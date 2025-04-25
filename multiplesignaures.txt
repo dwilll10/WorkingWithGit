@@ -1,0 +1,30 @@
+var signatureList = new List<string>();
+
+using (var pdf = new BitMiracle.Docotic.Pdf.PdfDocument(filename))
+{
+    var signatureControls = pdf.GetControls()
+        .Where(c => c.Type == BitMiracle.Docotic.Pdf.PdfWidgetType.Signature)
+        .ToList();
+
+    if (signatureControls.Count == 0)
+    {
+        signatureList.Add("No signature fields found.");
+    }
+
+    foreach (var control in signatureControls)
+    {
+        var field = (BitMiracle.Docotic.Pdf.PdfSignatureField)control;
+        var signature = field.Signature;
+
+        if (signature == null)
+        {
+            signatureList.Add($"Field {field.FullName}: Not signed");
+            continue;
+        }
+
+        string entry = $"Field: {field.FullName}, Signed by: {signature.Name}, Date: {signature.SigningTime}";
+        signatureList.Add(entry);
+    }
+}
+
+outList = signatureList;
