@@ -1,0 +1,38 @@
+signer1 = "";
+signDate1 = "";
+signer2 = "";
+signDate2 = "";
+
+using (var pdf = new BitMiracle.Docotic.Pdf.PdfDocument(filename))
+{
+    var signatureControls = pdf.GetControls()
+        .Where(c => c.Type == BitMiracle.Docotic.Pdf.PdfWidgetType.Signature)
+        .ToList();
+
+    int count = 0;
+
+    foreach (var control in signatureControls)
+    {
+        if (count >= 2)
+            break;
+
+        var field = (BitMiracle.Docotic.Pdf.PdfSignatureField)control;
+        var signature = field.Signature;
+
+        if (signature == null)
+            continue;
+
+        if (count == 0)
+        {
+            signer1 = signature.Name;
+            signDate1 = signature.SigningTime.ToString();
+        }
+        else if (count == 1)
+        {
+            signer2 = signature.Name;
+            signDate2 = signature.SigningTime.ToString();
+        }
+
+        count++;
+    }
+}
