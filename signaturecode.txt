@@ -1,0 +1,46 @@
+ var sb = new System.Text.StringBuilder();
+            using(var pdf = new PdfDocument(filename))
+            {
+                PdfControl? control = pdf.GetControls().FirstOrDefault(c => c.Type == PdfWidgetType.Signature);
+                if (control == null) {
+                    Console.WriteLine("Document does not contain signature fields");
+                    return;
+                }
+
+                PdfSignatureField field = (PdfSignatureField)control;
+
+
+                PdfSignature? signature = field.Signature;
+                if (signature == null)
+                {
+                    sb.AppendLine("Signature field does not have an associated signature");
+                    Console.WriteLine(sb.ToString());
+                    return;
+                }
+
+                sb.AppendFormat("Signed by: {0}\n", signature.Name);
+                sb.AppendFormat("Signing time: {0}\n", signature.SigningTime);
+                sb.AppendFormat("Signed at: {0}\n", signature.Location);
+                sb.AppendFormat("Reason for signing: {0}\n", signature.Reason);
+                sb.AppendFormat("Signer's contact: {0}\n", signature.ContactInfo);
+
+				PdfSignatureContents contents = signature.Contents;
+                sb.AppendFormat("Has OCSP embedded: {0}\n", contents.CheckHasEmbeddedOcsp());
+                sb.AppendFormat("Has CRL embedded: {0}\n", contents.CheckHasEmbeddedCrl());
+
+                PdfSignatureCertificate certificate = contents.GetSigningCertificate();
+                sb.AppendLine();
+                sb.AppendLine("== Signing certificate:");
+                sb.AppendFormat("Name: {0}\n", certificate.Name);
+                sb.AppendFormat("Algorithm: {0}\n", certificate.AlgorithmName);
+                sb.AppendFormat("Subject DN: {0}\n", certificate.Subject.Name);
+                sb.AppendFormat("Issuer DN: {0}\n", certificate.Issuer.Name);
+                sb.AppendFormat("Serial number: {0}\n", certificate.SerialNumber);
+                sb.AppendFormat("Valid from {0} up to {1}\n", certificate.ValidFrom, certificate.ValidUpto);
+                sb.AppendFormat("Timestamp Authority URL: {0}\n", certificate.GetTimestampAuthorityUrl());
+				outName = signature.Name;
+				outDate = signature.SigningTime.ToString();
+            }
+
+            Console.WriteLine(sb.ToString());
+			
