@@ -1,0 +1,14 @@
+		if(!cumulativeErrorMap.ContainsKey("designee1Designation")) {
+		string designation1 = ocrNameAttrDict.GetValueOrDefault("NoGroup.NoCategory.CAF2848.designee1Designation").GetValueOrDefault("formattedValue").ToString();
+		designation1=designation1.Replace(",","");
+			
+		Console.WriteLine(designation1);	
+			
+		char[] chardesignation1=designation1.ToCharArray();
+		Array.Sort(chardesignation1);
+		designation1=new string(chardesignation1);
+			
+		Console.WriteLine(designation1);		
+			
+		ocrNameAttrDict["NoGroup.NoCategory.CAF2848.designee1Designation"]["formattedValue"]=designation1[0].ToString();
+		}
