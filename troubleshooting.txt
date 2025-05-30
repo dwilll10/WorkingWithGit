@@ -1,0 +1,6 @@
+Console.WriteLine("Original: " + ocrNameAttrDict["NoGroup.NoCategory.CAF2848.designee1Designation"]["formattedValue"]);
+Console.WriteLine("After Replace: " + designation1);
+Console.WriteLine("Length: " + designation1.Length);
+Console.WriteLine("Sorted: " + designation1);
+Console.WriteLine("First Char Code: " + (int)designation1[0]);
+Console.WriteLine("First Char: '" + designation1[0] + "'");
