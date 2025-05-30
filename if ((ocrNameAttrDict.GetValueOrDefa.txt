@@ -1,0 +1,1 @@
+if ((ocrNameAttrDict.GetValueOrDefault(mandatoryItem).ContainsKey("UnformattedValue") && ocrNameAttrDict.GetValueOrDefault(mandatoryItem)("UnformattedValue") !="") || (ocrNameAttrDict.GetValueOrDefault(mandatoryItem).ContainsKey("UnformattedValue0") && ocrNameAttrDict.GetValueOrDefault(mandatoryItem)("UnformattedValue0") !="")) {
