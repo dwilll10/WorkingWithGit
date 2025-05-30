@@ -1,0 +1,4 @@
+var innerDict = ocrNameAttrDict.GetValueOrDefault(mandatoryItem);
+
+if ((innerDict != null && innerDict.ContainsKey("UnformattedValue") && innerDict["UnformattedValue"]?.ToString() != "") ||
+    (innerDict != null && innerDict.ContainsKey("UnformattedValue0") && innerDict["UnformattedValue0"]?.ToString() != ""))
