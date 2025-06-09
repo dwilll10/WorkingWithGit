@@ -8,3 +8,15 @@
 					checkBox=checkBox.Replace("☐","no");
 					checkBox=System.Text.RegularExpressions.Regex.Replace(checkBox,@"[^\d]","");	
 					Console.WriteLine(checkBox);
+
+
+
+if (key2.Contains("formattedValue")){
+				Console.WriteLine("contain formatted value");
+					string checkBox = dictItem.GetValueOrDefault(key2,"").ToString().ToLower().Trim();
+
+				if(checkBox.Contains("☒") || checkBox.Contains("☐")){
+					Console.WriteLine(checkBox);
+					checkBox=checkBox.Replace("☒",true).Replace("☐",false);
+					ocrNameAttrDict.GetValueOrDefault(key1)[key2]=checkBox;
+					Console.WriteLine(checkBox);
