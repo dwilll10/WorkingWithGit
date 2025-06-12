@@ -1,4 +1,4 @@
-
+matchedLine = yourLargeString.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(Function(line) line.Contains("your search text"))
 
 var reader = new iText.Kernel.Pdf.PdfReader(pdfPath);
 var pdfDoc = new iText.Kernel.Pdf.PdfDocument(reader);
