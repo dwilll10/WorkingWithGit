@@ -1,6 +1,26 @@
 int resultsNumber=caf8821ExtractionResults.ResultsDocument.Fields.Length;
 int count=0;
 
+if (!string.IsNullOrEmpty(caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value)){
+while(resultsNumber>count){
+	Console.WriteLine("1");
+ var fieldValue = caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value;
+	Console.WriteLine("2");
+	if( (fieldValue.Equals("☐" )) || (fieldValue.Equals("☒"))){
+		Console.WriteLine("3");
+		fieldValue = fieldValue.Replace("☐","No").Replace("☒","Yes");
+		Console.WriteLine(caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value);
+	 caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value=fieldValue;
+		
+	}
+	count++;
+	}
+}
+
+
+int resultsNumber=caf8821ExtractionResults.ResultsDocument.Fields.Length;
+int count=0;
+
 while(resultsNumber>count){
 	Console.WriteLine("1");
  var fieldValue = caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value;
