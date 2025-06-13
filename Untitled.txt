@@ -1,3 +1,13 @@
+	ResultsDataPoint rdp =   caf8821ExtractionResults.GetField("NoGroup.NoCategory.CAF8821.designee1SentNoticeBox");
+	ResultsContentReference rc = new ResultsContentReference();
+	string validationErrors = "yes";
+	ResultsValue rval = new ResultsValue(validationErrors,rc, 1.0f,1.0f);
+	ResultsValue[] rvalArray = new ResultsValue[1];
+	rvalArray[0] = rval;
+	rdp.Values = rvalArray;
+
+
+
 int resultsNumber = caf8821ExtractionResults.ResultsDocument.Fields.Length;
 int count = 0;
 
