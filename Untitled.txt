@@ -1,8 +1,59 @@
+int resultsNumber = caf8821ExtractionResults.ResultsDocument.Fields.Length;
+int count = 0;
+
+while (count < resultsNumber)
+{
+    var field = caf8821ExtractionResults.ResultsDocument.Fields[count];
+
+    // Check if the field has at least one value
+    if (field.Values != null && field.Values.Length > 0)
+    {
+        var fieldValue = field.Values[0]?.Value;
+
+        // Check if value is not null or empty
+        if (!string.IsNullOrEmpty(fieldValue))
+        {
+            Console.WriteLine("1");
+            Console.WriteLine("Original value: " + fieldValue);
+
+            if (fieldValue == "☐" || fieldValue == "☒")
+            {
+                Console.WriteLine("3");
+
+                // Replace value
+                fieldValue = fieldValue.Replace("☐", "No").Replace("☒", "Yes");
+
+                // Set the updated value safely
+                field.Values[0] = new UiPath.DocumentProcessing.Contracts.Results.ResultsValue
+                {
+                    Value = fieldValue
+                };
+
+                Console.WriteLine("Updated value: " + fieldValue);
+            }
+        }
+        else
+        {
+            Console.WriteLine("Skipped null or empty field value at index: " + count);
+        }
+    }
+    else
+    {
+        Console.WriteLine("Skipped field with no values at index: " + count);
+    }
+
+    count++;
+}
+
+
+
+
 int resultsNumber=caf8821ExtractionResults.ResultsDocument.Fields.Length;
 int count=0;
 
 if (!string.IsNullOrEmpty(caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value)){
 while(resultsNumber>count){
+if (!string.IsNullOrEmpty(caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value)){
 	Console.WriteLine("1");
  var fieldValue = caf8821ExtractionResults.ResultsDocument.Fields[count].Values[0].Value;
 	Console.WriteLine("2");
