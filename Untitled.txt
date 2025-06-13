@@ -1,3 +1,16 @@
+int resultsNumber=caf8821ExtractionResults.ResultsDocument.Fields.Length;
+int count=0;
+
+while(resultsNumber>count){
+ string fieldValue = caf8821ExtractionResults.ResultsDocument.Fields(count).Values(0);
+	if( fieldValue == "☐" || fieldValue=="☒"){
+		fieldValue.Replace("☐","No").Replace("☒","Yes");
+	 caf8821ExtractionResults.ResultsDocument.Fields(count).Values(0)=fieldValue;
+	}
+	
+	}
+
+
 matchedLine = yourLargeString.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(Function(line) line.Contains("your search text"))
 
 var reader = new iText.Kernel.Pdf.PdfReader(pdfPath);
