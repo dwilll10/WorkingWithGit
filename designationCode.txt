@@ -1,3 +1,6 @@
+string checkBox = checkBoxObj != null ? checkBoxObj.ToString() : string.Empty;
+
+
 var checkBox = ocrNameAttrDict[key1]["formattedValue"];
 	
 	if ((checkBox="☒") || (checkBox="☐")){
