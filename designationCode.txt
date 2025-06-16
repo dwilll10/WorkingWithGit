@@ -1,3 +1,17 @@
+if(key2.Contains("formattedValue")){
+	
+	var checkBoxObj = ocrNameAttrDict[key1][key2];
+	string checkBox = checkBoxObj != null ? checkBoxObj.ToString() : string.Empty;
+
+	
+	if ((checkBox=="☒") || (checkBox=="☐")){
+		checkBox=checkBox.Replace("☒","yes").Replace("☐","no");
+	}
+	
+}
+
+
+
 string checkBox = checkBoxObj != null ? checkBoxObj.ToString() : string.Empty;
 
 
