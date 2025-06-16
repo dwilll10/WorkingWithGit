@@ -1,3 +1,12 @@
+var checkBox = ocrNameAttrDict[key1]["formattedValue"];
+	
+	if ((checkBox="☒") || (checkBox="☐")){
+		checkBox=checkBox.Replace("☒","yes").Replace("☐","no");
+	}
+
+
+
+
 if (key2.Contains("formattedValue"))
 {
     ResultsDataPoint rdpBox = caf8821ExtractionResults.GetField(key1);
