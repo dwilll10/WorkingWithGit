@@ -1,4 +1,29 @@
-	if (key2.Contains("formattedValue")){
+if (key2.Contains("formattedValue"))
+{
+    ResultsDataPoint rdpBox = caf8821ExtractionResults.GetField(key1);
+
+    if (rdpBox != null && rdpBox.Values != null && rdpBox.Values.Length > 0)
+    {
+        string existingValue = rdpBox.Values[0]?.Value;
+
+        if (!string.IsNullOrEmpty(existingValue) && (existingValue.Contains("☒") || existingValue.Contains("☐")))
+        {
+            string booleanValue = existingValue.Contains("☒") ? "Yes" : "No";
+
+            ResultsContentReference rcBox = new ResultsContentReference();
+            ResultsValue rval = new ResultsValue(booleanValue, rcBox, 1.0f, 1.0f);
+            ResultsValue[] rvalArrayBox = new ResultsValue[1];
+            rvalArrayBox[0] = rval;
+
+            rdpBox.Values = rvalArrayBox;
+        }
+    }
+}
+
+
+
+
+if (key2.Contains("formattedValue")){
 				ResultsDataPoint rdpBox =   caf8821ExtractionResults.GetField(key1);
 				
 				if(rdpBox.Values(0).Value.Contains("☒")){
