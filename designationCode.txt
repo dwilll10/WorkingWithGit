@@ -1,4 +1,22 @@
-		if(!cumulativeErrorMap.ContainsKey("designee1Designation")) {
+	if (key2.Contains("formattedValue")){
+				ResultsDataPoint rdpBox =   caf8821ExtractionResults.GetField(key1);
+				
+				if(rdpBox.Values(0).Value.Contains("☒")){
+					ResultsContentReference rcBox = new ResultsContentReference();
+					string booleanValue = "Yes";
+					ResultsValue rval = new ResultsValue(booleanValue,rcBox, 1.0f,1.0f);	
+					ResultsValue[] rvalArrayBox = new ResultsValue[1];	
+					rvalArrayBox[0] = rval;
+					rdpBox.Values = rvalArrayBox;
+					}
+
+
+
+
+
+
+
+if(!cumulativeErrorMap.ContainsKey("designee1Designation")) {
 		string designation1 = ocrNameAttrDict.GetValueOrDefault("NoGroup.NoCategory.CAF2848.designee1Designation").GetValueOrDefault("formattedValue").ToString();
 		designation1=designation1.Replace(",","");
 			
