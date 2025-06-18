@@ -1,3 +1,7 @@
+parsedDate = DateTime.ParseExact(dateString, "MM/dd/yyyy h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
+isoFormattedString = parsedDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+
 if(key2.Contains("formattedValue")){
 	
 	var checkBoxObj = ocrNameAttrDict[key1][key2];
