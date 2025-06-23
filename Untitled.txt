@@ -1,4 +1,7 @@
-	ResultsDataPoint rdp =   caf8821ExtractionResults.GetField("NoGroup.NoCategory.CAF8821.designee1SentNoticeBox");
+str_TransLayout.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(Function(line) line.Contains(str_Value+*+"PIC"))
+
+
+ResultsDataPoint rdp =   caf8821ExtractionResults.GetField("NoGroup.NoCategory.CAF8821.designee1SentNoticeBox");
 	ResultsContentReference rc = new ResultsContentReference();
 	string validationErrors = "yes";
 	ResultsValue rval = new ResultsValue(validationErrors,rc, 1.0f,1.0f);
