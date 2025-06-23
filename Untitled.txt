@@ -1,3 +1,7 @@
+System.Text.RegularExpressions.Regex _
+    .Split(str_TransLayout, Environment.NewLine) _
+    .FirstOrDefault(Function(line) System.Text.RegularExpressions.Regex.IsMatch(line, str_Value & ".*PIC"))
+
 str_TransLayout.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(Function(line) line.Contains(str_Value+*+"PIC"))
 
 
