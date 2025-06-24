@@ -1,3 +1,8 @@
+groupedRows = dtInput.AsEnumerable().
+    GroupBy(Function(row) row("YourColumnName").ToString).
+    ToDictionary(Function(g) g.Key, Function(g) g.ToList())
+
+
 System.Text.RegularExpressions.Regex _
     .Split(str_TransLayout, Environment.NewLine) _
     .FirstOrDefault(Function(line) System.Text.RegularExpressions.Regex.IsMatch(line, str_Value & ".*PIC"))
