@@ -1,3 +1,8 @@
+str_TransLayout.Split({Environment.NewLine}, StringSplitOptions.None) _
+    .FirstOrDefault(Function(line) line.StartsWith("0") AndAlso line.Contains(str_ExecVariable))
+
+
+
 System.Text.RegularExpressions.Regex _
     .Split(str_TransLayout, Environment.NewLine) _
     .FirstOrDefault(Function(line) System.Text.RegularExpressions.Regex.IsMatch(line,  "0*" & str_ExecVariable))
