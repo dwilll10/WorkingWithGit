@@ -1,3 +1,9 @@
+System.Text.RegularExpressions.Regex _
+    .Split(str_TransLayout, Environment.NewLine) _
+    .FirstOrDefault(Function(line) System.Text.RegularExpressions.Regex.IsMatch(line,  "0*" & str_ExecVariable))
+
+
+
 lines = yourLongString.Split({Environment.NewLine}, StringSplitOptions.None).ToList()
 startIndex = lines.FindIndex(Function(l) l.Contains("TRANS-DT"))
 extractedLines = New List(Of String)
