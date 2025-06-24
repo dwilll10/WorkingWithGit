@@ -1,4 +1,25 @@
- 04  TRANS-DT.
+lines = yourLongString.Split({Environment.NewLine}, StringSplitOptions.None).ToList()
+startIndex = lines.FindIndex(Function(l) l.Contains("TRANS-DT"))
+extractedLines = New List(Of String)
+
+If startIndex >= 0 Then
+    For i = startIndex + 1 To lines.Count - 1
+        If String.IsNullOrWhiteSpace(lines(i)) Then
+            Continue For
+        End If
+        
+        If lines(i).StartsWith(" ") OrElse lines(i).StartsWith(vbTab) Then
+            extractedLines.Add(lines(i).Trim())
+        Else
+            Exit For
+        End If
+    Next
+End If
+
+finalResult = String.Join(Environment.NewLine, extractedLines)
+
+
+04  TRANS-DT.
                    05  YEAR                          PIC X(4).           00105-00108
                    05  MONTH                         PIC X(2).           00109-00110
                    05  DAY-OF-MONTH                  PIC X(2).           00111-00112
