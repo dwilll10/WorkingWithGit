@@ -1,3 +1,11 @@
+ 04  TRANS-DT.
+                   05  YEAR                          PIC X(4).           00105-00108
+                   05  MONTH                         PIC X(2).           00109-00110
+                   05  DAY-OF-MONTH                  PIC X(2).           00111-00112
+
+
+
+
 groupedRows = dtInput.AsEnumerable().
     GroupBy(Function(row) row("YourColumnName").ToString).
     ToDictionary(Function(g) g.Key, Function(g) g.ToList())
