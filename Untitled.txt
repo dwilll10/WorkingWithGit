@@ -1,4 +1,8 @@
- 04  DLN. 
+str_Result = String.Join(", ", str_Input.Split({Environment.NewLine}, StringSplitOptions.None).SkipWhile(Function(l) Not l.TrimStart().StartsWith("04") OrElse Not l.Contains("DLN.")).Skip(1).TakeWhile(Function(l) Not l.TrimStart().StartsWith("04")).SelectMany(Function(l) System.Text.RegularExpressions.Regex.Matches(l, "\d{5}-\d{5}").Cast(Of System.Text.RegularExpressions.Match)).Select(Function(m) m.Value))
+
+
+
+04  DLN. 
                    05  BLOCK-DLN-WITHOUT-YR-COUNT.  
                        06  FILE-LOC-CD               PIC 9(2).           00010-00011
                        06  TAX-CLASS-CD              PIC 9.              00012-00012
