@@ -1,3 +1,5 @@
+lst_LayoutLines.FindIndex(Function(line) line.Contains(str_ExecVariable) andAlso (line.StartsWith("MOV") or line.StartsWith("REN") or line.StartsWith("NEW") or line.StartsWith("0")))
+
 str_TransLayout.Split({Environment.NewLine}, StringSplitOptions.None).FirstOrDefault(Function(line) line.Replace("NEW","").Replace("MOV","").Replace("REN").StartsWith("0") AndAlso line.Contains(str_ExecVariable))
 
 str_TransLayout.Split({Environment.NewLine}, StringSplitOptions.None) _
