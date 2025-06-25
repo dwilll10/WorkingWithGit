@@ -1,3 +1,16 @@
+ 04  DLN. 
+                   05  BLOCK-DLN-WITHOUT-YR-COUNT.  
+                       06  FILE-LOC-CD               PIC 9(2).           00010-00011
+                       06  TAX-CLASS-CD              PIC 9.              00012-00012
+                       06  DOC-CD                    PIC 9(2).           00013-00014
+                       06  CTRL-DAY                  PIC 9(3).           00015-00017
+                       06  BLOCK-NUM                 PIC 9(3).           00018-00020
+                   05  SERIAL-NUM                    PIC 9(2).           00021-00022
+                   05  YR-COUNT                      PIC 9.              00023-00023
+               04  INPUT-SYSTEM-SOURCE-CODE          PIC X.              00024-00024
+
+
+
 str_LargeText = String.Join(Environment.NewLine, str_LargeText.Split({Environment.NewLine}, StringSplitOptions.None).Where(Function(line) Not line.Contains("*")))
 
 
