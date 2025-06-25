@@ -1,3 +1,7 @@
+ 05  F8936-PT-V-REG-NUM              PIC X(12).        06284-06295
+ 05  F8936-PT-V-CREDIT-AMT           PIC S9(15)   
+
+
 str_Result = String.Join(", ", str_Input.Split({Environment.NewLine}, StringSplitOptions.None).SkipWhile(Function(l) Not l.TrimStart().StartsWith("04") OrElse Not l.Contains("DLN.")).Skip(1).TakeWhile(Function(l) Not l.TrimStart().StartsWith("04")).SelectMany(Function(l) System.Text.RegularExpressions.Regex.Matches(l, "\d{5}-\d{5}").Cast(Of System.Text.RegularExpressions.Match)).Select(Function(m) m.Value))
 
 
