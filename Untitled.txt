@@ -1,3 +1,6 @@
+System.Text.RegularExpressions.Regex.Split(str_Input, "(?=^A)", System.Text.RegularExpressions.RegexOptions.Multiline)
+
+
 str_Result = String.Join(", ", str_Layout.Split({Environment.NewLine}, StringSplitOptions.None) _
     .SkipWhile(Function(line) Not (line.TrimStart().StartsWith("04") AndAlso line.Contains("DLN"))) _
     .TakeWhile(Function(line, idx) idx = 0 OrElse Not line.TrimStart().StartsWith("04")) _
