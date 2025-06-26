@@ -1,3 +1,5 @@
+updatedString = System.Text.RegularExpressions.Regex.Replace(myString, "^(NEW|MOV)", "", System.Text.RegularExpressions.RegexOptions.Multiline)
+
 System.Text.RegularExpressions.Regex.Split(str_Input, "(?=^A)", System.Text.RegularExpressions.RegexOptions.Multiline)
 
 
