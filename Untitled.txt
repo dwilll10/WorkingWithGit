@@ -1,4 +1,16 @@
- "^\s*\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & "(?:\r?\n(?!\s*\d{2}\s).+)*"
+pattern = "^\s*\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & _
+          ".*?(?=^\s*\d{2}\s+\S|\z)"
+
+targetSection = System.Text.RegularExpressions.Regex.Match(
+    str_Input,
+    pattern,
+    System.Text.RegularExpressions.RegexOptions.Multiline Or System.Text.RegularExpressions.RegexOptions.Singleline
+).Value
+
+
+
+
+"^\s*\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & "(?:\r?\n(?!\s*\d{2}\s).+)*"
 
 targetSection = System.Text.RegularExpressions.Regex.Match(str_Input, pattern, System.Text.RegularExpressions.RegexOptions.Multiline).Value
 
