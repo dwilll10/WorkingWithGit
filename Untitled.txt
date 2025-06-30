@@ -1,3 +1,13 @@
+ 05  SECTION-24-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00443-00444
+                       06  SECTION-PRESENCE-IND      PIC 9.              00445-00445
+                       06  SECTION-REQUIRED-IND      PIC 9.              00446-00446
+                   05  SECTION-25-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00447-00448
+                       06  SECTION-PRESENCE-IND      PIC 9.              00449-00449
+                       06  SECTION-REQUIRED-IND      PIC 9.              00450-00450
+
+
 updatedString = System.Text.RegularExpressions.Regex.Replace(myString, "^(NEW|MOV)", "", System.Text.RegularExpressions.RegexOptions.Multiline)
 
 System.Text.RegularExpressions.Regex.Split(str_Input, "(?=^A)", System.Text.RegularExpressions.RegexOptions.Multiline)
