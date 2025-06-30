@@ -1,4 +1,12 @@
 pattern = "\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & _
+          "(.*?\r?\n)*?" & _
+          "\d{2}\s+" & fieldLabel & "(.*?\r?\n)*?" & _
+          "(\d{5}-\d{5})"
+
+match = System.Text.RegularExpressions.Regex.Match(str_Input, pattern, System.Text.RegularExpressions.RegexOptions.Singleline)
+
+
+pattern = "\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & _
           ".*?\d{2}\s+" & fieldLabel & ".*?(?:\r?\n.*?)*?(\d{5}-\d{5})"
 
 
