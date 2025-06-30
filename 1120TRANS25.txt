@@ -1,0 +1,1697 @@
+      ***************************************************************** 
+1        01  1120TRANS (REV 01).
+      * 
+      *    LAST REVISED: 06/7/2013  
+      * 
+      *    UWR# 88418 RENAMED PREPARER-SSN TO PREPARER-TIN  
+      *    REDEFINED MFT CODE TO ACCOMMODATE 7004 PROCESSING
+      * 
+      ***************************************************************** 
+           03  RECORD-TYPE-ID-CODE                   PIC X.              00001-00001
+               88  TRANS-REC                         VALUE "A". 
+           03  GMF-DOC-ID-DATA. 
+               04  PROCESSING-PERIOD-IND             PIC X.              00002-00002
+               04  DOCUMENT-SPECIFIC-FORMAT-IND      PIC X.              00003-00003
+               04  END-OF-PERIOD-REFORMAT-IND        PIC X.              00004-00004
+               04  SPLIT-REC-CD                      PIC X.              00005-00005
+               04  FILLER                            PIC X.              00006-00006
+               04  MASTER-FILE-SYSTEM-ID-CODE        PIC X.              00007-00007
+               04  BLOCK-HEADER-MFT                  PIC X(2).           00008-00009
+               04  DLN. 
+                   05  BLOCK-DLN-WITHOUT-YR-COUNT.  
+                       06  FILE-LOC-CD               PIC 9(2).           00010-00011
+                       06  TAX-CLASS-CD              PIC 9.              00012-00012
+                       06  DOC-CD                    PIC 9(2).           00013-00014
+                       06  CTRL-DAY                  PIC 9(3).           00015-00017
+                       06  BLOCK-NUM                 PIC 9(3).           00018-00020
+                   05  SERIAL-NUM                    PIC 9(2).           00021-00022
+                   05  YR-COUNT                      PIC 9.              00023-00023
+               04  INPUT-SYSTEM-SOURCE-CODE          PIC X.              00024-00024
+               04  GMF-INPUT-SYSTEM-ID               PIC X(3).           00025-00027
+               04  FILLER                            PIC X(2).           00028-00029
+               04  PRIMARY-TRANS-PJ-AMT              PIC S9(13)V99  
+                     SIGN IS LEADING SEPARATE CHARACTER.                 00030-00045
+               04  TRANSFER-IN-AMT REDEFINES PRIMARY-TRANS-PJ-AMT   
+                                                     PIC S9(13)V99  
+                     SIGN IS LEADING SEPARATE CHARACTER.
+               04  REINPUT-SOURCE-CODE               PIC X.              00046-00046
+                   88  REPROCESSABLE-RNPT-SOURCE-CD  VALUE "R". 
+               04  BATCH-NUMBER                      PIC X(4).           00047-00050
+               04  SC-BLOCK-CTRL-NUM                 PIC X(3).           00051-00053
+               04  OPERATOR-CLASS                    PIC X.              00054-00054
+               04  FORMAT-CODE                       PIC X(3).           00055-00057
+               04  PROGRAM-NUM                       PIC X(5).           00058-00062
+               04  DOC-CURRENT-STATUS-CODE           PIC X.              00063-00063
+               04  DOC-PRIOR-STATUS-CODE             PIC X.              00064-00064
+               04  PRIOR-YEAR-CODE                   PIC X.              00065-00065
+               04  RPS-RETURNS-IND                   PIC X.              00066-00066
+               04  REMIT-SEPARATE-FROM-RETURN-CD REDEFINES  
+                    RPS-RETURNS-IND                  PIC X. 
+           03  GMF-TRANS-ID-DATA.   
+               04  PRIMARY-NAME-CTRL                 PIC X(4).           00067-00070
+               04  NAME-CTRL REDEFINES PRIMARY-NAME-CTRL
+                                                     PIC X(4).  
+               04  PRIMARY-TIN-GROUP                 PIC X(11).          00071-00081
+               04  TIN-GROUP REDEFINES PRIMARY-TIN-GROUP.   
+                   05  PRIMARY-TIN-VALIDITY-BYPASS-CD PIC X.
+                   05  TIN-VALIDITY-BYPASS-CODE REDEFINES   
+                       PRIMARY-TIN-VALIDITY-BYPASS-CD PIC X.
+                   05  PRIMARY-TIN-TYPE              PIC X. 
+                   05  TIN-TYPE REDEFINES   
+                        PRIMARY-TIN-TYPE             PIC X. 
+                   05  PRIMARY-TIN                   PIC X(9).  
+                   05  EIN REDEFINES PRIMARY-TIN     PIC X(9).  
+                   05  TIN REDEFINES PRIMARY-TIN     PIC X(9).  
+                   05  SSN REDEFINES PRIMARY-TIN     PIC X(9).  
+               04  SECONDARY-TIN                     PIC X(9).           00082-00090
+               04  TAX-PRD. 
+                   05  YEAR                          PIC 9(4).           00091-00094
+                   05  YEAR-R REDEFINES YEAR.   
+                     06  CENTURY                     PIC XX.
+                     06  DECADE-COUNT                PIC X. 
+                     06  YR-COUNT                    PIC X. 
+                   05  MONTH                         PIC X(2).           00095-00096
+               04  REPORT-PLAN-NUM                   PIC 9(3).           00097-00099
+               04  PLAN-NUM REDEFINES   
+                     REPORT-PLAN-NUM                 PIC 9(3).  
+               04  MFT-CD                            PIC 9(2).           00100-00101
+ NEW           04  MFT-CD-8868 REDEFINES MFT-CD      PIC X(2).  
+               04  TRANS-CD                          PIC 9(3).           00102-00104
+               04  TRANS-DT.
+                   05  YEAR                          PIC X(4).           00105-00108
+                   05  MONTH                         PIC X(2).           00109-00110
+                   05  DAY-OF-MONTH                  PIC X(2).           00111-00112
+               04  TRANSFER-IN-DT-TRANS REDEFINES TRANS-DT. 
+                   05  YEAR.
+                       06  CC                        PIC XX.
+                       06  YY.  
+                           25  DECADE-COUNT          PIC X. 
+                           25  YR-COUNT              PIC X. 
+                   05  MONTH                         PIC X(2).  
+                   05  DAY-OF-MONTH                  PIC X(2).  
+               04  TREASURY-REPORTS-DATA-IND         PIC 9.              00113-00113
+                   88  GAS-OIL-DATA-PRESENT          VALUE 1.   
+               04  XREF-BLOCK-DLN                    PIC X(12).          00114-00125
+               04  TRANS-SOURCE-CODE                 PIC X.              00126-00126
+               04  UNPOSTABLE-IND                    PIC 9.              00127-00127
+               04  GEN-TRANS-SOURCE-DOC-IND          PIC X.              00128-00128
+               04  UNPOSTABLE-CLASSIFICATION-CD      PIC 9.              00129-00129
+                   88  CORRECTED-UNPOSTABLE          VALUE 2 THRU 5.
+                   88  NULLIFIED-UNPOSTABLE          VALUE 9.   
+               04  INT-REDUCT-INITIATIVE-DATA.  
+                   05  INT-REDUCT-OVERPAYMENT-CMPTR  PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00130-00145
+                   05  INTEREST-PENALTY-DATE.   
+                       06  YEAR                      PIC X(4).           00146-00149
+                       06  MONTH                     PIC XX.             00150-00151
+                       06  DAY-OF-MONTH              PIC XX.             00152-00153
+               04  NCC-REPORT-TYPE-ORIG-TRANS        PIC XX.             00154-00155
+               04  FILLER                            PIC X(15).          00156-00170
+               04  IDRS-MODULE-MEMO-CODE             PIC X.              00171-00171
+               04  IDRS-EMPLOYEE-NUM                 PIC X(10).          00172-00181
+               04  POSTING-DELAY-CD                  PIC X.              00182-00182
+               04  OLE-RESERVED.
+                   05  EIN-UNDRPRT-DIGT              PIC X.              00183-00183
+                   05  2RS-IN-A-ROW-IND              PIC X.              00184-00184
+                   05  FILLER                        PIC X.              00185-00185
+               04  PRIMARY-TIN-EIF-NAP-DATA          PIC X(10).          00186-00195
+               04  EIF-NAP-DATA REDEFINES   
+                    PRIMARY-TIN-EIF-NAP-DATA.   
+                   05  NAP-EIF-NAME-CTRL-UNDRPRT     PIC X(4).  
+                   05  NAP-EIF-TAX-PRD-UNDRPRT       PIC X(2).  
+                   05  AUDIT-TRAIL-CODE              PIC X. 
+                   05  EIF-ACCESS-IND                PIC X. 
+                   05  NAP-ACCESS-IND                PIC X. 
+                   05  NAP-EIF-RESPONSE-IND          PIC X. 
+               04  ERS-RESPONSE-IND                  PIC X.              00196-00196
+               04  CAPR-DATA.   
+                   05  TRANSCRIPTION-OPERATOR-ID     PIC X(4).           00197-00200
+                   05  CODE-AND-EDIT-EMPLOYEE-NUM    PIC X(3).           00201-00203
+                   05  ERS-EMPLOYEE-NUM              PIC X(10).          00204-00213
+ REN           04  PREPARER-TIN                      PIC X(9).           00214-00222
+ NEW           04  PREPARER-SSN REDEFINES   
+ NEW                            PREPARER-TIN         PIC X(9).  
+               04  PREPARER-EIN                      PIC X(9).           00223-00231
+               04  AUTO-TIN-CORRECTION-DATA.
+                   05  PRIMARY-TIN-ORIGINAL-INPT     PIC X(9).           00232-00240
+                   05  FILLER                        PIC X(9).           00241-00249
+               04  NAP-COUNTS.  
+                   05  NAP-TIN-VAL-CK-REQ-CNT        PIC 9(2).           00250-00251
+                   05  NAP-TIN-VAL-CK-RSPNS-CNT      PIC 9(2).           00252-00253
+                   05  NAP-TIN-DUP-CK-REQ-CNT        PIC 9(2).           00254-00255
+                   05  NAP-TIN-DUP-CK-RSPNS-CNT      PIC 9(2).           00256-00257
+               04  CI-CART-CODE                      PIC X.              00258-00258
+               04  FILLER                            PIC X.              00259-00259
+           03  CORR-UP-ID-DATA. 
+               04  PRIOR-UP-CATEGORY-CODE            PIC X(2).           00260-00261
+               04  ORIGINAL-UNPOSTABLE-CD            PIC X(3).           00262-00264
+               04  ORIGINAL-MF-UP-REASON-CD          PIC 9.              00265-00265
+               04  PRIOR-MF-SYSTEM-ID-CODE           PIC X.              00266-00266
+               04  EMPLOYEE-NUM-ASSIGN               PIC X(10).          00267-00276
+               04  ORIGINAL-UP-CYCLE                 PIC X(8).           00277-00284
+               04  UP-SEQ-NUMBER                     PIC X(12).          00285-00296
+               04  UP-RESOLUTION-CD                  PIC X.              00297-00297
+               04  MF-UP-REASON-CD                   PIC 9.              00298-00298
+               04  UNPOSTABLE-CD                     PIC 9(3).           00299-00301
+               04  TIN-TYPE-ORIGINAL-TRANS           PIC X.              00302-00302
+               04  TIN-ORIGINAL-TRANS                PIC X(9).           00303-00311
+               04  MFT-ORIGINAL-TRANS                PIC X(2).           00312-00313
+               04  TAX-PRD-ORIGINAL-TRANS            PIC X(6).           00314-00319
+               04  RPT-PLAN-NUM-ORIGINAL-TRANS       PIC X(3).           00320-00322
+               04  PLAN-NUM-ORIGINAL-TRANS REDEFINES
+                     RPT-PLAN-NUM-ORIGINAL-TRANS     PIC X(3).  
+               04  UP-IDRS-CLASSIFICATION-CD         PIC X.              00323-00323
+           03  CYCLE-UNPOSTED.  
+               04  YEAR.
+                   05  CENTURY                       PIC 99.             00324-00325
+                   05  DECADE-COUNT                  PIC 9.              00326-00326
+                   05  YR-COUNT                      PIC 9.              00327-00327
+               04  WEEK                              PIC 99.             00328-00329
+               04  DAY-COUNT                         PIC 99.             00330-00331
+           03  CADE-ID-DATA.
+               04  CADE-DIGIT-CYCLE                  PIC 9(8).           00332-00339
+               04  CADE-REASON-CODE                  PIC 9(2).           00340-00341
+               04  FILLER                            PIC 9(2).           00342-00343
+           03  FILLER                                PIC X(4).           00344-00347
+           03  DOC-SECTIONAL-DATA-CHAR-CNT           PIC 9(5).           00348-00352
+      *                                                                       - 
+      ******************************************************************      - 
+      *********************************************************               - 
+      *    OPERATING DATE: JANUARY 1, 2025.                                   - 
+      *    REVISED DATE: 08/05/2024.                                          - 
+      *********************************************************               - 
+      *                                                                       - 
+      * FOR FS 2025 PROCESSING:                                               - 
+      *                                                                       - 
+      *********************************************************               - 
+      *                                                                       - 
+      *  FIXED TRANS RECORD LENGTH : 352 CHARACTERS                           - 
+      *  TRANS RECORD LENGTH : 9081 CHARACTERS                                - 
+      *  TOTAL TRANS RECORD LENGTH : 31000 CHARACTERS                         - 
+      *                                                                       - 
+      ************************************************************            - 
+      *                                                                       - 
+      * 08/05/2024: REMOVED *MOV COMMENT IN COLUMN 7 IN FRONT OF              - 
+      * FIELD SECTION-REQUIRED-IND IN SECTION-97-PRESENCE-PROFILE.            - 
+      *                                                                       - 
+      * FINAL FILLER DECREASED BY 1 CHARACTER.                                - 
+      ************************************************************            - 
+      * PER UWR # 983232:                                                     - 
+      *                                                                       - 
+      * FRM-1120-SECTION-PRESENCE-DATA CHANGES:                               - 
+      * ADDED NEW SECTION SECTION-35-PRESENCE-PROFILE TO                      - 
+      * FRM-1120-SECTION-PRESENCE-DATA. SECTION-97-PRESENCE-PROFILE,          - 
+      * SECTION-98-PRESENCE-PROFILE AND SECTION-99-PRESENCE-PROFILE           - 
+      * WERE MOVED.                                                           - 
+      *                                                                       - 
+      * FRM-1120-SECT-08-DETAIL-DATA CHANGES:                                 - 
+      * ADDED 14 NEW MONEY FIELDS TO FRM-1120-SECT-08-DETAIL-DATA             - 
+      * AND THE REST OF THE FIELDS IN THE SECTION WERE MOVED.                 - 
+      *                                                                       - 
+      * FRM-1120-SECT-23-DETAIL-DATA CHANGES:                                 - 
+      * 1. FIELD F7207-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F7207-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F7207-CR-TRANS-ELECT-AMT. FIELDS F7207-GROSS-EPE-AMT AND           - 
+      *    F7207-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      * 2. FIELD F3468-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F3468-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F3468-CR-TRANS-ELECT-AMT. FIELDS F3468-GROSS-EPE-AMT AND           - 
+      *    F3468-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      * 3. FIELD F8835-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F8835-CREDIT-AMT.                                                  - 
+      * 4. FIELD F7210-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F7210-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F7210-CR-TRANS-ELECT-AMT. FIELDS F7210-GROSS-EPE-AMT AND           - 
+      *    F7210-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      *                                                                       - 
+      * FRM-1120-SECT-24-DETAIL-DATA CHANGES:                                 - 
+      * 1. THE FOLLOWING 10 FIELDS WERE RENAMED:                              - 
+      *    OLD NAME               NEW NAME                                    - 
+      *    FILLER-SECT24-1        F7218-REG-NUM                               - 
+      *    FILLER-SECT24-2        F7218-CR-TRANS-ELECT-AMT                    - 
+      *    FILLER-SECT24-3        F7218-CREDIT-AMT                            - 
+      *    FILLER-SECT24-4        F7218-GROSS-EPE-AMT                         - 
+      *    FILLER-SECT24-5        F7218-NT-ELECT-PAY-AMT                      - 
+      *    FILLER-SECT24-6        F3468-PTV-REG-NUM                           - 
+      *    FILLER-SECT24-6        F3468-PTV-CR-TRANS-ELECT-AMT                - 
+      *    FILLER-SECT24-8        F3468-PTV-CREDIT-AMT                        - 
+      *    FILLER-SECT24-9        F3468-PTV-GRSS-EPE-AMT                      - 
+      *    FILLER-SECT24-10       F3468-PTV-NT-ELCT-PAY-AMT                   - 
+      * 2. FIELD F3468-PT-IV-NET-GBC-AMT HAS BEEN RENAMED TO                  - 
+      *    F3468-PT-IV-CREDIT-AMT AND PLACED AFTER FIELD                      - 
+      *    FILLER-SECT24-G. FIELDS F3468-PT-IV-GROSS-EPE-AMT AND              - 
+      *    F3468-PT-IV-NET-ELECT-PAY-AMT WERE MOVED.                          - 
+      * 3. FIELD F8911-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F8911-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F8911-CR-TRANS-ELECT-AMT. FIELDS F8911-GROSS-EPE-AMT AND           - 
+      *    F8911-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      * 4. FIELDS F7213-NET-GBC-AMT HAS BEEN RENAMED TO                       - 
+      *    F7213-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F7213-CR-TRANS-ELECT-AMT. FIELDS F7213-GROSS-EPE-AMT AND           - 
+      *    F7213-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      * 5. F8933-NET-GBC-AMT HAS BEEN RENAMED TO                              - 
+      *    F8933-CREDIT-AMT AND PLACED AFTER FIELD                            - 
+      *    F8933-CR-TRANS-ELECT-AMT. FIELDS F8933-GROSS-EPE-AMT AND           - 
+      *    F8933-NET-ELECT-PAY-AMT WERE MOVED.                                - 
+      *                                                                       - 
+      * FRM-1120-SECT-25-DETAIL-DATA CHANGES:                                 - 
+      * 1. THE FOLLOWING 5 FIELDS WERE RENAMED:                               - 
+      *    OLD NAME               NEW NAME                                    - 
+      *    FILLER-SECT25-1        F7211-REG-NUM                               - 
+      *    FILLER-SECT25-2        F7211-CR-TRANS-ELECT-AMT                    - 
+      *    FILLER-SECT25-3        F7211-CREDIT-AMT                            - 
+      *    FILLER-SECT25-4        F7211-GROSS-EPE-AMT                         - 
+      *    FILLER-SECT25-5        F7211-NT-ELECT-PAY-AMT                      - 
+      * 2. FIELD F8936-PT-V-NET-GBC-AMT HAS BEEN RENAMED TO                   - 
+      *    F8936-PT-V-CREDIT-AMT AND PLACED AFTER FIELD                       - 
+      *    F8936-PT-V-REG-NUM. FIELDS F8936-PT-V-GROSS-EPE-AMT                - 
+      *    AND F8936-PT-V-NET-ELECT-PAY-AMT WERE MOVED                        - 
+      * 3. FIELD F8904-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F8904-CREDIT-AMT.                                                  - 
+      * 4. FIELD F7213-PT-I-NET-GBC-AMT HAS BEEN RENAMED TO                   - 
+      *    F7213-PT-I-CREDIT-AMT.                                             - 
+      * 5. FIELD F8864-NET-GBC-AMT HAS BEEN RENAMED TO                        - 
+      *    F8864-CREDIT-AMT.                                                  - 
+      * 6. FIELD F3468-PT-6-NET-GBC-AMT HAS BEEN RENAMED TO                   - 
+      *    F3468-PT-6-CREDIT-AMT AND PLACED AFTER FIELD                       - 
+      *    F3468-PT-6-CR-TRANS-ELECT-AMT. FIELDS                              - 
+      *    F3468-PT-6-GROSS-EPE-AMT AND F3468-PT-6-NET-ELECT-PAY-AMT          - 
+      *    WERE MOVED.                                                        - 
+      * 7. FIELD F8835-PT-2-NET-GBC-AMT HAS BEEN RENAMED TO                   - 
+      *    F8835-PT-2-CREDIT-AMT AND PLACED AFTER FIELD                       - 
+      *    F8835-PT-2-CR-TRANS-ELECT-AMT. FIELDS                              - 
+      *    F8835-PT-2-GROSS-EPE-AMT AND F8835-PT-2-NET-ELECT-PAY-AMT          - 
+      *    WERE MOVED.                                                        - 
+      * 8. ADDED NEW FIELD F3800-REG-NUM-VAL-IND AFTER FIELD                  - 
+      *    DATA-PRESENT-SECT-5-IND.                                           - 
+      *                                                                       - 
+      * FRM-1120-SECT-31-DETAIL-DATA CHANGES:                                 - 
+      * FIELDS VIN1-VAL-IND AND VIN2-VAL HAVE BEN REMOVED FROM                - 
+      * FRM-1120-SECT-31-DETAIL-DATA AND PLACED AT THE BOTTOM OF              - 
+      * FRM-1120-SECT-98-GEN-DATA.                                            - 
+      * FRM-1120-SECT-31-DETAIL-DATA HAS BEEN REORDERED.                      - 
+      *                                                                       - 
+      * ADDED NEW SECTION FRM-1120-SECT-35-DETAIL-DATA TO                     - 
+      * FRM-1120-DOC-DETAIL-DATA CONTAINING 26 NEW FIELDS.                    - 
+      *                                                                       - 
+      * FRM-1120-SECT-98-GEN-DATA CHANGES:                                    - 
+      * 1. FRM-1120-SECT-98-GEN-DATA HAS BEEN RELEVELED AND                   - 
+      *    FIELDS HAVE BEEN reordered.                                        - 
+      * 2. FIELDS STARTING WITH NET-TAXABLE-INCOME AND ENDING WITH            - 
+      *    FIELD F3468-PT6-GRSMNS-NET-CMPTR-AMT HAVE BEEN REORDERED           - 
+      *    INCLUDING THE ADDITION OF 26 NEW MONEY FIELDS.                     - 
+      * 3. THE FOLLOWING FIELDS WERE RENAMED:                                 - 
+      *    OLD nAME                 NEW NAME                                  - 
+      *    FILLER-98-1-CMPTR-AMT    F7218-GRSS-MINUS-NT-CMPTR-AMT             - 
+      *    FILLER-98-2-CMPTR-AMT    F3468-PT5-GRSMNS-NT-CMPTR-AMT             - 
+      *    FILLER-98-3-CMPTR-AMT    F7211-GRSS-MINUS-NT-CMPTR-AMT             - 
+      * 4. AT THE BOOTOM OF THE SECTION, ADDED NEW DATA GROUP                 - 
+      *    F3800-REG-NUM-VAL-IND CONTAINING 13 NEW INDICATORS.                - 
+      *    ADDED FIELDS VIN1-VAL-IND AND VIN2-VAL-IND WHICH WERE              - 
+      *    WERE MOVED FROM FRM-1120-SECT-31-DETAIL-DATA AS WELL AS            - 
+      *    NEW FIELDS F8936A-LINE9-MAX-IND AND                                - 
+      *    F8936A-LINE26-MAX-IND.                                             - 
+      *                                                                       - 
+      * FINAL FILLER DECREASED BY 1074 CHARACTERS.                            - 
+      ************************************************************            - 
+           03  FRM-1120-SECTION-PRESENCE-DATA.  
+               04  SECTION-MAXIMUM-COUNT             PIC 9(2).           00353-00354
+               04  SECTION-PRESENCE-DATA.   
+                   05  SECTION-01-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00355-00356
+                       06  SECTION-PRESENCE-IND      PIC 9.              00357-00357
+                       06  SECTION-REQUIRED-IND      PIC 9.              00358-00358
+                   05  SECTION-02-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00359-00360
+                       06  SECTION-PRESENCE-IND      PIC 9.              00361-00361
+                       06  SECTION-REQUIRED-IND      PIC 9.              00362-00362
+                   05  SECTION-03-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00363-00364
+                       06  SECTION-PRESENCE-IND      PIC 9.              00365-00365
+                       06  SECTION-REQUIRED-IND      PIC 9.              00366-00366
+                   05  SECTION-04-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00367-00368
+                       06  SECTION-PRESENCE-IND      PIC 9.              00369-00369
+                       06  SECTION-REQUIRED-IND      PIC 9.              00370-00370
+                   05  SECTION-05-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00371-00372
+                       06  SECTION-PRESENCE-IND      PIC 9.              00373-00373
+                       06  SECTION-REQUIRED-IND      PIC 9.              00374-00374
+                   05  SECTION-06-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00375-00376
+                       06  SECTION-PRESENCE-IND      PIC 9.              00377-00377
+                       06  SECTION-REQUIRED-IND      PIC 9.              00378-00378
+                   05  SECTION-07-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00379-00380
+                       06  SECTION-PRESENCE-IND      PIC 9.              00381-00381
+                       06  SECTION-REQUIRED-IND      PIC 9.              00382-00382
+                   05  SECTION-08-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00383-00384
+                       06  SECTION-PRESENCE-IND      PIC 9.              00385-00385
+                       06  SECTION-REQUIRED-IND      PIC 9.              00386-00386
+                   05  SECTION-09-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00387-00388
+                       06  SECTION-PRESENCE-IND      PIC 9.              00389-00389
+                       06  SECTION-REQUIRED-IND      PIC 9.              00390-00390
+                   05  SECTION-10-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00391-00392
+                       06  SECTION-PRESENCE-IND      PIC 9.              00393-00393
+                       06  SECTION-REQUIRED-IND      PIC 9.              00394-00394
+                   05  SECTION-11-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00395-00396
+                       06  SECTION-PRESENCE-IND      PIC 9.              00397-00397
+                       06  SECTION-REQUIRED-IND      PIC 9.              00398-00398
+                   05  SECTION-12-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00399-00400
+                       06  SECTION-PRESENCE-IND      PIC 9.              00401-00401
+                       06  SECTION-REQUIRED-IND      PIC 9.              00402-00402
+                   05  SECTION-14-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00403-00404
+                       06  SECTION-PRESENCE-IND      PIC 9.              00405-00405
+                       06  SECTION-REQUIRED-IND      PIC 9.              00406-00406
+                   05  SECTION-15-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00407-00408
+                       06  SECTION-PRESENCE-IND      PIC 9.              00409-00409
+                       06  SECTION-REQUIRED-IND      PIC 9.              00410-00410
+                   05  SECTION-16-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00411-00412
+                       06  SECTION-PRESENCE-IND      PIC 9.              00413-00413
+                       06  SECTION-REQUIRED-IND      PIC 9.              00414-00414
+                   05  SECTION-17-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00415-00416
+                       06  SECTION-PRESENCE-IND      PIC 9.              00417-00417
+                       06  SECTION-REQUIRED-IND      PIC 9.              00418-00418
+                   05  SECTION-18-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00419-00420
+                       06  SECTION-PRESENCE-IND      PIC 9.              00421-00421
+                       06  SECTION-REQUIRED-IND      PIC 9.              00422-00422
+                   05  SECTION-19-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00423-00424
+                       06  SECTION-PRESENCE-IND      PIC 9.              00425-00425
+                       06  SECTION-REQUIRED-IND      PIC 9.              00426-00426
+                   05  SECTION-20-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00427-00428
+                       06  SECTION-PRESENCE-IND      PIC 9.              00429-00429
+                       06  SECTION-REQUIRED-IND      PIC 9.              00430-00430
+                   05  SECTION-21-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00431-00432
+                       06  SECTION-PRESENCE-IND      PIC 9.              00433-00433
+                       06  SECTION-REQUIRED-IND      PIC 9.              00434-00434
+                   05  SECTION-22-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00435-00436
+                       06  SECTION-PRESENCE-IND      PIC 9.              00437-00437
+                       06  SECTION-REQUIRED-IND      PIC 9.              00438-00438
+                   05  SECTION-23-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00439-00440
+                       06  SECTION-PRESENCE-IND      PIC 9.              00441-00441
+                       06  SECTION-REQUIRED-IND      PIC 9.              00442-00442
+                   05  SECTION-24-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00443-00444
+                       06  SECTION-PRESENCE-IND      PIC 9.              00445-00445
+                       06  SECTION-REQUIRED-IND      PIC 9.              00446-00446
+                   05  SECTION-25-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00447-00448
+                       06  SECTION-PRESENCE-IND      PIC 9.              00449-00449
+                       06  SECTION-REQUIRED-IND      PIC 9.              00450-00450
+                   05  SECTION-26-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00451-00452
+                       06  SECTION-PRESENCE-IND      PIC 9.              00453-00453
+                       06  SECTION-REQUIRED-IND      PIC 9.              00454-00454
+                   05  SECTION-29-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00455-00456
+                       06  SECTION-PRESENCE-IND      PIC 9.              00457-00457
+                       06  SECTION-REQUIRED-IND      PIC 9.              00458-00458
+                   05  SECTION-31-PRESENCE-PROFILE. 
+                       06  SECTION-NUM               PIC 9(2).           00459-00460
+                       06  SECTION-PRESENCE-IND      PIC 9.              00461-00461
+                       06  SECTION-REQUIRED-IND      PIC 9.              00462-00462
+ NEW               05  SECTION-35-PRESENCE-PROFILE. 
+ NEW                   06  SECTION-NUM               PIC 9(2).           00463-00464
+ NEW                   06  SECTION-PRESENCE-IND      PIC 9.              00465-00465
+ NEW                   06  SECTION-REQUIRED-IND      PIC 9.              00466-00466
+ MOV               05  SECTION-97-PRESENCE-PROFILE. 
+ MOV                   06  SECTION-NUM               PIC 9(2).           00467-00468
+ MOV                   06  SECTION-PRESENCE-IND      PIC 9.              00469-00469
+ MOV                   06  SECTION-REQUIRED-IND      PIC 9.              00470-00470
+ MOV               05  SECTION-98-PRESENCE-PROFILE. 
+ MOV                   06  SECTION-NUM               PIC 9(2).           00471-00472
+ MOV                   06  SECTION-PRESENCE-IND      PIC 9.              00473-00473
+ MOV                   06  SECTION-REQUIRED-IND      PIC 9.              00474-00474
+ MOV               05  SECTION-99-PRESENCE-PROFILE. 
+ MOV                   06  SECTION-NUM               PIC 9(2).           00475-00476
+ MOV                   06  SECTION-PRESENCE-IND      PIC 9.              00477-00477
+ MOV                   06  SECTION-REQUIRED-IND      PIC 9.              00478-00478
+           03  FRM-1120-DOC-DETAIL-DATA.
+               04  FRM-1120-SECT-01-DETAIL-DATA.
+                   05  COND-CODE-FLD                 PIC X(10).          00479-00488
+                   05  BEGIN-TAX-PRD.   
+                       06  BEG-YEAR-MONTH            PIC X(6).           00489-00494
+                       06  BEG-DAY-OF-MONTH          PIC X(2).           00495-00496
+                   05  CORRESP-RCVD-DT. 
+                       06  YEAR.
+                           07  CC                    PIC XX.             00497-00498
+                           07  YY                    PIC XX.             00499-00500
+                       06  MONTH                     PIC XX.             00501-00502
+                       06  DAY-OF-MONTH              PIC XX.             00503-00504
+                   05  NAICS-CD                      PIC X(6).           00505-00510
+                   05  TXPYR-NOTICE-CD-FLD. 
+                       06  TXPYR-NOTICE-CD  
+                               OCCURS 3 TIMES        PIC XX.             00511-00516
+                   05  PREPARER-CHECKBOX-IND         PIC X.              00517-00517
+                   05  PREPARER-PHONE-NUM            PIC X(10).          00518-00527
+                   05  RPC-CODE-FLD                  PIC X(35).          00528-00562
+                   05  VIN-PORTAL-INFO-FLD           PIC X(20).          00563-00582
+               04  FRM-1120-SECT-02-DETAIL-DATA.
+                   05  IN-CARE-OF-NAME-LINE          PIC X(35).          00583-00617
+                   05  FOREIGN-ADDR                  PIC X(35).          00618-00652
+                   05  STREET-ADDR                   PIC X(35).          00653-00687
+                   05  CITY                          PIC X(22).          00688-00709
+                   05  STATE-CD                      PIC X(2).           00710-00711
+                   05  ZIP-CD.  
+                       06  ZIP-BASIC.   
+                           07  ZIP-SECTIONAL-CENTER  PIC X(3).           00712-00714
+                           07  ZIP-DELIVERY-AREA     PIC XX.             00715-00716
+                       06  ZIP-EXPANDED.
+                           07  ZIP-SECTORS           PIC XX.             00717-00718
+                           07  ZIP-SEGMENTS          PIC XX.             00719-00720
+                           07  ZIP-BAR               PIC X(3).           00721-00723
+               04  FRM-1120-SECT-03-DETAIL-DATA.
+                   05  ABLM-CODE                     PIC X(3).           00724-00726
+                   05  INITIAL-RETURN-CD             PIC X.              00727-00727
+                   05  MISSING-SCHEDULE-CD           PIC XX.             00728-00729
+                   05  PENALTY-AND-INTEREST-CD       PIC X.              00730-00730
+                   05  RESERVE-CD                    PIC X.              00731-00731
+                   05  SPECIAL-DED-CD                PIC X.              00732-00732
+                   05  AFFILIATION-CD                PIC X.              00733-00733
+                   05  PARENT-NAME-CTRL              PIC X(4).           00734-00737
+                   05  PARENT-EIN                    PIC X(9).           00738-00746
+                   05  FOREIGN-COUNTRY-CD            PIC XX.             00747-00748
+                   05  AUDIT-CD-FLD.
+                       06  AUDIT-CD OCCURS 15 TIMES 
+                                                         PIC X.          00749-00763
+                   05  INSTALLMNT-SALES-IND              PIC X.          00764-00764
+                   05  ACCOUNTING-METHOD-CD              PIC X.          00765-00765
+                   05  FRM-8844-EMPOWERMENT-ZONE-IND     PIC X.          00766-00766
+                   05  NOL-CARRYOVER-CR-AMT              PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00767-00782
+                   05  NUM-OF-5472-ATTACHED-CNT          PIC X(3).       00783-00785
+                   05  CHNGE-IN-OWNERSHIP-CKBX-IND       PIC X.          00786-00786
+                   05  ASSET-DISPOSAL-CKBX-IND           PIC X.          00787-00787
+                   05  SECT-351-TRANSFER-CKBX-IND        PIC X.          00788-00788
+                   05  F8996-QUAL-OP-FUND-CD             PIC X.          00789-00789
+                   05  F8996-QUAL-OP-FUND-AMT         PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00790-00805
+                   05  DIGITAL-ASSET-CKBX             PIC 9.             00806-00806
+                   05  CONTROL-GRP-CD                PIC X.              00807-00807
+                   05  CORP-SECT59-PRIOR-YR-CKBX      PIC 9.             00808-00808
+                   05  CORP-SECT59-CURR-TX-YR-CKBX    PIC 9.             00809-00809
+                   05  CORP-SECT59-CURR-YR-CKBX       PIC 9.             00810-00810
+                   05  STOCK-REPURCH-CKBX             PIC 9.             00811-00811
+                   05  FRGN-CORP-CKBX                 PIC 9.             00812-00812
+                   05  FRGN-CORP-REPRCH-CKBX          PIC 9.             00813-00813
+                   05  CORP-PARENT-GRSS-RCPTS-CKBX    PIC 9.             00814-00814
+               04  FRM-1120-SECT-04-DETAIL-DATA.
+                   05  TOT-ASSETS-END                PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00815-00830
+                   05  TOT-COST-OF-SALES-AMT         PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00831-00846
+                   05  TXBL-INCOME-BRCKT-5TH         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00847-00862
+                   05  TXBL-INCOME-BRCKT-6TH         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00863-00878
+                   05  TXBL-INCOME-BRCKT-7TH         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00879-00894
+                   05  INVENTORY-BEG-AMT              PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             00895-00910
+                   05  INVENTORY-ENDING-AMT           PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             00911-00926
+                   05  CONTROL-GROUP-ADDNL-TX-AMT    PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00927-00942
+                   05  CONTROL-GROUP-ADDNL-TAX-1 REDEFINES  
+                          CONTROL-GROUP-ADDNL-TX-AMT PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.
+                   05  CONTROL-GROUP-ADDNL-TAX-2     PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             00943-00958
+               04  FRM-1120-SECT-05-DETAIL-DATA.
+                   05  GROSS-RECEIPTS-AMT            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00959-00974
+                   05  RETURNS-AND-ALLOWANCES-AMT    PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00975-00990
+                   05  COST-OF-GOODS-SOLD            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             00991-01006
+                   05  DIVIDENDS-AMT                 PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01007-01022
+                   05  TOT-INTEREST-INCOME           PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01023-01038
+                   05  RENTS-AMT                     PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01039-01054
+                   05  ROYALTIES-AMT                 PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01055-01070
+                   05  CAPITAL-GAIN-NET-INCOME       PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01071-01086
+                   05  ORDINARY-GAIN-LOSS            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01087-01102
+                   05  OTHER-INCOME-AMT              PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01103-01118
+                   05  TOT-INCOME                    PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01119-01134
+                   05  MERCHANT-CRD-3RD-PRTY-AMT     PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01135-01150
+               04  FRM-1120-SECT-06-DETAIL-DATA.
+                   05  COMPENSATION-OF-OFFICERS      PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01151-01166
+                   05  SALARIES-AND-WAGES            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01167-01182
+                   05  JOBS-CR-DEDUCTION             PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01183-01198
+                   05  REPAIRS-DEDUCTION             PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01199-01214
+                   05  BAD-DEBTS-DED                 PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01215-01230
+                   05  RENT-DEDUCTION                PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01231-01246
+                   05  TAXES-DEDUCTION               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01247-01262
+                   05  INTEREST-DEDUCTION            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01263-01278
+                   05  CHARITABLE-DED                PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01279-01294
+                   05  DEPRECIATION-DED              PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01295-01310
+                   05  DEPLETION-RATE                PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01311-01326
+                   05  ADVERTISING-DED               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01327-01342
+                   05  PENSION-PLANS-DED             PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01343-01358
+                   05  CONTRIBUTIONS-EMPLEE-PLANS    PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01359-01374
+                   05  DOMESTIC-PROD-ACTIVITIES-DED  PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01375-01390
+                   05  F7205-ENGY-EFF-COM-BLD-DED-AMT PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             01391-01406
+                   05  OTHER-DEDUCTIONS              PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01407-01422
+                   05  TOT-DEDUCTIONS                PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01423-01438
+                   05  NET-OPERATING-LOSS-DED        PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01439-01454
+                   05  SPECIAL-DEDUCTIONS            PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01455-01470
+               04  FRM-1120-SECT-07-DETAIL-DATA.
+                   05  TOT-TAX-TXPYR                 PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01471-01486
+                   05  NET-965-TAX-LIAB-PAID-AMT     PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         01487-01502
+                   05  BAL-PAYMENTS-REFNDBL-CR-AMT   PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01503-01518
+                   05  FIRPTA-CREDIT                 PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01519-01534
+                   05  ESTIMATED-TAX-PENALTY         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01535-01550
+                   05  BAL-DUE-OVERPAYMENT-TXPYR     PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01551-01566
+                   05  CR-ELECT-AMT                  PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01567-01582
+                   05  GROSS-INCOME-TAX              PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01583-01598
+                   05  MANUAL-CORR-TOTAL-TAX         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01599-01614
+                   05  GROSS-TAX-VERIFIED-AMT        PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         01615-01630
+               04  FRM-1120-SECT-08-DETAIL-DATA.
+ NEW               05   TAX-FROM-1120L-AMT           PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01631-01646
+ NEW               05   TAX-FROM-8621-AMT            PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01647-01662
+ NEW               05   TAX-ADJ-8978-AMT             PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01663-01678
+ NEW               05   ADDITIONAL-TAX-197F-AMT      PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01679-01694
+ MOV               05   BASE-EROSION-TAX-AMT         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01695-01710
+ NEW               05   CHAP1-RECAP-TAX-F4255-AMT    PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01711-01726
+ NEW               05   OTHER-CHAPTER-1-TAX-AMT      PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01727-01742
+ MOV               05  ALT-MIN-TAX-AMT               PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01743-01758
+ MOV               05  CORP-ALT-MIN-TAX-AMT          PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         01759-01774
+ MOV               05  FOREIGN-TAX-CR                PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01775-01790
+ MOV               05  FRM-8834-CREDIT-AMT           PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01791-01806
+ MOV               05  EMPLEE-STOCK-CR               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01807-01822
+ MOV               05  GENERAL-BUSINESS-CR           PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01823-01838
+ MOV               05  GENERAL-BUSINESS-CR-VRFD-AMT  PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             01839-01854
+ MOV               05  F8912-RENEW-ENRGY-BOND-CR-AMT  PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01855-01870
+ MOV               05  TOTAL-STATUTORY-CREDITS        PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01871-01886
+ MOV               05  STATUTORY-CREDITS-VERIFIED     PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01887-01902
+ MOV               05  PRIOR-YEAR-MINIMUM-TAX-CR-AMT  PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01903-01918
+ MOV               05  F8827-PR-YR-MIN-TAX-CR-AMT     PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01919-01934
+ NEW               05  CREDIT-ADJ-8978-AMT            PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01935-01950
+ MOV               05  PERSONAL-HOLDING-CO-AMT        PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01951-01966
+ MOV               05  TAX-RECOMPUTED-INVEST-CR       PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01967-01982
+ MOV               05  ENVIRONMENTAL-TAX              PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             01983-01998
+ MOV               05  FILLER-SECT08                   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             01999-02014
+ MOV               05  FRM-8847-COMM-DEVLPMNT-CR       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02015-02030
+ MOV               05  FRM-8861-WELFARE-TO-WORK-CR     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02031-02046
+ MOV               05  FRM-8860-ACADEMY-BOND-CR        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02047-02062
+ MOV               05  F8884-NY-LIBERTY-ZONE-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02063-02078
+ MOV               05  F5884A-EMPLYE-RETENTION-CR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02079-02094
+ MOV               05  RECAPTURE-INVEST-CR-AMT        PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             02095-02110
+ MOV               05  RECPTRD-LOW-INCM-HSNG-CR-AMT   PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             02111-02126
+ MOV               05  F8697-INT-DUE-LOOKBACK-AMT    PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02127-02142
+ MOV               05  F8866-INT-DUE-LOOKBACK-AMT    PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02143-02158
+ MOV               05  F8902-ALT-TAX-QUAL-SHIP-AMT   PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02159-02174
+ MOV               05  SEC453-INTEREST-TAX-DUE-AMT   PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02175-02190
+ NEW               05  INTEREST-TAX-DUE-SECT-453     PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02191-02206
+ MOV               05  OTHER-TAXES-INTEREST-AMT      PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02207-02222
+ NEW               05  DEFERRED-CORP-QEF-AMT         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02223-02238
+ NEW               05  DEFERRED-LIFO-RECAP-AMT       PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02239-02254
+ NEW               05  PRIOR-YR-CR-TO-CURR-AMT       PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02255-02270
+ NEW               05  CURR-YR-EST-TAX-PY-AMT        PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02271-02286
+ NEW               05  CURR-YR-REF-F4466-AMT         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02287-02302
+ MOV               05  ESTIMATED-TAX-CR              PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02303-02318
+ MOV               05  FRM-7004-CR                   PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02319-02334
+ MOV               05  WITHOLDING-AMT                PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02335-02350
+ MOV               05  REGULATED-INVEST-CO-CR        PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02351-02366
+ MOV               05  F8827-REFUNDABLE-CR-AMT       PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02367-02382
+ NEW               05  CRED-TAX-CHAP-3-4-AMT         PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02383-02398
+ MOV               05  OTHER-REFUNDABLE-CR-AMT       PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             02399-02414
+ MOV               05  NET-965-TAX-LIAB-AMT          PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         02415-02430
+ MOV               05  ELECTV-PYMT-ELECTN-AMT        PIC S9(15) 
+                             SIGN IS LEADING SEPARATE CHARACTER.         02431-02446
+ MOV               05  EPE-VERIFIED-AMT              PIC S9(15) 
+                             SIGN IS LEADING SEPARATE CHARACTER.         02447-02462
+               04  FRM-1120-SECT-09-DETAIL-DATA.
+                   05  TENT-ALT-MIN-TXBL-INCM-AMT      PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             02463-02478
+                   05  ADJ-CURRENT-EARNINGS-AMT        PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             02479-02494
+                   05  ALT-TAX-NOL-DED                 PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             02495-02510
+                   05  ALT-MINIMUM-FOREIGN-TAX-CR      PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             02511-02526
+                   05  ALT-MIN-TAX-MANUAL-AMT          PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             02527-02542
+                   05  CNTL-GRP-CKBX                   PIC 9.            02543-02543
+                   05  FPMNG-CKBX                      PIC 9.            02544-02544
+                   05  AFS-1ST-YR-AMT                  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02545-02560
+                   05  AFS-2ND-YR-AMT                  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02561-02576
+                   05  AFS-3RD-YR-AMT                  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02577-02592
+                   05  TST-GRP-ENTY-AFS-1ST-YR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02593-02608
+                   05  TST-GRP-ENTY-AFS-2ND-YR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02609-02624
+                   05  TST-GRP-ENTY-AFS-3RD-YR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02625-02640
+                   05  AFSI-1ST-YR-AMT                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02641-02656
+                   05  AFSI-2ND-YR-AMT                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02657-02672
+                   05  AFSI-3RD-YR-AMT                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02673-02688
+                   05  US-TRADE-1ST-YR-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02689-02704
+                   05  US-TRADE-2ND-YR-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02705-02720
+                   05  US-TRADE-3RD-YR-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02721-02736
+                   05  US-TRADE-3-YR-AVG-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02737-02752
+                   05  AFS-CORP-AMT                    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02753-02768
+                   05  AFS-CORP-BEFORE-ADJS-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02769-02784
+                   05  AFSI-NET-LOSS-CARRYOVER-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02785-02800
+                   05  FIN-STATEMENT-NET-OP-LOSS-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02801-02816
+                   05  PTII-ALT-MIN-FRGN-TAX-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02817-02832
+                   05  PTII-TENTATIVE-MIN-TAX-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02833-02848
+                   05  FINAL-ALT-MIN-TAX-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             02849-02864
+               04  FRM-1120-SECT-10-DETAIL-DATA.
+                   05  SCH-D-QOF-DISP-INV-CKBX-CD     PIC X.             02865-02865
+                   05  ST-TOTALS-1099B-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02866-02881
+                   05  ST-TOTALS-1099B-CST-BASIS-AMT  PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02882-02897
+                   05  ST-TOTALS-BOX-A-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02898-02913
+                   05  ST-TOTALS-BOX-A-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02914-02929
+                   05  ST-TOTALS-BOX-A-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02930-02945
+                   05  ST-TOTALS-BOX-B-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02946-02961
+                   05  ST-TOTALS-BOX-B-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02962-02977
+                   05  ST-TOTALS-BOX-B-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02978-02993
+                   05  ST-TOTALS-BOX-C-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         02994-03009
+                   05  ST-TOTALS-BOX-C-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03010-03025
+                   05  ST-TOTALS-BOX-C-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03026-03041
+                   05  LT-TOTALS-1099B-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03042-03057
+                   05  LT-TOTALS-1099B-CST-BASIS-AMT  PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03058-03073
+                   05  LT-TOTALS-BOX-D-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03074-03089
+                   05  LT-TOTALS-BOX-D-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03090-03105
+                   05  LT-TOTALS-BOX-D-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03106-03121
+                   05  LT-TOTALS-BOX-E-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03122-03137
+                   05  LT-TOTALS-BOX-E-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03138-03153
+                   05  LT-TOTALS-BOX-E-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03154-03169
+                   05  LT-TOTALS-BOX-F-PRICE-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03170-03185
+                   05  LT-TOTALS-BOX-F-COST-BASIS-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03186-03201
+                   05  LT-TOTALS-BOX-F-ADJMNT-AMT     PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03202-03217
+                   05  CAPITAL-GAINS-DISTRIBUTION-AMT PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03218-03233
+                   05  F4797-TOTAL-GAIN-DISP-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03234-03249
+                   05  F4797-TOTAL-LOSS-DISP-AMT      PIC S9(15)
+                             SIGN IS LEADING SEPARATE CHARACTER.         03250-03265
+                   05  F8949-PART1-EIN              PIC X(9).            03266-03274
+                   05  F8949-PART1-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              03275-03276
+                           07  YY                   PIC XX.              03277-03278
+                           07  MONTH                PIC XX.              03279-03280
+                           07  DAY-OF-MONTH         PIC XX.              03281-03282
+                   05  F8949-PART1-ADJ-AMT          PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            03283-03298
+                   05  F8949-PART1-MORE-DATA-IND    PIC X.               03299-03299
+                   05  F8949-Y-PART1-EIN            PIC X(9).            03300-03308
+                   05  F8949-Y-PART1-DATE-SOLD. 
+                       06  YEAR.
+                           07  CC                   PIC XX.              03309-03310
+                           07  YY                   PIC XX.              03311-03312
+                           07  MONTH                PIC XX.              03313-03314
+                           07  DAY-OF-MONTH         PIC XX.              03315-03316
+                   05  F8949-Y-PART1-RCPTD-DEFER-AMT   PIC S9(15)   
+                          SIGN IS LEADING SEPARATE CHARACTER.            03317-03332
+                   05  F8949-Y-PART1-MORE-DATA-IND  PIC X.               03333-03333
+                   05  F8949-PART2-EIN              PIC X(9).            03334-03342
+                   05  F8949-PART2-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              03343-03344
+                           07  YY                   PIC XX.              03345-03346
+                           07  MONTH                PIC XX.              03347-03348
+                           07  DAY-OF-MONTH         PIC XX.              03349-03350
+                   05  F8949-PART2-ADJ-AMT          PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            03351-03366
+                   05  F8949-PART2-MORE-DATA-IND    PIC X.               03367-03367
+                   05  F8949-Y-PART2-EIN            PIC X(9).            03368-03376
+                   05  F8949-Y-PART2-DATE-SOLD. 
+                       06  YEAR.
+                           07  CC                   PIC XX.              03377-03378
+                           07  YY                   PIC XX.              03379-03380
+                           07  MONTH                PIC XX.              03381-03382
+                           07  DAY-OF-MONTH         PIC XX.              03383-03384
+                   05  F8949-Y-PART2-RCPTD-DEFER-AMT   PIC S9(15)   
+                          SIGN IS LEADING SEPARATE CHARACTER.            03385-03400
+                   05  F8949-Y-PART2-MORE-DATA-IND  PIC X.               03401-03401
+                   05  F8996-QOF-CKBX-CD            PIC X.               03402-03402
+                   05  F8996-DECRTFD-QOF-CKBX-CD    PIC X.               03403-03403
+                   05  F8996-QOF-MONTH-6-AMT        PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             03404-03419
+                   05  F8996-TOTAL-ASSETS-AMT       PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             03420-03435
+                   05  F8996-QOF-EOY-AMT            PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             03436-03451
+                   05  F8996-TOTAL-ASSETS-EOY-AMT   PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             03452-03467
+                   05  F8996-QOF-AVG-PCT            PIC 9V99.            03468-03470
+                   05  F8996-QOF-LT90-PCT-AMT       PIC S9(13)V99   
+                             SIGN IS LEADING SEPARATE CHARACTER.         03471-03486
+               04  FRM-1120-SECT-11-DETAIL-DATA.
+                   05  TRADE-NOTES-ACCT-RCVBL-END      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03487-03502
+                   05  LOANS-TO-SHAREHOLDERS-END       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03503-03518
+                   05  DPRCBL-ASSETS-LESS-DPRCTN-END   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03519-03534
+                   05  TOT-ASSETS-BEGIN                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03535-03550
+                   05  TOTAL-ASSETS-ENDING             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03551-03566
+                   05  CURR-LIAB-OTHER-END             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03567-03582
+                   05  LOANS-FROM-SHAREHOLDERS-END     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03583-03598
+                   05  OTHER-LIABILITIES-END           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03599-03614
+                   05  PREFERRED-STOCK-1-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03615-03630
+                   05  PREFERRED-STOCK-2-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03631-03646
+                   05  COMMON-STOCK-1ST-AMT            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03647-03662
+                   05  COMMON-STOCK-2ND-AMT            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03663-03678
+                   05  COMMON-STOCK-3RD-AMT            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03679-03694
+                   05  CAPITAL-STOCK-END-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03695-03710
+                   05  RETAINED-EARNINGS-BEGIN         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03711-03726
+                   05  LOSS-COST-TRES-STOCK-BEG-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03727-03742
+                   05  LOSS-COST-TRES-STOCK-END-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03743-03758
+                   05  TOT-LIABILITIES-AND-EQUITY      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             03759-03774
+               04  FRM-1120-SECT-12-DETAIL-DATA.
+                   05  ROUTING-TRANSIT-NUM           PIC X(9).           03775-03783
+                   05  DEPOSITOR-ACCOUNT-NUM         PIC X(17).          03784-03800
+                   05  DIRECT-DEPOSIT-CD             PIC XX.             03801-03802
+                   05  TYPE-OF-DEPOSITOR-ACCT-IND    PIC X.              03803-03803
+               04  FRM-1120-SECT-14-DETAIL-DATA.
+                   05  DISREGARDED-ENTITY-CKBX-CD    PIC X.              03804-03804
+                   05  NUM-OF-8865-ATTACHED-CNT      PIC X(3).           03805-03807
+                   05  DIRECT-INDIRECT-INT-CKBX-CD   PIC X.              03808-03808
+                   05  FORGN-CONTRLLED-CORP-CKBX-CD  PIC X.              03809-03809
+                   05  NUM-OF-5471-ATTACHED-CNT      PIC X(3).           03810-03812
+                   05  FOREIGN-TRUST-DISTRIB-CKBX-CD PIC X.              03813-03813
+                   05  FRGN-CNTRY-FINAN-ACCT-CKBX-CD PIC X.              03814-03814
+                   05  SCHED-N-FOREIGN-COUNTRY-CD    PIC XX.             03815-03816
+                   05  ET-INC-EXCLUSION-CKBX-CD      PIC X.              03817-03817
+                   05  NUM-OF-8873-ATTACHED-CNT      PIC X(3).           03818-03820
+                   05  TOTAL-EI-EXCLUSION-AMT        PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             03821-03836
+               04  FRM-1120-SECT-15-DETAIL-DATA.
+                   05  CRN-AND-AMT OCCURS 12 TIMES  
+                         INDEXED BY SECT15-IX.  
+                    06  CR-REF-AMT                PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             03837-04028
+                    06  CR-REF-NUM                PIC X(3).              04029-04064
+               04  FRM-1120-SECT-16-DETAIL-DATA.
+                   05  CRN-AND-AMT OCCURS 12 TIMES  
+                         INDEXED BY SECT16-IX.  
+                    06  CR-REF-AMT                PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             04065-04256
+                    06  CR-REF-NUM                PIC X(3).              04257-04292
+               04  FRM-1120-SECT-17-DETAIL-DATA.
+                   05  CRN-AND-AMT OCCURS 12 TIMES  
+                         INDEXED BY SECT17-IX.  
+                       06  CR-REF-AMT                PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         04293-04484
+                       06  CR-REF-NUM                PIC X(3).           04485-04520
+               04  FRM-1120-SECT-18-DETAIL-DATA.
+                   05  CRN-AND-AMT OCCURS 7 TIMES   
+                         INDEXED BY SECT18-IX.  
+                       06  CR-REF-AMT                PIC S9(13)V99  
+                             SIGN IS LEADING SEPARATE CHARACTER.         04521-04632
+                       06  CR-REF-NUM                PIC X(3).           04633-04653
+               04  FRM-1120-SECT-19-DETAIL-DATA.
+                   05  F8978-REVW-YR-ADJ-SRC-CKBX     PIC 9.             04654-04654
+                   05  F8978-TOT-ADDNL-RPT-YR-TX-AMT  PIC S9(13)V99 
+                          SIGN IS LEADING SEPARATE CHARACTER.            04655-04670
+                   05  F8978-TOT-PENALTIES-AMT        PIC S9(13)V99 
+                          SIGN IS LEADING SEPARATE CHARACTER.            04671-04686
+                   05  F8978-TOT-INTEREST-AMT         PIC S9(13)V99 
+                          SIGN IS LEADING SEPARATE CHARACTER.            04687-04702
+               04  FRM-1120-SECT-20-DETAIL-DATA.
+                   05  F965B-INCLUSION-YR-1         PIC X(4).            04703-04706
+                   05  F965B-TAX-LIABILITY-AMT-1    PIC S9(15)  
+                           SIGN IS LEADING SEPARATE CHARACTER.           04707-04722
+                   05  F965B-EIN-1                  PIC X(9).            04723-04731
+                   05  F965B-INCLUSION-YR-2         PIC X(4).            04732-04735
+                   05  F965B-TAX-LIABILITY-AMT-2    PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             04736-04751
+                   05  F965B-EIN-2                  PIC X(9).            04752-04760
+                   05  F965B-INCLUSION-YR-3         PIC X(4).            04761-04764
+                   05  F965B-TAX-LIABILITY-AMT-3    PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             04765-04780
+                   05  F965B-EIN-3                  PIC X(9).            04781-04789
+                   05  F965B-INCLUSION-YR-4         PIC X(4).            04790-04793
+                   05  F965B-TAX-LIABILITY-AMT-4    PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             04794-04809
+                   05  F965B-EIN-4                  PIC X(9).            04810-04818
+                   05  F965B-INCLUSION-YR-5         PIC X(4).            04819-04822
+                   05  F965B-TAX-LIABILITY-AMT-5    PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             04823-04838
+                   05  F965B-EIN-5                  PIC X(9).            04839-04847
+                   05  F965B-PART-1-IND             PIC X.               04848-04848
+               04  SECT-20-F965-TABLE REDEFINES 
+                       FRM-1120-SECT-20-DETAIL-DATA.
+                   05  SECT-20-F965-FIELD-DATA  
+                         OCCURS 5 TIMES 
+                         INDEXED BY SECTION20-IX.   
+                         06  F965-YEAR-FLD           PIC X(4).  
+                         06  F965-MONEY-AMT          PIC S9(15) 
+                               SIGN IS LEADING SEPARATE CHARACTER.  
+                         06  F965-EIN                PIC X(9).  
+                   05  F965-IND                      PIC X. 
+               04  FRM-1120-SECT-21-DETAIL-DATA.
+                   05  F8941-SHOP-CHECK-BOX-IND       PIC X.             04849-04849
+                   05  F8941-EIN-EMPLYMNT-REPORT-NUM  PIC X(9).          04850-04858
+                   05  F8941-PREVIOUS-FILED-CKBX-CD  PIC X.              04859-04859
+                   05  NUM-OF-EMPLOYEES               PIC 9(4).          04860-04863
+                   05  NUM-OF-FULL-TIME-EMPLYEES      PIC 9(4).          04864-04867
+                   05  AVG-ANNUAL-WAGES-AMT           PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04868-04883
+                   05  HEALTH-INS-PRMS-PAID-AMT       PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04884-04899
+                   05  PRMS-WOULD-HAVE-PAID-AMT       PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04900-04915
+                   05  PREMIUM-SUBSIDIES-PAID-AMT     PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04916-04931
+                   05  NUM-EMPLYEES-PREMIUMS-PAID     PIC 9(4).          04932-04935
+                   05  NUM-FULL-TIME-EMPLYS-PREMS-PD  PIC 9(4).          04936-04939
+                   05  SMALL-BUS-HLTH-INS-PREM-CR-AMT PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04940-04955
+                   05  SMLL-EMPLYR-HLTH-INS-CR-AMT    PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04956-04971
+                   05  FILLER-21-1                     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             04972-04987
+                   05  F8941-SMLL-EMPLYR-CR-VERFD-AMT PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             04988-05003
+               04  FRM-1120-SECT-22-DETAIL-DATA.
+                   05  PRELIM-NEW-HIRE-RETEN-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05004-05019
+                   05  NUM-RETAINED-WORKERS-CNT        PIC 9(7).         05020-05026
+               04  FRM-1120-SECT-23-DETAIL-DATA.
+                   05  CAMT-BEAT-CKBX                  PIC 9.            05027-05027
+                   05  GBC-NON-PASSIVE-ACTVTY-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05028-05043
+                   05  GBC-PASSIVE-ACTIVITY-CR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05044-05059
+                   05  PASSIVE-ACTIVITY-CURR-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05060-05075
+                   05  CARRYFORWARD-GBC-CR-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05076-05091
+                   05  CARRYBACK-GBC-CR-AMT            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05092-05107
+                   05  CERTAIN-ALLOWABLE-CREDITS-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05108-05123
+                   05  F8844-EMPOWERMENT-ZONE-CR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05124-05139
+                   05  F8844-PASSIVE-ACTVTY-CR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05140-05155
+                   05  ALLOWABLE-CR-LINE-28-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05156-05171
+                   05  GBC-LINE-5-PARTIII-BOX-A-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05172-05187
+                   05  ELIGIBLE-SMLL-BSNSS-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05188-05203
+                   05  PASSIVE-ACTVTY-CR-BOX-B-F-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05204-05219
+                   05  PASSIVE-ACTVTY-CR-ALLOWED-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05220-05235
+                   05  CARRYFORWARD-GBC-BOX-C-G-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05236-05251
+                   05  CARRYBACK-GBC-BOX-D-H-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05252-05267
+                   05  F3468-INVESTMENT-CR-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05268-05283
+                   05  F7207-REG-NUM                   PIC X(12).        05284-05295
+                   05  F7207-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05296-05311
+ REN               05  F7207-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05312-05327
+ MOV               05  F7207-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05328-05343
+ MOV               05  F7207-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05344-05359
+                   05  FILLER-SECT23-2                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05360-05375
+                   05  F6765-RESEARCH-CR-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05376-05391
+                   05  FILLER-SECT23-3                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05392-05407
+                   05  F3468-REG-NUM                   PIC X(12).        05408-05419
+                   05  F3468-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05420-05435
+ REN               05  F3468-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05436-05451
+ MOV               05  F3468-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05452-05467
+ MOV               05  F3468-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05468-05483
+                   05  F8826-DISABLED-ACCESS-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05484-05499
+                   05  F8835-REG-NUM                   PIC X(12).        05500-05511
+                   05  F8835-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05512-05527
+ REN               05  F8835-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05528-05543
+                   05  F7210-REG-NUM                   PIC X(12).        05544-05555
+                   05  F7210-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05556-05571
+ REN               05  F7210-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05572-05587
+ MOV               05  F7210-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05588-05603
+ MOV               05  F7210-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05604-05619
+                   05  F8820-ORPHAN-DRUG-CR-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05620-05635
+                   05  F8874-NEW-MARKET-TAX-CR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05636-05651
+                   05  F8881-SM-EMPLR-PPSC-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05652-05667
+                   05  F8882-EMPLR-CHILD-CARE-CR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05668-05683
+                   05  F8864-BIODIESEL-FUEL-CR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05684-05699
+                   05  F8896-LOW-SULFUR-DIESEL-PR-CR   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05700-05715
+                   05  F8906-DISTILLED-SPIRITS-CR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05716-05731
+                   05  ACCLRTD-RESEARCH-CR             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05732-05747
+               04  FRM-1120-SECT-24-DETAIL-DATA.
+                   05  F3468-PT-IV-REG-NUM             PIC X(12).        05748-05759
+                   05  FILLER-SECT24-G                 PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05760-05775
+ REN               05  F3468-PT-IV-CREDIT-AMT          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05776-05791
+ MOV               05  F3468-PT-IV-GROSS-EPE-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05792-05807
+ MOV               05  F3468-PT-IV-NET-ELECT-PAY-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05808-05823
+                   05  F8908-ENRGY-EFFCNT-HOME-CR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05824-05839
+ REN               05  F7218-REG-NUM                   PIC X(12).        05840-05851
+ REN               05  F7218-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05852-05867
+ REN               05  F7218-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05868-05883
+ REN               05  F7218-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05884-05899
+ REN               05  F7218-NT-ELECT-PAY-AMT          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05900-05915
+                   05  F8910-ALT-FUEL-VEHICLE-CR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05916-05931
+                   05  F8911-REG-NUM                   PIC X(12).        05932-05943
+                   05  F8911-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05944-05959
+ REN               05  F8911-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05960-05975
+ MOV               05  F8911-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05976-05991
+ MOV               05  F8911-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             05992-06007
+                   05  F8830-ENH-OIL-RCVRY-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06008-06023
+                   05  F7213-REG-NUM                   PIC X(12).        06024-06035
+                   05  F7213-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06036-06051
+ REN               05  F7213-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06052-06067
+ MOV               05  F7213-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06068-06083
+ MOV               05  F7213-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06084-06099
+ REN               05  F3468-PTV-REG-NUM               PIC X(12).        06100-06111
+ REN               05  F3468-PTV-CR-TRANS-ELECT-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06112-06127
+ REN               05  F3468-PTV-CREDIT-AMT            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06128-06143
+ REN               05  F3468-PTV-GRSS-EPE-AMT          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06144-06159
+ REN               05  F3468-PTV-NT-ELCT-PAY-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06160-06175
+                   05  F8932-EMPLR-DIFF-WG-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06176-06191
+                   05  F8933-REG-NUM                   PIC X(12).        06192-06203
+                   05  F8933-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06204-06219
+ REN               05  F8933-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06220-06235
+ MOV               05  F8933-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06236-06251
+ MOV               05  F8933-NET-ELECT-PAY-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06252-06267
+                   05  F8936-PLG-N-ELEC-DR-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06268-06283
+               04  FRM-1120-SECT-25-DETAIL-DATA.
+                   05  F8936-PT-V-REG-NUM              PIC X(12).        06284-06295
+ REN               05  F8936-PT-V-CREDIT-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06296-06311
+ MOV               05  F8936-PT-V-GROSS-EPE-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06312-06327
+ MOV               05  F8936-PT-V-NET-ELECT-PAY-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06328-06343
+ REN               05  F8904-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06344-06359
+ REN               05  F7213-PT-I-CREDIT-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06360-06375
+                   05  F8881-PT-II-PEN-PLN-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06376-06391
+                   05  F8881-PT-III-MIL-SPOUSE-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06392-06407
+ REN               05  F8864-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06408-06423
+ REN               05  F7211-REG-NUM                   PIC X(12).        06424-06435
+ REN               05  F7211-CR-TRANS-ELECT-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06436-06451
+ REN               05  F7211-CREDIT-AMT                PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06452-06467
+ REN               05  F7211-GROSS-EPE-AMT             PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06468-06483
+ REN               05  F7211-NT-ELECT-PAY-AMT          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06484-06499
+                   05  OTHER-GENERAL-BUSINESS-CR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06500-06515
+                   05  F3468-PT-6-REG-NUM              PIC X(12).        06516-06527
+                   05  F3468-PT-6-CR-TRANS-ELECT-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06528-06543
+ REN               05  F3468-PT-6-CREDIT-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06544-06559
+ MOV               05  F3468-PT-6-GROSS-EPE-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06560-06575
+ MOV               05  F3468-PT-6-NET-ELECT-PAY-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06576-06591
+                   05  WORK-OPPORTUNITY-CR-AMT         PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06592-06607
+                   05  ALCOHOL-CELLULSC-FUELS-CR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06608-06623
+                   05  LOW-INCOME-HOUSING-CR-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06624-06639
+                   05  F8835-PT-2-REG-NUM              PIC X(12).        06640-06651
+                   05  F8835-PT-2-CR-TRANS-ELECT-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06652-06667
+ REN               05  F8835-PT-2-CREDIT-AMT           PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06668-06683
+ MOV               05  F8835-PT-2-GROSS-EPE-AMT        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06684-06699
+ MOV               05  F8835-PT-2-NET-ELECT-PAY-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06700-06715
+                   05  F8846-SS-TAX-ON-TIPS-CR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06716-06731
+                   05  F8900-QUAL-RR-TRK-MAINT-CR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06732-06747
+                   05  F8941-EMPLYR-HLTH-INS-CR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06748-06763
+                   05  INCREASING-RESEARCH-CR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06764-06779
+                   05  F8994-EMPLY-CR-PAID-FMLA-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06780-06795
+                   05  F3468-PT7-REHAB-CR-AMT          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06796-06811
+                   05  PARTIII-OTHER-CREDITS-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             06812-06827
+                   05  DATA-PRESENT-SECT-5-IND         PIC 9.            06828-06828
+               04  FRM-1120-SECT-26-DETAIL-DATA.
+                   05  F8997-PART1-EIN              PIC X(9).            06829-06837
+                   05  F8997-PART1-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              06838-06839
+                           07  YY                   PIC XX.              06840-06841
+                           07  MONTH                PIC XX.              06842-06843
+                           07  DAY-OF-MONTH         PIC XX.              06844-06845
+                   05  F8997-PART1-SPECIAL-GAIN-CD  PIC X.               06846-06846
+                   05  F8997-PART1-ST-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06847-06862
+                   05  F8997-PART1-LT-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06863-06878
+                   05  F8997-PART1-MORE-DATA-IND    PIC X.               06879-06879
+                   05  F8997-PART1-TOT-ST-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06880-06895
+                   05  F8997-PART1-TOT-LT-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06896-06911
+                   05  F8997-PART2-EIN              PIC X(9).            06912-06920
+                   05  F8997-PART2-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              06921-06922
+                           07  YY                   PIC XX.              06923-06924
+                           07  MONTH                PIC XX.              06925-06926
+                           07  DAY-OF-MONTH         PIC XX.              06927-06928
+                   05  F8997-PART2-SPECIAL-GAIN-CD  PIC X.               06929-06929
+                   05  F8997-PART2-ST-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06930-06945
+                   05  F8997-PART2-LT-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06946-06961
+                   05  F8997-PART2-MORE-DATA-IND    PIC X.               06962-06962
+                   05  F8997-PART2-TOT-ST-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06963-06978
+                   05  F8997-PART2-TOT-LT-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            06979-06994
+                   05  F8997-PART3-EIN              PIC X(9).            06995-07003
+                   05  F8997-PART3-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              07004-07005
+                           07  YY                   PIC XX.              07006-07007
+                           07  MONTH                PIC XX.              07008-07009
+                           07  DAY-OF-MONTH         PIC XX.              07010-07011
+                   05  F8997-PART3-SPECIAL-GAIN-CD  PIC X.               07012-07012
+                   05  F8997-PART3-ST-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07013-07028
+                   05  F8997-PART3-LT-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07029-07044
+                   05  F8997-PART3-MORE-DATA-IND    PIC X.               07045-07045
+                   05  F8997-PART3-TOT-ST-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07046-07061
+                   05  F8997-PART3-TOT-LT-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07062-07077
+                   05  F8997-PART4-EIN              PIC X(9).            07078-07086
+                   05  F8997-PART4-DATE-ACQUIRED.   
+                       06  YEAR.
+                           07  CC                   PIC XX.              07087-07088
+                           07  YY                   PIC XX.              07089-07090
+                           07  MONTH                PIC XX.              07091-07092
+                           07  DAY-OF-MONTH         PIC XX.              07093-07094
+                   05  F8997-PART4-SPECIAL-GAIN-CD  PIC X.               07095-07095
+                   05  F8997-PART4-ST-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07096-07111
+                   05  F8997-PART4-LT-DEFERRED-AMT  PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07112-07127
+                   05  F8997-PART4-MORE-DATA-IND    PIC X.               07128-07128
+                   05  F8997-PART4-TOT-ST-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07129-07144
+                   05  F8997-PART4-TOT-LT-DFR-AMT   PIC S9(15)  
+                          SIGN IS LEADING SEPARATE CHARACTER.            07145-07160
+               04  SECT-26-F8997-TABLE REDEFINES
+                       FRM-1120-SECT-26-DETAIL-DATA.
+                   05  SECT-26-F8997-FIELD-DATA 
+                         OCCURS 4 TIMES 
+                         INDEXED BY SECTION26-IX.   
+                         06  F8997-EIN               PIC X(9).  
+                         06  F8997-DATE-ACQ          PIC X(8).  
+                         06  F8997-GAIN-CD           PIC X. 
+                         06  F8997-ST-AMT            PIC S9(15) 
+                              SIGN IS LEADING SEPARATE CHARACTER.   
+                         06  F8997-LT-AMT            PIC S9(15) 
+                              SIGN IS LEADING SEPARATE CHARACTER.   
+                         06  F8997-MORE-IND          PIC X. 
+                         06  F8997-TOT-ST-AMT        PIC S9(15) 
+                              SIGN IS LEADING SEPARATE CHARACTER.   
+                         06  F8997-TOT-LT-AMT        PIC S9(15) 
+                              SIGN IS LEADING SEPARATE CHARACTER.   
+               04  FRM-1120-SECT-29-DETAIL-DATA.
+                   05  F6252-PROPERTY-DESC-CKBX-CD     PIC X.            07161-07161
+                   05  F6252-DATE-ACQUIRED             PIC X(8).         07162-07169
+                   05  F6252-DATE-SOLD                 PIC X(8).         07170-07177
+                   05  F6252-NET-SALE-PRICE-AMT      PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07178-07193
+                   05  F6252-GROSS-PROFIT-PCT-AMT     PIC 9V9999.        07194-07198
+                   05  F6252-PAYMENT-RECV-AMT         PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07199-07214
+                   05  F6252-PRIOR-YRS-PAYM-RECV-AMT  PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07215-07230
+               04  FRM-1120-SECT-31-DETAIL-DATA.
+                   05  VEH-ID1-NUM                    PIC X(17).         07231-07247
+                   05  PLACED-IN-SERVICE1-DT.   
+                       06  YEAR.
+                           07  CC                    PIC 99.             07248-07249
+                           07  YY                    PIC 99.             07250-07251
+                       06  MONTH                     PIC 99.             07252-07253
+                       06  DAY-OF-MONTH              PIC 99.             07254-07255
+                   05  TENTATIVE1-CR-AMT             PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07256-07271
+                   05  NET1-BIZ-CRED-AMT         PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07272-07287
+                   05  LESSER1-PT4-AMT               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07288-07303
+                   05  LESSER1-PT5-AMT               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07304-07319
+ MOV               05  VEH-ID2-NUM                   PIC X(17).          07320-07336
+ MOV               05  PLACED-IN-SERVICE2-DT.   
+                       06  YEAR.
+                           07  CC                    PIC 99.             07337-07338
+                           07  YY                    PIC 99.             07339-07340
+                       06  MONTH                     PIC 99.             07341-07342
+                       06  DAY-OF-MONTH              PIC 99.             07343-07344
+ MOV               05  TENTATIVE2-CR-AMT             PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07345-07360
+ MOV               05  NET2-BIZ-CRED-AMT         PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07361-07376
+ MOV               05  LESSER2-PT4-AMT               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07377-07392
+ MOV               05  LESSER2-PT5-AMT               PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07393-07408
+ MOV               05  SUM-REDCD-VIN-CR-VERIFIED-AMT PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07409-07424
+ MOV               05  MORE-THAN-2-SCH-A-IND         PIC 9.              07425-07425
+ NEW           04  FRM-1120-SECT-35-DETAIL-DATA.
+ NEW               05  F7207-RECAP-NT-EPE-AMT    PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07426-07441
+ NEW               05  F7207-EXCESS-PAY-AMT      PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07442-07457
+ NEW               05  F3468-PT-III-RECAP-NT-EPE-AMT    PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07458-07473
+ NEW               05  F3468-PT-III-EXCESS-PAY-AMT      PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07474-07489
+ NEW               05  F7210-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07490-07505
+ NEW               05  F7210-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07506-07521
+ NEW               05  F3468-PT-IV-RECAP-NT-EPE-AMT     PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07522-07537
+ NEW               05  F3468-PT-IV-EXCESS-PAY-AMT       PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07538-07553
+ NEW               05  F7218-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07554-07569
+ NEW               05  F7218-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07570-07585
+ NEW               05  F7213-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07586-07601
+ NEW               05  F7213-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07602-07617
+ NEW               05  F3468-PT-V-RECAP-NT-EPE-AMT      PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07618-07633
+ NEW               05  F3468-PT-V-EXCESS-PAY-AMT        PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07634-07649
+ NEW               05  F8936-PT-V-RECAP-NT-EPE-AMT      PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07650-07665
+ NEW               05  F8936-PT-V-EXCESS-PAY-AMT        PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07666-07681
+ NEW               05  F7211-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07682-07697
+ NEW               05  F7211-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07698-07713
+ NEW               05  F3468-PT-VI-RECAP-NT-EPE-AMT     PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07714-07729
+ NEW               05  F3468-PT-VI-EXCESS-PAY-AMT       PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07730-07745
+ NEW               05  F8835-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07746-07761
+ NEW               05  F8835-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07762-07777
+ NEW               05  F8933-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07778-07793
+ NEW               05  F8933-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07794-07809
+ NEW               05  F8911-RECAP-NT-EPE-AMT           PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07810-07825
+ NEW               05  F8911-EXCESS-PAY-AMT             PIC S9(15)  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07826-07841
+           03  FRM-1120-SPCFC-VLDTY-DATA.   
+               04  FRM-1120-SECT-97-GEN-DATA.   
+                   05  ASSET-CD-CMPTR                PIC 99.             07842-07843
+                   05  GROSS-RCPTS-LESS-RTRNS-GEN    PIC S9(15) 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07844-07859
+                   05  POSSESSION-TAX-CR-IND         PIC 9.              07860-07860
+                   05  REGULATED-INVEST-CO-CR-GEN    PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07861-07876
+                   05  FOREIGN-COUNTRY-CODE          PIC X(2).           07877-07878
+                   05  TAX-SHOWN-ON-RETURN-AMT       PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07879-07894
+                   05  DEFERRED-965-TAX-AMT          PIC S9(13)V99  
+                         SIGN IS LEADING SEPARATE CHARACTER.             07895-07910
+               04  FRM-1120-SECT-98-GEN-DATA.   
+                   05  CMPTR-GEN-FLDS.  
+                       06  ADJSTMNT-BSD-NRGY-PREF-CMPTR 
+                                                  PIC S9(13)V99 
+                         SIGN IS LEADING SEPARATE CHARACTER.             07911-07926
+                       06  ALCOHOL-FUELS-TX-CR-CMPTR   PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             07927-07942
+                       06  ALT-MIN-TAX-CMPTR-AMT       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             07943-07958
+                       06  ALT-MIN-TXBL-INCM-CMPTR-AMT  
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             07959-07974
+                       06  ALT-TAX-NOL-DED-CMPTR-AMT
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             07975-07990
+                       06  AMTI-BEFORE-ENERGY-PREFERENCE
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             07991-08006
+                       06  AMTI-BEFORE-NOL-DEDUCTION
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08007-08022
+                       06  BAL-DUE-OVERPAYMENT-CMPTR
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08023-08038
+                       06  CHARITABLE-DED-CMPTR        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08039-08054
+                       06  COST-GOODS-SOLD-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08055-08070
+                       06  EMPLEE-STOCK-CR-CMPTR       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08071-08086
+                       06  EMPOWERMENT-ZONE-CR-CMPTR   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08087-08102
+                       06  ENVIRONMENTAL-TAX-CMPTR     PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08103-08118
+                       06  EXEMPTION-AMOUNT            PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08119-08134
+                       06  F8941-SMLL-EMPLYR-CR-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08135-08150
+                       06  FOREIGN-TAX-CR-CMPTR        PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08151-08166
+                       06  FRM-8860-ACADEMY-BOND-CR-CMPR
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08167-08182
+                       06  GENERAL-BUSINESS-CR-CMPTR   PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08183-08198
+                       06  GROSS-INCOME-TAX-CMPTR      PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08199-08214
+                       06  GROSS-PROFIT-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08215-08230
+                       06  GROSS-TAX-LESS-CR-CMPTR     PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08231-08246
+                       06  INVESTMENT-CR-CMPTR         PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             08247-08262
+                       06  MATH-STATUS-CD              PIC 9.            08263-08263
+                       06  MRCHNT-CD-GRSS-RCPT-CMPTR-AMT
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08264-08279
+                       06  NET-INCOME                  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08280-08295
+                       06  NET-RECEIPTS-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08296-08311
+                       06  NET-TAXABLE-INCOME          PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08312-08327
+ NEW                   06  F7207-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08328-08343
+ NEW                   06  F3468-PT3-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08344-08359
+ NEW                   06  F7210-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08360-08375
+ NEW                   06  F3468-PT4-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08376-08391
+ NEW                   06  F7218-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08392-08407
+ NEW                   06  F8911-GRS-EPE-CMPTR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08408-08423
+ NEW                   06  F7213-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08424-08439
+ NEW                   06  F3468-PT5-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08440-08455
+ NEW                   06  F8933-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08456-08471
+ NEW                   06  F8936-PT5-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08472-08487
+ NEW                   06  F7211-GROSS-EPE-CMPTR-AMT   PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08488-08503
+ NEW                   06  F3468-PT6-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08504-08519
+ NEW                   06  F8835-PT2-GRS-EPE-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08520-08535
+ NEW                   06  F7207-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08536-08551
+ NEW                   06  F3468-PT3-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08552-08567
+ NEW                   06  F7210-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08568-08583
+ NEW                   06  F3468-PT4-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08584-08599
+ NEW                   06  F7218-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08600-08615
+ NEW                   06  F8911-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08616-08631
+ NEW                   06  F7213-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08632-08647
+ NEW                   06  F3468-PT5-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08648-08663
+ NEW                   06  F8933-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08664-08679
+ NEW                   06  F8936-PT5-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08680-08695
+ NEW                   06  F7211-NT-EPE-CMPTR-AMT      PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08696-08711
+ NEW                   06  F3468-PT6-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08712-08727
+ NEW                   06  F8835-PT2-NT-EPE-CMPTR-AMT  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08728-08743
+ MOV                   06  F7207-GRSS-MINUS-NET-CMPTR-AMT PIC S9(15)
+                         SIGN IS LEADING SEPARATE CHARACTER.             08744-08759
+ MOV                   06  F3468-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08760-08775
+ MOV                   06  F7210-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08776-08791
+ MOV                   06  F3468-PT4-GRSMNS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08792-08807
+ REN                   06  F7218-GRSS-MINUS-NT-CMPTR-AMT
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08808-08823
+ MOV                   06  F8911-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08824-08839
+ MOV                   06  F7213-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08840-08855
+ REN                   06  F3468-PT5-GRSMNS-NT-CMPTR-AMT
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08856-08871
+ MOV                   06  F8933-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08872-08887
+ MOV                   06  F8936-GRSS-MINUS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08888-08903
+ REN                   06  F7211-GRSS-MINUS-NT-CMPTR-AMT
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08904-08919
+ MOV                   06  F3468-PT6-GRSMNS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08920-08935
+ MOV                   06  F8835-PT2-GRSMNS-NET-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08936-08951
+ NOV                   06  TOT-NET-ELECT-PAY-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08952-08967
+ MOV                   06  NET1-BIZ-CRED-CMPTR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08968-08983
+ MOV                   06  NET2-BIZ-CRED-CMPTR-AMT     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             08984-08999
+ MOV                   06  LESSER1-PT5-CMPTR-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09000-09015
+ MOV                   06  LESSER2-PT5-CMPTR-AMT       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09016-09031
+ MOV                   06  REDUCTION-OF-CVC-CR-CMPTR-AMT
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09032-09047
+ MOV                   06  NON-ENERGY-INVEST-CR-CMPTR  PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09048-09063
+ MOV                   06  NON-REF-ENERGY-CR-CMPTR     PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09064-09079
+ MOV                   06  ORPHAN-DRUG-CR-CMPTR        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09080-09095
+ MOV                   06  PRELIM-CR-ALLOWED-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09096-09111
+ MOV                   06  PREM-PD-LESS-PRE-SUB-CMPTR-AMT   
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09112-09127
+ MOV                   06  PR-YR-MIN-TAX-CR-CMPTR-AMT  PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09128-09143
+ MOV                   06  FRM-8834-CREDIT-AMT-CMPTR   PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09144-09159
+ MOV                   06  REFUNDABLE-CREDITS          PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09160-09175
+ MOV                   06  RESEARCH-CREDIT-CMPTR       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09176-09191
+ MOV                   06  SMLL-LINE9-LINE11-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09192-09207
+ MOV                   06  SPECIAL-DEDUCTIONS-CMPTR    PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09208-09223
+ MOV                   06  TAX-PREFERENCE-CD           PIC X.            09224-09224
+ MOV                   06  TENT-ALLOWABLE-CR-CMPTR-AMT PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09225-09240
+ MOV                   06  TENT-ALT-MIN-TAX-CMPTR-AMT  PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09241-09256
+ MOV                   06  TOT-CURR-YR-CR-CMPTR-AMT    PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09257-09272
+ MOV                   06  TOT-DEDUCTIONS-CMPTR        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09273-09288
+ MOV                   06  TOT-GAS-TX-CR-CMPTR-AMT     PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09289-09304
+ MOV                   06  TOT-INCOME-CMPTR            PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09305-09320
+ MOV                   06  TOT-TAX-CMPTR               PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09321-09336
+ MOV                   06   TOT-TAX-SETTLEMENT-AMT     PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09337-09352
+ MOV                   06  TOTAL-RECEIPTS-CMPTR        PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09353-09368
+ MOV                   06  TOTAL-STATUTORY-CREDITS-CMPTR
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09369-09384
+ MOV                   06  TXBL-INCM-LSS-BEFOR-NOLD-CMPTR   
+                                                       PIC S9(13)V99
+                         SIGN IS LEADING SEPARATE CHARACTER.             09385-09400
+ MOV                   06  WORK-OPPORTUNITY-CREDIT-CMPTR
+                                                       PIC S9(15)   
+                         SIGN IS LEADING SEPARATE CHARACTER.             09401-09416
+ NEW               05  F3800-REG-NUM-VAL-IND.   
+ NEW                   06  F7207-REG-NUM-VAL-IND           PIC 9.        09417-09417
+ NEW                   06  F3468-PT3-REG-NUM-VAL-IND       PIC 9.        09418-09418
+ NEW                   06  F7210-REG-NUM-VAL-IND           PIC 9.        09419-09419
+ NEW                   06  F3468-PT4-REG-NUM-VAL-IND       PIC 9.        09420-09420
+ NEW                   06  F7218-REG-NUM-VAL-IND           PIC 9.        09421-09421
+ NEW                   06  F8911-REG-NUM-VAL-IND           PIC 9.        09422-09422
+ NEW                   06  F7213-REG-NUM-VAL-IND           PIC 9.        09423-09423
+ NEW                   06  F3468-PT5-REG-NUM-VAL-IND       PIC 9.        09424-09424
+ NEW                   06  F8933-REG-NUM-VAL-IND           PIC 9.        09425-09425
+ NEW                   06  F8936-PT5-REG-NUM-VAL-IND       PIC 9.        09426-09426
+ NEW                   06  F7211-REG-NUM-VAL-IND           PIC 9.        09427-09427
+ NEW                   06  F3468-PT6-REG-NUM-VAL-IND       PIC 9.        09428-09428
+ NEW                   06  F8835-PT2-REG-NUM-VAL-IND       PIC 9.        09429-09429
+ MOV               05  VIN1-VAL-IND                  PIC 9.              09430-09430
+ MOV               05  VIN2-VAL-IND                  PIC 9.              09431-09431
+ NEW               05  F8936A-LINE9-MAX-IND          PIC 9.              09432-09432
+ NEW               05  F8936A-LINE26-MAX-IND         PIC 9.              09433-09433
+      *                                                                       - 
+ S01     03  FILLER                                 PIC X(21567).        09434-31000
+      *************************************************************           - 
+************************************************************************************************************************
+XXX OR X** = MULTIPLE CHANGES   
+DEF OR D** = A FIELD WHICH WAS DOLLARS ONLY NOW IS DOLLARS AND CENTS OR WAS DOLLARS AND CENTS IS NOW DOLLARS ONLY.  
+NEW OR N** = A NEW FIELD FOR PROCESSING THIS YEAR.   REN OR R** = AN EXISTING FIELD WHICH HAS BEEN RENAMED. 
+MOV OR M** = A FIELD WHICH HAS BEEN MOVED.           SIZ OR S** = AN EXISTING FIELD WHICH IS CHANGED IN LENGTH. 
+CNV OR C** = A FIELD USED IN REFORMATTING.                  WHERE ** IS REPLACED WITH A SEQUENCE NUMBER.
+************************************************************************************************************************
