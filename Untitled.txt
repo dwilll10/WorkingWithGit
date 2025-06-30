@@ -1,4 +1,12 @@
- 04  FRM-1120-SECT-04-DETAIL-DATA.
+pattern = "\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & _
+          ".*?\d{2}\s+" & fieldLabel & ".*?(?:\r?\n.*?)*?(\d{5}-\d{5})"
+
+
+result = System.Text.RegularExpressions.Regex.Match(str_Input, pattern, System.Text.RegularExpressions.RegexOptions.Singleline).Groups(1).Value
+
+
+
+04  FRM-1120-SECT-04-DETAIL-DATA.
                    05  TOT-ASSETS-END                PIC S9(15) 
                          SIGN IS LEADING SEPARATE CHARACTER.             00815-00830
 
