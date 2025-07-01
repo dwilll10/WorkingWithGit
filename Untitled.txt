@@ -1,3 +1,14 @@
+
+
+
+
+takeCount = str_Lines _
+    .Skip(startIndex) _
+    .TakeWhile(Function(line, idx) idx = 0 OrElse Not line.TrimStart().StartsWith(str_LinePrefix)) _
+    .Count()
+
+
+
 String.Join(", ", str_Group1.Split({Environment.NewLine}, StringSplitOptions.None) _
     .SkipWhile(Function(line) Not (line.TrimStart().StartsWith(str_LinePrefix) AndAlso line.Contains(str_ExecVariable))) _
     .TakeWhile(Function(line, idx) idx = 0 OrElse Not line.TrimStart().StartsWith(str_LinePrefix)) _
