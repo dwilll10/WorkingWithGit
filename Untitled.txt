@@ -1,3 +1,49 @@
+String.Join(", ", str_Group1.Split({Environment.NewLine}, StringSplitOptions.None) _
+    .SkipWhile(Function(line) Not (line.TrimStart().StartsWith(str_LinePrefix) AndAlso line.Contains(str_ExecVariable))) _
+    .TakeWhile(Function(line, idx) idx = 0 OrElse Not line.TrimStart().StartsWith(str_LinePrefix)) _
+    .SelectMany(Function(line) System.Text.RegularExpressions.Regex.Matches(line, "\d{5}-\d{5}").Cast(Of System.Text.RegularExpressions.Match)) _
+    .Select(Function(m) m.Value))
+
+
+"               04  FRM-1120-SECT-03-DETAIL-DATA.
+                    05  ABLM-CODE                     PIC X(3).           00780-00782
+                    05  INITIAL-RETURN-CD             PIC X.              00783-00783
+                    05  MISSING-SCHEDULE-CD           PIC XX.             00784-00785
+                    05  PENALTY-AND-INTEREST-CD       PIC X.              00786-00786
+                    05  RESERVE-CD                    PIC X.              00787-00787
+                    05  SPECIAL-DED-CD                PIC X.              00788-00788
+                    05  AFFILIATION-CD                PIC X.              00789-00789
+                    05  PARENT-NAME-CTRL              PIC X(4).           00790-00793
+                    05  PARENT-EIN                    PIC X(9).           00794-00802
+                    05  FOREIGN-COUNTRY-CD            PIC XX.             00803-00804
+                    05  AUDIT-CD-FLD.
+                        06  AUDIT-CD           OCCURS 15 TIMES   
+                                                          PIC X.          00805-00819
+                    05  INSTALLMNT-SALES-IND              PIC X.          00820-00820
+                    05  ACCOUNTING-METHOD-CD              PIC X.          00821-00821
+                    05  FRM-8844-EMPOWERMENT-ZONE-IND     PIC X.          00822-00822
+                    05  NOL-CARRYOVER-CR-AMT           PIC S9(15)
+                          SIGN IS LEADING SEPARATE CHARACTER.             00823-00838
+                    05  NUM-OF-5472-ATTACHED-CNT          PIC X(3).       00839-00841
+                    05  CHNGE-IN-OWNERSHIP-CKBX-IND       PIC X.          00842-00842
+                    05  ASSET-DISPOSAL-CKBX-IND           PIC X.          00843-00843
+                    05  SECT-351-TRANSFER-CKBX-IND        PIC X.          00844-00844
+                    05  F8996-QUAL-OP-FUND-CD             PIC X.          00845-00845
+                    05  F8996-QUAL-OP-FUND-AMT         PIC S9(13)V99 
+                          SIGN IS LEADING SEPARATE CHARACTER.             00846-00861
+                    05  DIGITAL-ASSET-CKBX             PIC 9.             00862-00862
+                    05  CONTROL-GRP-CD                PIC X.              00863-00863
+                    05  CORP-SECT59-PRIOR-YR-CKBX      PIC 9.             00864-00864
+                    05  CORP-SECT59-CURR-TX-YR-CKBX    PIC 9.             00865-00865
+                    05  CORP-SECT59-CURR-YR-CKBX       PIC 9.             00866-00866
+                    05  STOCK-REPURCH-CKBX             PIC 9.             00867-00867
+                    05  FRGN-CORP-CKBX                 PIC 9.             00868-00868
+                    05  FRGN-CORP-REPRCH-CKBX          PIC 9.             00869-00869
+                    05  CORP-PARENT-GRSS-RCPTS-CKBX    PIC 9.             00870-00870"
+
+
+
+
 pattern = "^\s*\d{2}\s+" & System.Text.RegularExpressions.Regex.Escape(sectionHeader) & _
           ".*?(?=^\s*\d{2}\s+\S|\z)"
 
