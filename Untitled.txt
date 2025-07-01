@@ -1,4 +1,4 @@
-
+str_SelectedBlock = String.Join(Environment.NewLine, str_Lines.Skip(startIndex).Take(lastIndex - startIndex + 1))
 
 
 
