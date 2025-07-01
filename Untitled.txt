@@ -1,3 +1,7 @@
+occursMatch = System.Text.RegularExpressions.Regex.Match(str_SelectedBlock, "Occurs\s+(\d+)\s+times", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+occursCount = If(occursMatch.Success, CInt(occursMatch.Groups(1).Value), 0)
+
+
 str_SelectedBlock = String.Join(Environment.NewLine, str_Lines.Skip(startIndex).Take(lastIndex - startIndex + 1))
 
 
