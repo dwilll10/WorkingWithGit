@@ -1,3 +1,9 @@
+cleaned = If(input.StartsWith("-"),
+    "-" & If(input.Substring(1).TrimStart("0"c) = "", "0", input.Substring(1).TrimStart("0"c)),
+    If(input.TrimStart("0"c) = "", "0", input.TrimStart("0"c))
+)
+
+
 occursMatch = System.Text.RegularExpressions.Regex.Match(str_SelectedBlock, "Occurs\s+(\d+)\s+times", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 occursCount = If(occursMatch.Success, CInt(occursMatch.Groups(1).Value), 0)
 
