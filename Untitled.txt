@@ -1,3 +1,6 @@
+variables(‘arr_DaysOfWeek’)[outputs('Compose_-_Get_Day_of_the_week_(Number)')]
+
+
 string LogFileRecord = str_LogTemplate.
 	Replace("@@Date@@", DateTime.Today.ToString).
 	Replace("@@TestCaseNumber", str_TestCase).
