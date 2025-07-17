@@ -1,3 +1,13 @@
+{
+"Sunday",
+"Monday",
+"Tuesday",
+"Wednesday",
+"Thursday",
+"Friday",
+"Saturday"
+}
+
 variables(‘arr_DaysOfWeek’)[outputs('Compose_-_Get_Day_of_the_week_(Number)')]
 
 
