@@ -1,3 +1,9 @@
+Func<List<int>, bool> isValidYearRange = (ocrYears) =>{
+       List<int> validYears = Enumerable.Range(DateTime.Now.Year - 50, 54).ToList();
+       bool hasInvalidYear = ocrYears.Select(x => validYears.Contains(x)).Contains(false);
+       return !hasInvalidYear;
+};
+
 {
 "Sunday",
 "Monday",
