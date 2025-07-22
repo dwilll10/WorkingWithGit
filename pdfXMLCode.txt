@@ -1,0 +1,25 @@
+var pdfDoc = new iText.Kernel.Pdf.PdfDocument(new iText.Kernel.Pdf.PdfReader(pdfPath));
+
+try{
+
+
+var form = iText.Forms.PdfAcroForm.GetAcroForm(pdfDoc, false);
+var xfaForm = form.GetXfaForm();
+
+if (xfaForm != null)
+{
+    var dom = xfaForm.GetDomDocument();
+	using (var sw = new System.IO.StringWriter())
+    {
+			dom.Save(sw);
+            xfaXml =sw.ToString();
+        }
+    }
+}
+
+finally{
+
+pdfDoc.Close();
+
+}
+              
