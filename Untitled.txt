@@ -1,3 +1,30 @@
+PS C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents> dir
+
+
+    Directory: C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+dar--l          3/9/2026  10:06 AM                a. Source Files
+d----l         2/24/2026  10:48 AM                Copilot
+dar--l         2/24/2026  10:48 AM                Custom Office Templates
+dar--l          3/9/2026  10:06 AM                z. Python Program
+-a---l          3/6/2026   8:42 AM              0 error_log.txt
+-a---l          3/6/2026   8:44 AM         138681 GK Footing Template.xlsm
+
+
+PS C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents> cd z. Python Program
+Set-Location : A positional parameter cannot be found that accepts argument 'Python'.
+At line:1 char:1
++ cd z. Python Program
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Set-Location], ParameterBindingException
+    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.SetLocationCommand    
+
+
+
+
 Func<List<int>, bool> isValidYearRange = (ocrYears) =>{
        List<int> validYears = Enumerable.Range(DateTime.Now.Year - 50, 54).ToList();
        bool hasInvalidYear = ocrYears.Select(x => validYears.Contains(x)).Contains(false);
@@ -380,4 +407,5 @@ finally
     pdfDoc.Close();
     reader.Close();  // <- this is key
 }
+
 
