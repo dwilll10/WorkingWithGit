@@ -1,5 +1,16 @@
 selected_columns = selected_columns[~(
     (selected_columns['Line Title'] != 'Equipment:') &
+    (selected_columns[['Gross Cost',
+                       'Accumulated Depreciation/ Amortization',
+                       'Total Net Book Value',
+                       'CY Consolidated']] == 0).all(axis=1)
+)]
+
+
+
+
+selected_columns = selected_columns[~(
+    (selected_columns['Line Title'] != 'Equipment:') &
     selected_columns[['Gross Cost','Accumulated Depreciation/ Amortization','Total Net Book Value','CY Consolidated']].isna().all(axis=1)
     )]
 
@@ -414,6 +425,7 @@ finally
     pdfDoc.Close();
     reader.Close();  // <- this is key
 }
+
 
 
 
