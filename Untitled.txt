@@ -1,3 +1,8 @@
+def fn11(sheet_name, wb):
+    #try:
+        # Get the cleaned data
+        data_to_write,not_needed = clean.cleanFn11(ic.import_fn('fn11'))
+
 selected_columns = selected_columns[~(
     (selected_columns['Line Title'] != 'Equipment:') &
     (selected_columns[['Gross Cost',
@@ -425,6 +430,7 @@ finally
     pdfDoc.Close();
     reader.Close();  // <- this is key
 }
+
 
 
 
