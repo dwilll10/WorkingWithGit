@@ -1,3 +1,10 @@
+selected_columns = selected_columns[~(
+    (selected_columns['Line Title'] != 'Equipment:') &
+    selected_columns[['Gross Cost','Accumulated Depreciation/ Amortization','Total Net Book Value','CY Consolidated']].isna().all(axis=1)
+    )]
+
+
+
 PS C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents> dir
 
 
@@ -407,5 +414,6 @@ finally
     pdfDoc.Close();
     reader.Close();  // <- this is key
 }
+
 
 
