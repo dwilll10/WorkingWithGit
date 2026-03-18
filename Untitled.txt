@@ -1,3 +1,72 @@
+Sub RunPythonScript()
+    Dim pythonExePath As String
+    Dim pythonScriptPath As String
+    Dim workingDirectory As String
+    Dim oneDrivePath As String
+    Dim errorLogPath As String
+    Dim command As String
+    Dim wsh As Object
+    Dim result As Integer
+    Dim fileNum As Integer
+    Dim hasErrors As Boolean
+
+    ' Get OneDrive folder path automatically
+    oneDrivePath = Environ("OneDrive")
+
+    ' Define paths
+    pythonExePath = """C:\ProgramData\Anaconda3\python.exe"""
+    pythonScriptPath = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\mainScript.py" & """"
+    workingDirectory = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format" & """"
+    errorLogPath = Environ("USERPROFILE") & "\Documents\error_log.txt"
+
+    ' Pre-clear error log (optional)
+    fileNum = FreeFile
+    Open errorLogPath For Output As #fileNum
+    Close fileNum
+
+    ' Build command: run Python and redirect errors to log
+    command = "cmd /c cd /d " & workingDirectory & " && " & pythonExePath & " " & pythonScriptPath & " 2> """ & errorLogPath & """"
+
+    ' Execute command synchronously
+    Set wsh = CreateObject("WScript.Shell")
+    result = wsh.Run(command, 0, True) ' 0 = hidden window, True = wait
+
+    ' Check for errors in the log file
+    hasErrors = False
+    If Dir(errorLogPath) <> "" Then
+        fileNum = FreeFile
+        Open errorLogPath For Input As #fileNum
+        If LOF(fileNum) > 0 Then
+            hasErrors = True
+        End If
+        Close fileNum
+    End If
+
+    ' Show appropriate message
+    If hasErrors Then
+        MsgBox "Python script completed, but some errors were logged. Please check the error log file:" & vbCrLf & errorLogPath, vbExclamation, "Script Completed with Errors"
+    Else
+        MsgBox "Python script ran successfully! No errors were logged.", vbInformation, "Execution Completed"
+    End If
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def fn11(sheet_name, wb):
     #try:
         # Get the cleaned data
