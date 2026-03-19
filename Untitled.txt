@@ -1,53 +1,80 @@
 Sub RunPythonScript()
+
     Dim pythonExePath As String
     Dim pythonScriptPath As String
     Dim workingDirectory As String
     Dim oneDrivePath As String
     Dim errorLogPath As String
+    Dim outputLogPath As String
+    Dim workbookPath As String
     Dim command As String
     Dim wsh As Object
     Dim result As Integer
     Dim fileNum As Integer
     Dim hasErrors As Boolean
+    Dim hasOutput As Boolean
 
-    ' Get OneDrive folder path automatically
     oneDrivePath = Environ("OneDrive")
 
-    ' Define paths
     pythonExePath = """C:\ProgramData\Anaconda3\python.exe"""
     pythonScriptPath = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\mainScript.py" & """"
     workingDirectory = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format" & """"
-    errorLogPath = Environ("USERPROFILE") & "\Documents\error_log.txt"
 
-    ' Pre-clear error log (optional)
+    errorLogPath = Environ("USERPROFILE") & "\Documents\error_log.txt"
+    outputLogPath = Environ("USERPROFILE") & "\Documents\python_output.txt"
+
+    workbookPath = """" & ThisWorkbook.FullName & """"
+
+    ' Clear logs
     fileNum = FreeFile
     Open errorLogPath For Output As #fileNum
     Close fileNum
 
-    ' Build command: run Python and redirect errors to log
-    command = "cmd /c cd /d " & workingDirectory & " && " & pythonExePath & " " & pythonScriptPath & " 2> """ & errorLogPath & """"
+    fileNum = FreeFile
+    Open outputLogPath For Output As #fileNum
+    Close fileNum
 
-    ' Execute command synchronously
+    ' Run Python, pass workbook path, capture stdout and stderr
+    command = "cmd /c cd /d " & workingDirectory & _
+              " && " & pythonExePath & " " & pythonScriptPath & " " & workbookPath & _
+              " 1> """ & outputLogPath & """ 2> """ & errorLogPath & """"
+
     Set wsh = CreateObject("WScript.Shell")
-    result = wsh.Run(command, 0, True) ' 0 = hidden window, True = wait
 
-    ' Check for errors in the log file
+    ' Use 1 instead of 0 while testing so you can see if cmd flashes any errors
+    result = wsh.Run(command, 1, True)
+
     hasErrors = False
+    hasOutput = False
+
     If Dir(errorLogPath) <> "" Then
         fileNum = FreeFile
         Open errorLogPath For Input As #fileNum
-        If LOF(fileNum) > 0 Then
-            hasErrors = True
-        End If
+        If LOF(fileNum) > 0 Then hasErrors = True
         Close fileNum
     End If
 
-    ' Show appropriate message
-    If hasErrors Then
-        MsgBox "Python script completed, but some errors were logged. Please check the error log file:" & vbCrLf & errorLogPath, vbExclamation, "Script Completed with Errors"
-    Else
-        MsgBox "Python script ran successfully! No errors were logged.", vbInformation, "Execution Completed"
+    If Dir(outputLogPath) <> "" Then
+        fileNum = FreeFile
+        Open outputLogPath For Input As #fileNum
+        If LOF(fileNum) > 0 Then hasOutput = True
+        Close fileNum
     End If
+
+    If hasErrors Then
+        MsgBox "Python finished with errors." & vbCrLf & _
+               "Exit code: " & result & vbCrLf & _
+               "StdErr: " & errorLogPath & vbCrLf & _
+               "StdOut: " & outputLogPath, _
+               vbExclamation, "Python Run Failed"
+    Else
+        MsgBox "Python finished." & vbCrLf & _
+               "Exit code: " & result & vbCrLf & _
+               "StdOut: " & outputLogPath & vbCrLf & _
+               "StdErr: " & errorLogPath, _
+               vbInformation, "Python Run Completed"
+    End If
+
 End Sub
 
 
