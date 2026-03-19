@@ -1,3 +1,28 @@
+import sys
+import xlwings as xw
+
+def updateFile(active_sheet_name='Start'):
+    try:
+        app = xw.apps.active
+
+        wb = app.books.active
+        print(f"Using active workbook: {wb.name}")
+        try:
+            print(f"Workbook fullname: {wb.fullname}")
+        except Exception:
+            pass
+
+        if active_sheet_name in [sheet.name for sheet in wb.sheets]:
+            wb.sheets[active_sheet_name].activate()
+
+        # rest of your existing updateFile code continues here
+
+    except Exception as e:
+        print(f"Error in updateFile: {e}")
+
+
+
+
 Error in updateFile: Workbook is not already open in Excel: C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\https:\usdhs-my.sharepoint.com\personal\diedrich_willers_associates_hq_dhs_gov\Documents\Documents\GK Footing Template.xlsm
 
 
