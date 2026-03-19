@@ -1,3 +1,6 @@
+Error in updateFile: Workbook is not already open in Excel: C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\https:\usdhs-my.sharepoint.com\personal\diedrich_willers_associates_hq_dhs_gov\Documents\Documents\GK Footing Template.xlsm
+
+
 def updateFile(active_sheet_name='Start'):
     try:
         app = xw.apps.active
