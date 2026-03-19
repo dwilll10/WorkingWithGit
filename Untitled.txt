@@ -1,3 +1,49 @@
+def updateFile(active_sheet_name='Start'):
+    try:
+        app = xw.apps.active
+
+        if len(sys.argv) > 1:
+            target_path = os.path.abspath(sys.argv[1])
+        else:
+            raise Exception("No workbook path passed from VBA")
+
+        wb = None
+
+        for book in app.books:
+            try:
+                if os.path.abspath(book.fullname).lower() == target_path.lower():
+                    wb = book
+                    break
+            except Exception:
+                pass
+
+        if wb is None:
+            raise Exception(f"Workbook is not already open in Excel: {target_path}")
+
+        print(f"Using already open workbook: {wb.fullname}")
+
+        if active_sheet_name in [sheet.name for sheet in wb.sheets]:
+            wb.sheets[active_sheet_name].activate()
+
+        # rest of your existing updateFile code continues here
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def updateFile():
     try:
         app = xw.apps.active
