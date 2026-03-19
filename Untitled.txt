@@ -1,3 +1,45 @@
+def updateFile():
+    try:
+        app = xw.apps.active
+
+        # Get workbook path passed from VBA
+        if len(sys.argv) > 1:
+            target_path = os.path.abspath(sys.argv[1])
+        else:
+            raise Exception("No workbook path passed from VBA")
+
+        wb = None
+
+        # Loop through already open workbooks
+        for book in app.books:
+            try:
+                if os.path.abspath(book.fullname).lower() == target_path.lower():
+                    wb = book
+                    break
+            except Exception:
+                pass
+
+        # If not found, open it (fallback)
+        if wb is None:
+            print("Workbook not already open, opening it...")
+            wb = app.books.open(target_path)
+        else:
+            print("Using already open workbook")
+
+        print(f"Workbook in use: {wb.fullname}")
+
+        # 👉 continue your existing logic here using wb
+
+    except Exception as e:
+        print(f"Error in updateFile: {e}")
+
+
+
+
+
+
+
+
 Sub RunPythonScript()
 
     Dim pythonExePath As String
