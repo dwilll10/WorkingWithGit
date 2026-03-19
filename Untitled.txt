@@ -1,3 +1,23 @@
+ex = fn_two_two_call(fn1, 'balance beginning of year', 18)
+                    if ex is None:
+                        ex = 0  # Assign 0 if not found
+                    ex2 = fn_two_two_call(fn1, 'capitalized acquisitions', 19)
+                    ex3 = fn_two_two_call(fn1, 'right-to-use lease assets', 20)
+                    ex4 = fn_two_two_call(fn1, 'amortization of right-to-use lease assets', 21)
+                    ex5 = fn_two_two_call(fn1, 'transfers in/out without reimbursement', 23)
+                    ex6 = fn_two_two_call(fn1, 'revaluations', 24)
+                    ex7 = fn_two_two_call(fn1, 'depreciation expense', 25)
+                    ex8 = fn_two_two_call(fn1, 'donations', 26)
+                    ex9 = fn_two_two_call(fn1, 'other', 27)
+
+
+
+
+
+
+
+
+
 import sys
 import xlwings as xw
 
