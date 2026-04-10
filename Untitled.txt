@@ -1,3 +1,11 @@
+File "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\internal_fn.py", line 427
+    elif str(report_name) in ('Statement_Custodial_Activity'):
+    ^^^^
+SyntaxError: invalid syntax
+
+
+
+
 ex = fn_two_two_call(fn1, 'balance beginning of year', 18)
                     if ex is None:
                         ex = 0  # Assign 0 if not found
