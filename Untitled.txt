@@ -1,3 +1,60 @@
+def import_fs(fn_filter):
+    directory_path = dir_p.fs_path()
+    
+    df_config = pd.read_excel(mapping_file, sheet_name='Config-FS')
+    fs_config = dict(zip(df_config['report_key'].str.strip(), df_config['source_tab'].str.strip()))
+    
+    data = []
+    for filename in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, filename)
+        if os.path.isfile(full_path):
+            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+            if fy_qtr_match:
+                fy = fy_qtr_match.group(1)
+                qtr = fy_qtr_match.group(2)
+            else:
+                fy, qtr = None, None
+
+            for file_code, sheet_name in fs_config.items():
+                match = re.search(file_code, filename)
+                if match:
+                    fn = match.group(0).lower()
+                    if fn == fn_filter:
+                        data.append((fy, qtr, fn, sheet_name, filename))
+                        break
+
+    df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
+
+    dfs = []
+    for _, row in df.iterrows():
+        file_path = os.path.join(directory_path, row['File Name'])
+        sheet_name = row['Tab']
+
+        try:
+            actual_sheet = ru.find_sheet_name(file_path, sheet_name)
+            if actual_sheet != sheet_name:
+                logger.info("Sheet name normalised: '%s' -> '%s' in %s",
+                            sheet_name, actual_sheet, file_path)
+            sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
+            if sheet_df.empty:
+                logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
+            dfs.append(sheet_df)
+        except ValueError as e:
+            logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
+        except Exception as e:
+            logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
+
+    final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+    if final_df.empty:
+        logger.warning("import_fs('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
+
+    return final_df
+
+
+
+
+
 # def import_fs(fn_filter):
 #     # Define the directory path containing your files
 #     directory_path = dir_p.fs_path()
