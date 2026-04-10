@@ -1,3 +1,102 @@
+# def import_fs(fn_filter):
+#     # Define the directory path containing your files
+#     directory_path = dir_p.fs_path()
+    
+
+#     # Create a list to hold FY, QTR, FN (File Number), Tab, and file name pairs
+#     data = []
+
+#     # Iterate through files in the directory
+#     for filename in os.listdir(directory_path):
+#         full_path = os.path.join(directory_path, filename)
+        
+#         # Check if it's a file (not a directory)
+#         if os.path.isfile(full_path):
+#             # Try to find the Fiscal Year (FY) and Quarter (QTR) using regex
+#             fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+#             if fy_qtr_match:
+#                 fy = fy_qtr_match.group(1)  # Extract FY (e.g., "24")
+#                 qtr = fy_qtr_match.group(2)  # Extract QTR (e.g., "9" or "12")
+#             else:
+#                 fy, qtr = None, None  # Default if not found
+
+
+#             # Check if OI-SOS term is in the filename
+#             bs_match = re.search(r'BS', filename)
+#             if bs_match:
+#                 bs_fn = bs_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if bs_fn == fn_filter:
+#                     data.append((fy, qtr, bs_fn, 'BalanceSheet', filename))
+                    
+#             # Check if SNC term is in the filename
+#             snc_match = re.search(r'SNC', filename)
+#             if snc_match:
+#                 snc_fn = snc_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if snc_fn == fn_filter:
+#                     data.append((fy, qtr, snc_fn, 'SNC (AFR)', filename))
+                    
+#             # Check if SNC term is in the filename
+#             scnp_match = re.search(r'SCNP', filename)
+#             if scnp_match:
+#                 scnp_fn = scnp_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if scnp_fn == fn_filter:
+#                     data.append((fy, qtr, scnp_fn, 'SCNP8', filename))
+                    
+#             # Check if SNC term is in the filename
+#             sca_match = re.search(r'SCA', filename)
+#             if sca_match:
+#                 sca_fn = sca_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if sca_fn == fn_filter:
+#                     data.append((fy, qtr, sca_fn, 'CustodialActivity', filename))
+                    
+#             # Check if SNC term is in the filename
+#             sbr_match = re.search(r'SBR', filename)
+#             if sbr_match:
+#                 sbr_fn = sbr_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if sbr_fn == fn_filter:
+#                     data.append((fy, qtr, sbr_fn, 'SBRRealigned', filename))
+                    
+            
+
+#     # Create a DataFrame from the list of tuples (FY, QTR, FN, Tab, File Name)
+#     df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
+
+#     # Now, load the Excel file using the file name and the sheet name (Tab)
+#     dfs = []  # This will hold all DataFrames that match the file name and tab
+#     for _, row in df.iterrows():
+#         file_path = os.path.join(directory_path, row['File Name'])
+#         sheet_name = row['Tab']
+        
+#         # Use flexible sheet name matching to handle trailing spaces, case changes, etc.
+#         try:
+#             actual_sheet = ru.find_sheet_name(file_path, sheet_name)
+#             if actual_sheet != sheet_name:
+#                 logger.info("Sheet name normalised: '%s' -> '%s' in %s",
+#                             sheet_name, actual_sheet, file_path)
+#             sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
+#             if sheet_df.empty:
+#                 logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
+#             dfs.append(sheet_df)
+#         except ValueError as e:
+#             logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
+#         except Exception as e:
+#             logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
+
+#     # Combine all DataFrames into a single one (optional)
+#     final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+#     if final_df.empty:
+#         logger.warning("import_fs('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
+
+#     return final_df
+
+
+
+
+
+
+
+
 11:37:03 [WARNING] gk_footing - find_row fallback for 'Line': find_row_flex: 'Line' not found in any cell. DataFrame shape: (1, 5)
 11:37:03 [ERROR] gk_footing - Error occurred in clean.cleanSca(): single positional indexer is out-of-bounds
 
