@@ -1,5 +1,38 @@
 def import_fs(fn_filter):
         # Define the directory path containing your files
+    directory_path = dir_p.fs_path()
+    
+    df = pd.read_excel(mapping_file, sheet_name='Config-FS')
+    fs_config = dict(zip(df['report_key'].str.strip(), df['source_tab'].str.strip()))
+    data = []
+
+    for filename in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, filename)
+
+        if os.path.isfile(full_path):
+            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+            if fy_qtr_match:
+                fy = fy_qtr_match.group(1)
+                qtr = fy_qtr_match.group(2)
+            else:
+                fy, qtr = None, None
+
+            # Loop through all codes from config instead of hardcoded blocks
+            for file_code, sheet_name in fs_config.items():
+                match = re.search(file_code, filename)
+                if match:
+                    fn = match.group(0).lower()
+                    if fn == fn_filter:
+                        data.append((fy, qtr, fn, sheet_name, filename))
+                    break  # Stop after first match to avoid SNC matching SCNP
+    print(data)
+    return data
+
+
+
+
+def import_fs(fn_filter):
+        # Define the directory path containing your files
     directory_path = dir_p.fn_path()
     
     df = pd.read_excel(mapping_file, sheet_name='Config-FS')
