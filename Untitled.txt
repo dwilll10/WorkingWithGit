@@ -1,3 +1,46 @@
+import pandas as pd
+
+def load_fs_config(config_path):
+    """Load file search terms and sheet names from Excel config."""
+    df = pd.read_excel(config_path)
+    # Returns a dict like: {'BS': 'BalanceSheet', 'SNC': 'SNC (AFR)', ...}
+    return dict(zip(df['file_code'], df['sheet_name']))
+
+
+def import_fs(fn_filter, config_path='fs_config.xlsx'):
+    directory_path = dir_p.fs_path()
+    fs_config = load_fs_config(config_path)
+    data = []
+
+    for filename in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, filename)
+
+        if os.path.isfile(full_path):
+            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+            if fy_qtr_match:
+                fy = fy_qtr_match.group(1)
+                qtr = fy_qtr_match.group(2)
+            else:
+                fy, qtr = None, None
+
+            # Loop through all codes from config instead of hardcoded blocks
+            for file_code, sheet_name in fs_config.items():
+                match = re.search(file_code, filename)
+                if match:
+                    fn = match.group(0).lower()
+                    if fn == fn_filter:
+                        data.append((fy, qtr, fn, sheet_name, filename))
+                    break  # Stop after first match to avoid SNC matching SCNP
+
+    return data
+
+
+
+
+
+
+
+
 File "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\internal_fn.py", line 427
     elif str(report_name) in ('Statement_Custodial_Activity'):
     ^^^^
