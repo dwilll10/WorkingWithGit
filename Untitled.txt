@@ -1,3 +1,6 @@
+11:27:33 [ERROR] gk_footing - Error occurred in clean.cleanScnp()[2]: 'list' object has no attribute 'apply'
+[('25', '12', 'sca', 'CustodialActivity', 'FY25 PD12 FS SCA Revised.xlsx')]
+
 def import_fs(fn_filter):
         # Define the directory path containing your files
     directory_path = dir_p.fs_path()
