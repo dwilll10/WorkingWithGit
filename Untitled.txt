@@ -1,4 +1,54 @@
-  min_line, max_line = line_nr-2, line_nr + 2
+logger = logging.getLogger("gk_footing")
+
+# Only add a handler if one hasn't been added yet (avoids duplicate logs)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        datefmt="%H:%M:%S",
+    ))
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO)
+
+
+
+import robust_utils as ru
+
+logger = ru.logger
+
+def three_three_call(fn1, fn2, fn_line_one, fn_line_title_one, fn_line_nr_one, fn_line_two, fn_line_title_two, fn_line_nr_two):
+    def get_consolidated_value(df, line_title, line_nr):
+        #Force the input variable to int
+        line_nr = int(line_nr)
+    
+        #Force the DataFrame column to numeric (handling potential strings/NaNs)
+        df['LineNr'] = pd.to_numeric(df['LineNr'], errors='coerce')
+        
+        # First, try exact match
+        exact = df.loc[(df['Line Title'] == line_title) & (df['LineNr'] == line_nr), 'Consolidated']
+        if not exact.empty:
+            return exact.values[0]
+    
+        # Fallback: search in range if exact match fails
+        min_line, max_line = line_nr-2, line_nr + 2
+        mask = (df['Line Title'] == line_title) & (df['LineNr'] >= min_line) & (df['LineNr'] <= max_line)
+        matches = df.loc[mask]
+        if not matches.empty:
+            actual_line_nr = matches['LineNr'].values[0]
+            logger.info(f"Updated {line_nr} to {actual_line_nr}")
+            return matches['Consolidated'].values[0]
+    
+        return None
+    # Get the consolidated value for the fn DataFrame
+    fn1_total = get_consolidated_value(fn1, fn_line_title_one, fn_line_nr_one)
+    fn2_total = get_consolidated_value(fn2, fn_line_title_two, fn_line_nr_two)
+    
+    return fn1_total, fn2_total
+
+
+
+
+min_line, max_line = line_nr-2, line_nr + 2
         mask = (df['Line Title'] == line_title) & (df['LineNr'] >= min_line) & (df['LineNr'] <= max_line)
         matches = df.loc[mask]
         if not matches.empty:
