@@ -1,3 +1,14 @@
+  min_line, max_line = line_nr-2, line_nr + 2
+        mask = (df['Line Title'] == line_title) & (df['LineNr'] >= min_line) & (df['LineNr'] <= max_line)
+        matches = df.loc[mask]
+        if not matches.empty:
+            actual_line_nr = matches['LineNr'].values[0]
+            print(f"Updated {line_nr} to {actual_line_nr}")
+            return matches['Consolidated'].values[0]
+
+
+
+
 def import_fs(fn_filter):
     directory_path = dir_p.fs_path()
     
