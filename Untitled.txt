@@ -1,3 +1,7 @@
+fn_prefix = fn_number.split()[0]  # gets 'fn2' or 'fn20A'
+if fn_prefix.startswith(fn_filter) and (len(fn_prefix) == len(fn_filter) or not fn_prefix[len(fn_filter)].isdigit()):
+
+
 logger = logging.getLogger("gk_footing")
 
 # Only add a handler if one hasn't been added yet (avoids duplicate logs)
