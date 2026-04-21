@@ -1,3 +1,37 @@
+def reorder_sheets(wb, desired_order):
+    existing = [s.name for s in wb.sheets]
+    order = [name for name in desired_order if name in existing]
+    
+    if not order:
+        logger.info("No sheets from desired_order found in workbook.")
+        return
+    
+    logger.info(f"Reordering. Before: {[s.name for s in wb.sheets]}")
+    
+    # Grab a stable COM reference to each sheet BEFORE any moves happen.
+    # Using the Sheets collection via the workbook's .api avoids xlwings re-lookups.
+    sheet_refs = {s.name: s.api for s in wb.sheets}
+    
+    # Strategy: move each sheet in reverse order, placing it BEFORE the first sheet.
+    # After the loop, they end up in the correct forward order at the front of the workbook.
+    # Sheets not in `order` drift to the end naturally.
+    try:
+        for name in reversed(order):
+            sheet_api = sheet_refs[name]
+            # Re-fetch the first sheet each time — it changes as we move things
+            first_sheet_api = wb.sheets[0].api
+            if sheet_api is not first_sheet_api:
+                sheet_api.Move(Before=first_sheet_api)
+    except Exception as e:
+        logger.error(f"Failed during reorder: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return
+    
+    logger.info(f"Reordering complete. After: {[s.name for s in wb.sheets]}")
+
+
+
 Error in updateFile: (-2147352567, 'Exception occurred.', (0, None, None, None, 0, -2147352565), None)
 
 
