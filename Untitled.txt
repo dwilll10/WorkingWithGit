@@ -1,3 +1,36 @@
+logger.info(f"=== Pre-STMT assembly ===")
+logger.info(f"fsTofn: {len(fsTofn)} rows, columns: {list(fsTofn.columns)}")
+logger.info(f"fnTofn: {len(fnTofn)} rows, columns: {list(fnTofn.columns)}")
+logger.info(f"fsTofs: {len(fsTofs)} rows, columns: {list(fsTofs.columns)}")
+logger.info(f"internal_data: {len(internal_data)} rows")
+
+# Try to find FN11 in them — adjust column name to whatever identifies the FN
+for df_name, df in [('fsTofn', fsTofn), ('fnTofn', fnTofn), ('fsTofs', fsTofs), ('internal_data', internal_data)]:
+    for col in df.columns:
+        mask = df[col].astype(str).str.contains('FN11', na=False, case=False)
+        if mask.any():
+            logger.info(f"  FN11 found in {df_name}.{col}: {mask.sum()} rows")
+
+tabName = 'STMT to STMT'
+fsFn = stmt.fs_to_fn(fsTofn)
+fnFn = stmt.fn_to_fn(fnTofn)
+fsFs = stmt.fs_to_fs(fsTofs)
+inte = stmt.internal_tie(internal_data)
+
+logger.info(f"=== Post-reshape ===")
+logger.info(f"fsFn: {len(fsFn)} rows")
+logger.info(f"fnFn: {len(fnFn)} rows")
+logger.info(f"fsFs: {len(fsFs)} rows")
+logger.info(f"inte: {len(inte)} rows")
+
+main = stmt.stmt_tie(fsFn, fnFn, fsFs, inte)
+logger.info(f"main: {len(main)} rows")
+
+sheet = df_to_sheet(main, tabName, wb)
+
+
+
+
 def reorder_sheets(wb, desired_order):
     existing = [s.name for s in wb.sheets]
     order = [name for name in desired_order if name in existing]
