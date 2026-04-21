@@ -1,3 +1,17 @@
+=== Pre-STMT assembly ===
+14:56:03 [INFO] gk_footing - fsTofn: 66 rows, columns: ['FS_Report_Name', 'FS_Line', 'FS_Line_Nr', 'FS_Line_Title', 'FN_Report_Name', 'FN_Tab', 'FN_Line', 'FN_Line_Nr', 'FN_Line_Title', 'Match Value', 'Match Line Title', 'FN Amount', 'FS Amount', 'Difference']
+14:56:03 [INFO] gk_footing - fnTofn: 30 rows, columns: ['Review_Checks', 'FN_Line_One', 'FN_Line_Nr_One', 'FN_Line_Title_One', 'FN_Report_Name_One', 'FN_Line_Two', 'FN_Line_Nr_Two', 'FN_Line_Title_Two', 'FN_Report_Name_Two', 'Match Value', 'Match Line Title', 'FN Amount One', 'FN Amount Two', 'Difference']
+14:56:03 [INFO] gk_footing - fsTofs: 6 rows, columns: ['Review_Checks', 'FS_Line_One', 'FS_Line_Nr_One', 'FS_Line_Title_One', 'FS_Report_Name_One', 'FS_Line_Two', 'FS_Line_Nr_Two', 'FS_Line_Title_Two', 'FS_Report_Name_Two', 'Match Value', 'Match Line Title', 'FS Amount One', 'FS Amount Two', 'Difference']
+14:56:03 [INFO] gk_footing - internal_data: 31 rows
+14:56:03 [INFO] gk_footing -   FN11 found in fsTofn.FN_Report_Name: 1 rows
+14:56:03 [INFO] gk_footing -   FN11 found in fsTofn.FN_Tab: 1 rows
+14:56:03 [INFO] gk_footing -   FN11 found in fnTofn.Review_Checks: 3 rows
+14:56:03 [INFO] gk_footing -   FN11 found in fnTofn.FN_Report_Name_One: 3 rows
+14:56:03 [INFO] gk_footing -   FN11 found in internal_data.Report_Name: 1 rows
+14:56:03 [INFO] gk_footing - Sheet 'STMT to STMT' already exists. Skipping
+
+
+
 logger.info(f"=== Pre-STMT assembly ===")
 logger.info(f"fsTofn: {len(fsTofn)} rows, columns: {list(fsTofn.columns)}")
 logger.info(f"fnTofn: {len(fnTofn)} rows, columns: {list(fnTofn.columns)}")
