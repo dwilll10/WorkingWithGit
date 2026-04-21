@@ -1,3 +1,24 @@
+desired_order = [
+    'Start',
+    'STMT to STMT',
+    'Tie-Through',
+    'Tie-Through-fn to fn',
+    'Tie-Through fs to fs',
+    'Tie-Through Internal',
+    'BS', 'SCA', 'SBR', 'SCNP', 'SNC',
+    'FN2', 'FN3', 'FN4', 'FN5', 'FN6', 'FN7', 'FN8', 'FN9',
+    'FN10', 'FN11', 'FN12', 'FN13', 'FN14', 'FN15', 'FN16',
+    'FN17', 'FN18', 'FN19', 'FN20', 'FN21', 'FN22', 'FN23',
+    'FN25', 'FN26', 'FN27', 'FN28', 'FN29', 'FN30SCNP',
+    'FN30SNC', 'FN32',
+    'RSI-DEFERRED', 'RSI-SBR', 'RSI-LAND', 'RSI-SCA',
+    'OI-SOS',
+]
+reorder_sheets(wb, desired_order)
+wb.save()
+
+
+
 fn_prefix = fn_number.split()[0]  # gets 'fn2' or 'fn20A'
 if fn_prefix.startswith(fn_filter) and (len(fn_prefix) == len(fn_filter) or not fn_prefix[len(fn_filter)].isdigit()):
 
