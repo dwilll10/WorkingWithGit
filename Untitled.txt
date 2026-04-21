@@ -1,7 +1,5 @@
-File "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\mainScript.py", line 233
-    desired_order = ['Start',
-                             ^
-IndentationError: unindent does not match any outer indentation level
+Error in updateFile: (-2147352567, 'Exception occurred.', (0, None, None, None, 0, -2147352565), None)
+
 
 
 def reorder_sheets(wb, desired_order):
