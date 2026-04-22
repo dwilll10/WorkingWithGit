@@ -1,3 +1,77 @@
+# Read the entire Difference column in ONE COM call instead of per-row
+difference_column_index = 3
+last_data_row = dataframe.shape[0] + 1  # +1 because row 1 is headers
+difference_range = new_sheet.range(
+    new_sheet.cells(2, difference_column_index),
+    new_sheet.cells(last_data_row, difference_column_index)
+)
+difference_values = difference_range.value  # one call, returns a list
+# Normalize to a list even if there's only one row
+if not isinstance(difference_values, list):
+    difference_values = [difference_values]
+
+# Also read column A values for the "Tie-Through ..." label check
+col_a_range = new_sheet.range(
+    new_sheet.cells(2, 1),
+    new_sheet.cells(last_data_row + 5, 1)  # read a bit further for lookahead
+)
+col_a_values = col_a_range.value
+if not isinstance(col_a_values, list):
+    col_a_values = [col_a_values]
+
+# Now iterate using the in-memory data — no COM reads in the loop
+valid_values = ["Tie-Through FS to FN", "Tie-Through FN to FN", 
+                "Tie-Through FS to FS", "Internal Tie-Through"]
+
+for i, difference_value in enumerate(difference_values):
+    row = i + 2  # data rows start at row 2
+    
+    if difference_value in [None, '']:
+        continue
+    
+    col3_cell = new_sheet.cells(row, difference_column_index)
+    
+    # Bottom double border on column 3
+    bottom_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
+    bottom_border.LineStyle = xw.constants.LineStyle.xlDouble
+    bottom_border.Color = 0
+    bottom_border.Weight = 4
+    
+    # Top border on column 3
+    top_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeTop)
+    top_border.LineStyle = 1
+    top_border.Color = 0
+    top_border.Weight = 2
+    
+    # Fill cell right of Difference with color
+    new_sheet.cells(row, difference_column_index + 1).api.Interior.Color = 13434828
+    
+    # Check 3 rows down in col A (using in-memory data, not COM)
+    lookahead_idx = i + 3  # row + 3 relative to our data range
+    value_3_down = col_a_values[lookahead_idx] if lookahead_idx < len(col_a_values) else None
+    
+    if value_3_down in valid_values:
+        new_sheet.cells(row + 2, 1).value = value_3_down
+        new_sheet.cells(row + 2, 1).api.Font.Bold = True
+        new_sheet.range(f"A{row + 3}").api.EntireRow.Delete()
+        border_end_col = 4
+    else:
+        border_end_col = 3
+    
+    next_row_range = new_sheet.range(
+        new_sheet.cells(row + 1, 1),
+        new_sheet.cells(row + 1, border_end_col)
+    )
+    next_row_border = next_row_range.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
+    next_row_border.LineStyle = 1
+    next_row_border.Color = 0
+    next_row_border.Weight = 4 if border_end_col == 4 else 3
+
+
+
+
+
+
 09:52:40 [INFO] gk_footing - TIMING: Tie_bs_fn.tie_through = 27.84s
 09:52:42 [INFO] gk_footing - TIMING: Write tie through sheet = 1.15s
 09:52:42 [INFO] gk_footing - Loaded mapping table sheet 'FN_FN' with 30 rows
