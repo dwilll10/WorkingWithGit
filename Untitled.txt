@@ -1,130 +1,131 @@
-09:36:44 [INFO] gk_footing - TIMING: Tie_bs_fn.tie_through = 27.46s
-09:36:46 [INFO] gk_footing - TIMING: Write tie through sheet = 1.65s
-09:36:46 [INFO] gk_footing - Loaded mapping table sheet 'FN_FN' with 30 rows
-09:36:48 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:36:48 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:36:49 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:36:50 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:36:50 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:37:07 [INFO] gk_footing - TIMING: Tie_fn_fn.tie_through = 20.73s
-09:37:09 [INFO] gk_footing - TIMING: Write fn-fn tie through = 1.85s
-09:37:09 [INFO] gk_footing - Loaded mapping table sheet 'FS_FS' with 6 rows
-09:37:17 [INFO] gk_footing - cumulative results of operations - ending - updated 26 to 28.0
-09:37:17 [INFO] gk_footing - TIMING: Tie_fs_fs.tie_through = 8.36s
-09:37:19 [INFO] gk_footing - TIMING: Write fs-fs tie through = 1.59s
-09:37:19 [INFO] gk_footing - Loaded mapping table sheet 'Report' with 31 rows
-09:37:23 [ERROR] gk_footing - Error occurred in clean.cleanScnp()[1]: "No column matching 'FFDC Consolidated' in DataFrame. Available columns: ['Line', 'LineNr', 'Line Title', 'Consolidated']"
-09:37:26 [INFO] gk_footing - total fund balance - section a - updated 10 to 11.0
-09:37:26 [INFO] gk_footing - total - section b - updated 32 to 31.0
-09:37:31 [INFO] gk_footing - net cost of operations - updated 53 to 52.0
-09:37:31 [INFO] gk_footing - net cost of operations - updated 81 to 83.0
-09:37:32 [INFO] gk_footing - TIMING: Tie_internal.tie_through = 13.72s
-09:37:34 [INFO] gk_footing - TIMING: Write internal tie through = 1.52s
-09:37:34 [WARNING] gk_footing - import_fn('rsi-deferred') returned an empty DataFrame. Check file paths and sheet names.
-09:37:34 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
-09:37:34 [ERROR] gk_footing - Error in rsiDeferred: single positional indexer is out-of-bounds
-09:37:34 [INFO] gk_footing - OK: RSI-DEFERRED
-09:37:34 [INFO] gk_footing - TIMING: RSI-DEFERRED = 0.03s
-09:37:36 [INFO] gk_footing - OK: RSI-SBR
-09:37:36 [INFO] gk_footing - TIMING: RSI-SBR = 1.60s
-09:37:36 [ERROR] gk_footing - Sheet lookup failed for 'SOS Rollforward' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/Documents/a. Source Files/Footnotes – Upload Files\FY25 PD12 OI-SOS.xlsx: Sheet 'SOS Rollforward' not found in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/Documents/a. Source Files/Footnotes – Upload Files\FY25 PD12 OI-SOS.xlsx. Available sheets: ['SOS   AFR', 'SOS boc by component', 'SBRRealigned', 'DHS-UDO-JV-2024', 'UDO  JV 24 BREAKOUT OTHR COMP ', ' RSI SBR AFR RF']
-09:37:36 [WARNING] gk_footing - import_fn('oi-sos') returned an empty DataFrame. Check file paths and sheet names.
-09:37:36 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
-09:37:36 [ERROR] gk_footing - Error in oiSos: single positional indexer is out-of-bounds
-09:37:36 [INFO] gk_footing - OK: OI-SOS
-09:37:36 [INFO] gk_footing - TIMING: OI-SOS = 0.30s
-09:37:36 [WARNING] gk_footing - import_fn('rsi-land') returned an empty DataFrame. Check file paths and sheet names.
-09:37:36 [WARNING] gk_footing - import_fn('rsi-land_t') returned an empty DataFrame. Check file paths and sheet names.
-09:37:36 [WARNING] gk_footing - find_row fallback for 'Commercial ': find_row_flex: 'Commercial ' not found in any cell. DataFrame shape: (0, 0)
-09:37:36 [ERROR] gk_footing - Error in rsiLand: single positional indexer is out-of-bounds
-09:37:36 [INFO] gk_footing - OK: RSI-LAND
-09:37:36 [INFO] gk_footing - TIMING: RSI-LAND = 0.05s
-09:37:36 [INFO] gk_footing - OK: RSI-SCA
-09:37:36 [INFO] gk_footing - TIMING: RSI-SCA = 0.58s
-09:37:37 [INFO] gk_footing - OK: FN32
-09:37:37 [INFO] gk_footing - TIMING: FN32 = 0.93s
-09:37:38 [INFO] gk_footing - OK: FN30SCNP
-09:37:38 [INFO] gk_footing - TIMING: FN30SCNP = 0.62s
-09:37:39 [INFO] gk_footing - OK: FN30SNC
-09:37:39 [INFO] gk_footing - TIMING: FN30SNC = 1.17s
-09:37:40 [INFO] gk_footing - OK: FN29
-09:37:40 [INFO] gk_footing - TIMING: FN29 = 0.94s
-09:37:41 [INFO] gk_footing - OK: FN28
-09:37:41 [INFO] gk_footing - TIMING: FN28 = 1.08s
-09:37:42 [INFO] gk_footing - OK: FN27
-09:37:42 [INFO] gk_footing - TIMING: FN27 = 0.78s
-09:37:43 [INFO] gk_footing - OK: FN26
-09:37:43 [INFO] gk_footing - TIMING: FN26 = 0.82s
-09:37:45 [INFO] gk_footing - OK: FN25
-09:37:45 [INFO] gk_footing - TIMING: FN25 = 2.55s
-09:37:46 [INFO] gk_footing - OK: FN23
-09:37:46 [INFO] gk_footing - TIMING: FN23 = 0.78s
-09:37:48 [INFO] gk_footing - OK: FN22
-09:37:48 [INFO] gk_footing - TIMING: FN22 = 1.67s
-09:37:51 [INFO] gk_footing - OK: FN21
-09:37:51 [INFO] gk_footing - TIMING: FN21 = 2.84s
-09:37:55 [INFO] gk_footing - OK: FN20
-09:37:55 [INFO] gk_footing - TIMING: FN20 = 4.55s
-09:37:58 [INFO] gk_footing - OK: FN19
-09:37:58 [INFO] gk_footing - TIMING: FN19 = 3.24s
-09:37:59 [INFO] gk_footing - OK: FN18
-09:37:59 [INFO] gk_footing - TIMING: FN18 = 0.75s
-09:38:00 [INFO] gk_footing - OK: FN17
-09:38:00 [INFO] gk_footing - TIMING: FN17 = 0.69s
-09:38:03 [INFO] gk_footing - OK: FN16
-09:38:03 [INFO] gk_footing - TIMING: FN16 = 3.23s
-09:38:04 [INFO] gk_footing - OK: FN15
-09:38:04 [INFO] gk_footing - TIMING: FN15 = 0.69s
-09:38:04 [INFO] gk_footing - OK: FN14
-09:38:04 [INFO] gk_footing - TIMING: FN14 = 0.60s
-09:38:05 [INFO] gk_footing - OK: FN13
-09:38:05 [INFO] gk_footing - TIMING: FN13 = 0.48s
-09:38:07 [INFO] gk_footing - OK: FN12
-09:38:07 [INFO] gk_footing - TIMING: FN12 = 1.71s
-09:38:08 [INFO] gk_footing - OK: FN11
-09:38:08 [INFO] gk_footing - TIMING: FN11 = 1.08s
-09:38:18 [INFO] gk_footing - OK: FN10
-09:38:18 [INFO] gk_footing - TIMING: FN10 = 9.90s
-09:38:18 [INFO] gk_footing - OK: FN9
-09:38:18 [INFO] gk_footing - TIMING: FN9 = 0.56s
-09:38:18 [WARNING] gk_footing - import_fn('fn8') returned an empty DataFrame. Check file paths and sheet names.
-09:38:18 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
-09:38:18 [ERROR] gk_footing - Error in fn8: single positional indexer is out-of-bounds
-09:38:18 [INFO] gk_footing - OK: FN8
-09:38:18 [INFO] gk_footing - TIMING: FN8 = 0.04s
-09:38:19 [INFO] gk_footing - OK: FN7
-09:38:19 [INFO] gk_footing - TIMING: FN7 = 0.90s
-09:38:20 [INFO] gk_footing - OK: FN6
-09:38:20 [INFO] gk_footing - TIMING: FN6 = 0.75s
-09:38:20 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
-09:38:21 [INFO] gk_footing - OK: FN5
-09:38:21 [INFO] gk_footing - TIMING: FN5 = 1.24s
-09:38:22 [INFO] gk_footing - OK: FN4
-09:38:22 [INFO] gk_footing - TIMING: FN4 = 0.62s
-09:38:22 [INFO] gk_footing - OK: FN3
-09:38:22 [INFO] gk_footing - TIMING: FN3 = 0.60s
-09:38:23 [INFO] gk_footing - OK: FN2
-09:38:23 [INFO] gk_footing - TIMING: FN2 = 0.90s
-09:38:24 [INFO] gk_footing - OK: SCA
-09:38:24 [INFO] gk_footing - TIMING: SCA = 0.71s
-09:38:26 [INFO] gk_footing - OK: SBR
-09:38:26 [INFO] gk_footing - TIMING: SBR = 2.29s
-09:38:29 [INFO] gk_footing - OK: SCNP
-09:38:29 [INFO] gk_footing - TIMING: SCNP = 3.19s
-09:38:30 [INFO] gk_footing - OK: SNC
-09:38:30 [INFO] gk_footing - TIMING: SNC = 0.57s
-09:38:31 [INFO] gk_footing - OK: BS
-09:38:31 [INFO] gk_footing - TIMING: BS = 1.15s
-09:38:31 [INFO] gk_footing - Pipeline finished: all 40 steps succeeded.
-09:38:31 [INFO] gk_footing - TIMING: full pipeline = 57.19s
+09:52:40 [INFO] gk_footing - TIMING: Tie_bs_fn.tie_through = 27.84s
+09:52:42 [INFO] gk_footing - TIMING: Write tie through sheet = 1.15s
+09:52:42 [INFO] gk_footing - Loaded mapping table sheet 'FN_FN' with 30 rows
+09:52:43 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:52:44 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:52:44 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:52:45 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:52:46 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:53:02 [INFO] gk_footing - TIMING: Tie_fn_fn.tie_through = 20.68s
+09:53:04 [INFO] gk_footing - TIMING: Write fn-fn tie through = 1.32s
+09:53:04 [INFO] gk_footing - Loaded mapping table sheet 'FS_FS' with 6 rows
+09:53:12 [INFO] gk_footing - cumulative results of operations - ending - updated 26 to 28.0
+09:53:12 [INFO] gk_footing - TIMING: Tie_fs_fs.tie_through = 8.49s
+09:53:13 [INFO] gk_footing - TIMING: Write fs-fs tie through = 1.06s
+09:53:13 [INFO] gk_footing - Loaded mapping table sheet 'Report' with 31 rows
+09:53:18 [ERROR] gk_footing - Error occurred in clean.cleanScnp()[1]: "No column matching 'FFDC Consolidated' in DataFrame. Available columns: ['Line', 'LineNr', 'Line Title', 'Consolidated']"
+09:53:20 [INFO] gk_footing - total fund balance - section a - updated 10 to 11.0
+09:53:20 [INFO] gk_footing - total - section b - updated 32 to 31.0
+09:53:26 [INFO] gk_footing - net cost of operations - updated 53 to 52.0
+09:53:26 [INFO] gk_footing - net cost of operations - updated 81 to 83.0
+09:53:27 [INFO] gk_footing - TIMING: Tie_internal.tie_through = 13.39s
+09:53:28 [INFO] gk_footing - TIMING: Write internal tie through = 0.96s
+09:53:28 [WARNING] gk_footing - import_fn('rsi-deferred') returned an empty DataFrame. Check file paths and sheet names.
+09:53:28 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+09:53:28 [ERROR] gk_footing - Error in rsiDeferred: single positional indexer is out-of-bounds
+09:53:28 [INFO] gk_footing - OK: RSI-DEFERRED
+09:53:28 [INFO] gk_footing - TIMING: RSI-DEFERRED = 0.03s
+09:53:29 [INFO] gk_footing - OK: RSI-SBR
+09:53:29 [INFO] gk_footing - TIMING: RSI-SBR = 1.25s
+09:53:29 [ERROR] gk_footing - Sheet lookup failed for 'SOS Rollforward' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/Documents/a. Source Files/Footnotes – Upload Files\FY25 PD12 OI-SOS.xlsx: Sheet 'SOS Rollforward' not found in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/Documents/a. Source Files/Footnotes – Upload Files\FY25 PD12 OI-SOS.xlsx. Available sheets: ['SOS   AFR', 'SOS boc by component', 'SBRRealigned', 'DHS-UDO-JV-2024', 'UDO  JV 24 BREAKOUT OTHR COMP ', ' RSI SBR AFR RF']
+09:53:29 [WARNING] gk_footing - import_fn('oi-sos') returned an empty DataFrame. Check file paths and sheet names.
+09:53:29 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+09:53:29 [ERROR] gk_footing - Error in oiSos: single positional indexer is out-of-bounds
+09:53:29 [INFO] gk_footing - OK: OI-SOS
+09:53:29 [INFO] gk_footing - TIMING: OI-SOS = 0.23s
+09:53:29 [WARNING] gk_footing - import_fn('rsi-land') returned an empty DataFrame. Check file paths and sheet names.
+09:53:29 [WARNING] gk_footing - import_fn('rsi-land_t') returned an empty DataFrame. Check file paths and sheet names.
+09:53:29 [WARNING] gk_footing - find_row fallback for 'Commercial ': find_row_flex: 'Commercial ' not found in any cell. DataFrame shape: (0, 0)
+09:53:29 [ERROR] gk_footing - Error in rsiLand: single positional indexer is out-of-bounds
+09:53:29 [INFO] gk_footing - OK: RSI-LAND
+09:53:29 [INFO] gk_footing - TIMING: RSI-LAND = 0.05s
+09:53:30 [INFO] gk_footing - OK: RSI-SCA
+09:53:30 [INFO] gk_footing - TIMING: RSI-SCA = 0.66s
+09:53:30 [INFO] gk_footing - OK: FN32
+09:53:30 [INFO] gk_footing - TIMING: FN32 = 0.68s
+09:53:31 [INFO] gk_footing - OK: FN30SCNP
+09:53:31 [INFO] gk_footing - TIMING: FN30SCNP = 0.44s
+09:53:32 [INFO] gk_footing - OK: FN30SNC
+09:53:32 [INFO] gk_footing - TIMING: FN30SNC = 0.83s
+09:53:32 [INFO] gk_footing - OK: FN29
+09:53:32 [INFO] gk_footing - TIMING: FN29 = 0.70s
+09:53:33 [INFO] gk_footing - OK: FN28
+09:53:33 [INFO] gk_footing - TIMING: FN28 = 0.90s
+09:53:34 [INFO] gk_footing - OK: FN27
+09:53:34 [INFO] gk_footing - TIMING: FN27 = 0.64s
+09:53:35 [INFO] gk_footing - OK: FN26
+09:53:35 [INFO] gk_footing - TIMING: FN26 = 0.70s
+09:53:37 [INFO] gk_footing - OK: FN25
+09:53:37 [INFO] gk_footing - TIMING: FN25 = 1.87s
+09:53:37 [INFO] gk_footing - OK: FN23
+09:53:37 [INFO] gk_footing - TIMING: FN23 = 0.58s
+09:53:38 [INFO] gk_footing - OK: FN22
+09:53:38 [INFO] gk_footing - TIMING: FN22 = 1.23s
+09:53:41 [INFO] gk_footing - OK: FN21
+09:53:41 [INFO] gk_footing - TIMING: FN21 = 2.39s
+09:53:45 [INFO] gk_footing - OK: FN20
+09:53:45 [INFO] gk_footing - TIMING: FN20 = 3.95s
+09:53:47 [INFO] gk_footing - OK: FN19
+09:53:47 [INFO] gk_footing - TIMING: FN19 = 2.32s
+09:53:47 [INFO] gk_footing - OK: FN18
+09:53:47 [INFO] gk_footing - TIMING: FN18 = 0.50s
+09:53:48 [INFO] gk_footing - OK: FN17
+09:53:48 [INFO] gk_footing - TIMING: FN17 = 0.45s
+09:53:51 [INFO] gk_footing - OK: FN16
+09:53:51 [INFO] gk_footing - TIMING: FN16 = 2.98s
+09:53:51 [INFO] gk_footing - OK: FN15
+09:53:51 [INFO] gk_footing - TIMING: FN15 = 0.47s
+09:53:52 [INFO] gk_footing - OK: FN14
+09:53:52 [INFO] gk_footing - TIMING: FN14 = 0.49s
+09:53:52 [INFO] gk_footing - OK: FN13
+09:53:52 [INFO] gk_footing - TIMING: FN13 = 0.34s
+09:53:54 [INFO] gk_footing - OK: FN12
+09:53:54 [INFO] gk_footing - TIMING: FN12 = 1.47s
+09:53:54 [INFO] gk_footing - OK: FN11
+09:53:54 [INFO] gk_footing - TIMING: FN11 = 0.83s
+09:54:04 [INFO] gk_footing - OK: FN10
+09:54:04 [INFO] gk_footing - TIMING: FN10 = 9.24s
+09:54:04 [INFO] gk_footing - OK: FN9
+09:54:04 [INFO] gk_footing - TIMING: FN9 = 0.37s
+09:54:04 [WARNING] gk_footing - import_fn('fn8') returned an empty DataFrame. Check file paths and sheet names.
+09:54:04 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+09:54:04 [ERROR] gk_footing - Error in fn8: single positional indexer is out-of-bounds
+09:54:04 [INFO] gk_footing - OK: FN8
+09:54:04 [INFO] gk_footing - TIMING: FN8 = 0.03s
+09:54:05 [INFO] gk_footing - OK: FN7
+09:54:05 [INFO] gk_footing - TIMING: FN7 = 1.33s
+09:54:06 [INFO] gk_footing - OK: FN6
+09:54:06 [INFO] gk_footing - TIMING: FN6 = 0.83s
+09:54:07 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+09:54:08 [INFO] gk_footing - OK: FN5
+09:54:08 [INFO] gk_footing - TIMING: FN5 = 1.29s
+09:54:08 [INFO] gk_footing - OK: FN4
+09:54:08 [INFO] gk_footing - TIMING: FN4 = 0.54s
+09:54:09 [INFO] gk_footing - OK: FN3
+09:54:09 [INFO] gk_footing - TIMING: FN3 = 0.52s
+09:54:10 [INFO] gk_footing - OK: FN2
+09:54:10 [INFO] gk_footing - TIMING: FN2 = 0.88s
+09:54:10 [INFO] gk_footing - OK: SCA
+09:54:10 [INFO] gk_footing - TIMING: SCA = 0.61s
+09:54:12 [INFO] gk_footing - OK: SBR
+09:54:12 [INFO] gk_footing - TIMING: SBR = 1.94s
+09:54:15 [INFO] gk_footing - OK: SCNP
+09:54:15 [INFO] gk_footing - TIMING: SCNP = 2.68s
+09:54:15 [INFO] gk_footing - OK: SNC
+09:54:15 [INFO] gk_footing - TIMING: SNC = 0.42s
+09:54:16 [INFO] gk_footing - OK: BS
+09:54:16 [INFO] gk_footing - TIMING: BS = 0.87s
+09:54:16 [INFO] gk_footing - Pipeline finished: all 40 steps succeeded.
+09:54:16 [INFO] gk_footing - TIMING: full pipeline = 48.50s
+09:54:16 [INFO] gk_footing -   FN11 found in fsTofn.FN_Report_Name: 1 rows
+09:54:16 [INFO] gk_footing -   FN11 found in fsTofn.FN_Tab: 1 rows
+09:54:16 [INFO] gk_footing -   FN11 found in fnTofn.Review_Checks: 3 rows
+09:54:16 [INFO] gk_footing -   FN11 found in fnTofn.FN_Report_Name_One: 3 rows
+09:54:16 [INFO] gk_footing -   FN11 found in internal_data.Report_Name: 1 rows
+09:54:16 [INFO] gk_footing - main: 673 rows
+09:54:42 [INFO] gk_footing - TIMING: STMT TO STMT = 26.08s
 
-09:38:31 [INFO] gk_footing - main: 673 rows
-09:38:55 [INFO] gk_footing - TIMING: STMT TO STMT = 23.76s
-
-09:38:56 [INFO] gk_footing - TIMING: overall = 159.01s
-
-
-
+09:54:42 [INFO] gk_footing - TIMING: overall = 149.89s
 
 === Pre-STMT assembly ===
 14:56:03 [INFO] gk_footing - fsTofn: 66 rows, columns: ['FS_Report_Name', 'FS_Line', 'FS_Line_Nr', 'FS_Line_Title', 'FN_Report_Name', 'FN_Tab', 'FN_Line', 'FN_Line_Nr', 'FN_Line_Title', 'Match Value', 'Match Line Title', 'FN Amount', 'FS Amount', 'Difference']
