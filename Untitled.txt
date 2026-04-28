@@ -1,16 +1,31 @@
 def updateFile(active_sheet_name='Start'):
     try:
-        overall_start=time.time()
+        overall_start = time.time()
         app = xw.apps.active
 
-        wb = app.books.active
+        # Find all workbooks that contain the target sheet
+        matching_books = [
+            wb for wb in app.books
+            if active_sheet_name in [sh.name for sh in wb.sheets]
+        ]
+
+        if len(matching_books) == 0:
+            raise ValueError(f"No open workbook contains a sheet named '{active_sheet_name}'.")
+        elif len(matching_books) > 1:
+            names = [wb.name for wb in matching_books]
+            raise ValueError(
+                f"Multiple open workbooks contain a sheet named '{active_sheet_name}': {names}. "
+                f"Please close the others and try again."
+            )
+
+        wb = matching_books[0]
         logger.info(f"Using active workbook: {wb.name}")
-       
+
         try:
             logger.info(f"Workbook fullname: {wb.fullname}")
         except Exception:
             pass
-    
+
         app.screen_updating = False
         app.calculation = 'manual'
         app.display_alerts = False
