@@ -1,21 +1,43 @@
-def updateFile(active_sheet_name='Start'):
-    try:
-        overall_start = time.time()
-        app = xw.apps.active
+Dim pythonPath As String
+    Dim scriptPath As String
+    Dim logPath As String
+    Dim command As String
+    Dim wsh As Object
+    
+    pythonPath = "C:\Users\YourName\AppData\Local\Programs\Python\Python311\python.exe"
+    scriptPath = "C:\Users\YourName\Documents\fill_word_from_excel.py"
+    logPath    = "C:\Users\YourName\Documents\script_log.txt"
+    
+    ' Redirect output and errors to a log file
+    command = """" & pythonPath & """ """ & scriptPath & """ > """ & logPath & """ 2>&1"
+    
+    ' Use WScript.Shell so we can wait for completion and get exit code
+    Set wsh = CreateObject("WScript.Shell")
+    Dim exitCode As Long
+    exitCode = wsh.Run("cmd /c " & command, 0, True) ' 0 = hidden, True = wait
+    
+    If exitCode = 0 Then
+        MsgBox "Word document generated successfully!", vbInformation, "Done"
+    Else
+        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
+    End If
+    
+    Set wsh = Nothing
 
-        # Find all workbooks that contain the target sheet
-        matching_books = [
-            wb for wb in app.books
-            if active_sheet_name in [sh.name for sh in wb.sheets]
-        ]
 
-        if len(matching_books) == 0:
-            raise ValueError(f"No open workbook contains a sheet named '{active_sheet_name}'.")
-        elif len(matching_books) > 1:
-            names = [wb.name for wb in matching_books]
-            raise ValueError(
-                f"Multiple open workbooks contain a sheet named '{active_sheet_name}': {names}. "
-                f"Please close the others and try again."
+
+
+
+
+
+
+
+
+
+
+
+
+
             )
 
         wb = matching_books[0]
