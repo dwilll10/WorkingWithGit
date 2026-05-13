@@ -1,3 +1,108 @@
+import os
+import openpyxl
+from docx import Document
+
+
+# update this to the folder where your Excel and Word files are stored
+BASE_DIR = r"C:\Users\YourName\Documents"
+
+
+def get_excel_value(excel_path, row_value_in_col_c, col_name, sheet_name="Sheet5"):
+    # data_only=True returns cached cell values instead of formula strings
+    wb = openpyxl.load_workbook(excel_path, data_only=True)
+    ws = wb[sheet_name]
+
+    # map each header name to its column index number
+    headers = {}
+    for col_idx, cell in enumerate(ws[1], start=1):
+        if cell.value is not None:
+            headers[str(cell.value).strip()] = col_idx
+
+    if col_name not in headers:
+        raise ValueError(f"Column '{col_name}' not found. Available: {list(headers.keys())}")
+
+    target_col_idx = headers[col_name]
+
+    # search column C for a matching row label, starting after the header row
+    for row in ws.iter_rows(min_row=2):
+        col_c_value = row[2].value  # index 2 = column C (0-based)
+        if col_c_value is not None and str(col_c_value).strip() == str(row_value_in_col_c).strip():
+            value = row[target_col_idx - 1].value  # -1 because row tuple is 0-indexed
+            return str(value) if value is not None else ""
+
+    raise ValueError(f"No row found where column C = '{row_value_in_col_c}'")
+
+
+def replace_in_paragraph(para, placeholder, value):
+    # Word often splits text across multiple runs, so combine them before searching
+    full_text = "".join(run.text for run in para.runs)
+    if placeholder not in full_text:
+        return
+
+    new_text = full_text.replace(placeholder, value)
+
+    if para.runs:
+        # write the replaced text into the first run to preserve its formatting
+        para.runs[0].text = new_text
+        # clear remaining runs so their text doesn't appear twice
+        for run in para.runs[1:]:
+            run.text = ""
+
+
+def replace_placeholder_in_doc(doc, placeholder, value):
+    for para in doc.paragraphs:
+        replace_in_paragraph(para, placeholder, value)
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    replace_in_paragraph(para, placeholder, value)
+
+    # also check headers and footers in each section
+    for section in doc.sections:
+        for para in section.header.paragraphs:
+            replace_in_paragraph(para, placeholder, value)
+        for para in section.footer.paragraphs:
+            replace_in_paragraph(para, placeholder, value)
+
+
+def fill_word_from_excel(word_path, excel_path, replacements, output_path):
+    doc = Document(word_path)
+
+    for item in replacements:
+        placeholder = item["placeholder"]
+        try:
+            value = get_excel_value(
+                excel_path,
+                row_value_in_col_c=item["row"],
+                col_name=item["col"],
+                sheet_name=item.get("sheet", "Sheet5")  # defaults to Sheet5 if not specified
+            )
+            print(f"Replacing {placeholder} → {value}")
+            replace_placeholder_in_doc(doc, placeholder, value)
+        except ValueError as e:
+            # skip bad lookups and continue rather than crashing the whole script
+            print(f"WARNING: Skipping {placeholder} — {e}")
+
+    doc.save(output_path)
+    print(f"\nSaved to {output_path}")
+
+
+if __name__ == "__main__":
+    fill_word_from_excel(
+        word_path=os.path.join(BASE_DIR, "template.docx"),
+        excel_path=os.path.join(BASE_DIR, "data.xlsx"),
+        replacements=[
+            {"placeholder": "@@BudgetNumber@@", "row": "Operations", "col": "2024 Budget", "sheet": "Sheet5"},
+            {"placeholder": "@@RevenueTotal@@",  "row": "Revenue",    "col": "2024 Budget", "sheet": "Sheet5"},
+            {"placeholder": "@@HeadCount@@",     "row": "HR",         "col": "Headcount",   "sheet": "Sheet5"},
+        ],
+        output_path=os.path.join(BASE_DIR, "filled_output.docx")
+    )
+
+
+
 Dim pythonPath As String
     Dim scriptPath As String
     Dim logPath As String
