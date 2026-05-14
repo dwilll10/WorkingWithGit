@@ -1,3 +1,18 @@
+Sub DebugColumnC()
+    Dim ws As Worksheet
+    Dim cell As Range
+    Set ws = ThisWorkbook.Sheets("OI-SOS")
+    
+    For Each cell In ws.Range("C1:C100")
+        If cell.Value <> "" Then
+            ' prints the row number and exact cell value with pipes so you can see spaces
+            Debug.Print cell.Row & " | " & cell.Value & " |"
+        End If
+    Next cell
+End Sub
+
+
+
 Sub ExportOI_SOS()
     Dim pythonPath As String
     Dim scriptPath As String
