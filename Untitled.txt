@@ -1,4 +1,4 @@
-Command: "C:\ProgramData\Anaconda3\python.exe" "C:\Users\DIEDRICH.WILLERS\OneDrive\Documents\z. Python Program\GK_new_format\WordExportOISOS.py" "216555" "-61234" > "C:\Users\DIEDRICH.WILLERS\Documents\error_log_wordexport.txt" 2>&1
+
 
 
 
