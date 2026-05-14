@@ -1,15 +1,4 @@
-Sub DebugColumnC()
-    Dim ws As Worksheet
-    Dim cell As Range
-    Set ws = ThisWorkbook.Sheets("OI-SOS")
-    
-    For Each cell In ws.Range("C1:C100")
-        If cell.Value <> "" Then
-            ' prints column C value and the value one column to the right (column D)
-            Debug.Print cell.Row & " | C: " & cell.Value & " | D: " & cell.Offset(0, 1).Value & " |"
-        End If
-    Next cell
-End Sub
+Command: "C:\ProgramData\Anaconda3\python.exe" "C:\Users\DIEDRICH.WILLERS\OneDrive\Documents\z. Python Program\GK_new_format\WordExportOISOS.py" "216555" "-61234" > "C:\Users\DIEDRICH.WILLERS\Documents\error_log_wordexport.txt" 2>&1
 
 
 
