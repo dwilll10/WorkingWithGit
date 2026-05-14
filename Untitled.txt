@@ -5,8 +5,8 @@ Sub DebugColumnC()
     
     For Each cell In ws.Range("C1:C100")
         If cell.Value <> "" Then
-            ' prints the row number and exact cell value with pipes so you can see spaces
-            Debug.Print cell.Row & " | " & cell.Value & " |"
+            ' prints column C value and the value one column to the right (column D)
+            Debug.Print cell.Row & " | C: " & cell.Value & " | D: " & cell.Offset(0, 1).Value & " |"
         End If
     Next cell
 End Sub
