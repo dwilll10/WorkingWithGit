@@ -42,6 +42,14 @@ Sub ExportOI_SOS()
 
     Set wsConfig = wbConfig.Sheets(1)
 
+    MsgBox "Config sheet name: " & wsConfig.Name & vbNewLine & _
+           "A1: '" & wsConfig.Cells(1, 1).Value & "'" & vbNewLine & _
+           "A2: '" & wsConfig.Cells(2, 1).Value & "'" & vbNewLine & _
+           "B2: '" & wsConfig.Cells(2, 2).Value & "'" & vbNewLine & _
+           "C2: '" & wsConfig.Cells(2, 3).Value & "'" & vbNewLine & _
+           "lastRow: " & wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row, _
+           vbInformation, "Config Check"
+
     ' Find last row of config table
     lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
 
@@ -52,7 +60,12 @@ Sub ExportOI_SOS()
         subtitle = Trim(wsConfig.Cells(i, 2).Value)
         placeholder = Trim(wsConfig.Cells(i, 3).Value)
 
-        If section = "" Or subtitle = "" Or placeholder = "" Then GoTo NextRow
+        MsgBox "Row " & i & ": section='" & section & "' subtitle='" & subtitle & "' placeholder='" & placeholder & "'", vbInformation, "Config Read"
+
+        If section = "" Or subtitle = "" Or placeholder = "" Then
+            MsgBox "SKIPPING row " & i & " - one or more fields empty", vbExclamation, "Skipped"
+            GoTo NextRow
+        End If
 
         ' Step 1: find section in col A of OI-SOS
         Set foundCell = wsData.Columns("A").Find( _
