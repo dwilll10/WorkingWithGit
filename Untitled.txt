@@ -42,14 +42,6 @@ Sub ExportOI_SOS()
 
     Set wsConfig = wbConfig.Sheets(1)
 
-    MsgBox "Config sheet name: " & wsConfig.Name & vbNewLine & _
-           "A1: '" & wsConfig.Cells(1, 1).Value & "'" & vbNewLine & _
-           "A2: '" & wsConfig.Cells(2, 1).Value & "'" & vbNewLine & _
-           "B2: '" & wsConfig.Cells(2, 2).Value & "'" & vbNewLine & _
-           "C2: '" & wsConfig.Cells(2, 3).Value & "'" & vbNewLine & _
-           "lastRow: " & wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row, _
-           vbInformation, "Config Check"
-
     ' Find last row of config table
     lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
 
@@ -60,24 +52,18 @@ Sub ExportOI_SOS()
         subtitle = Trim(wsConfig.Cells(i, 2).Value)
         placeholder = Trim(wsConfig.Cells(i, 3).Value)
 
-        MsgBox "Row " & i & ": section='" & section & "' subtitle='" & subtitle & "' placeholder='" & placeholder & "'", vbInformation, "Config Read"
-
-        If section = "" Or subtitle = "" Or placeholder = "" Then
-            MsgBox "SKIPPING row " & i & " - one or more fields empty", vbExclamation, "Skipped"
-            GoTo NextRow
-        End If
+        If section = "" Or subtitle = "" Or placeholder = "" Then GoTo NextRow
 
         ' Step 1: find section in col A of OI-SOS
         Set foundCell = wsData.Columns("A").Find( _
             What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
 
         If foundCell Is Nothing Then
-            MsgBox "SECTION NOT FOUND: '" & section & "'", vbExclamation, "Step 1 Failed"
+            Debug.Print "Section not found: " & section
             GoTo NextRow
         End If
 
         sectionRow = foundCell.Row
-        MsgBox "Section '" & section & "' found at row " & sectionRow, vbInformation, "Step 1 OK"
 
         ' Step 2: find next section to bound the search
         Set nextCell = wsData.Columns("A").FindNext(foundCell)
@@ -86,8 +72,6 @@ Sub ExportOI_SOS()
         Else
             nextSectionRow = nextCell.Row - 1
         End If
-
-        MsgBox "Searching col B from row " & sectionRow & " to " & nextSectionRow, vbInformation, "Step 2"
 
         ' Step 3: find subtitle in col B within the bounded range
         subtitleRow = 0
@@ -99,19 +83,13 @@ Sub ExportOI_SOS()
         Next j
 
         If subtitleRow = 0 Then
-            MsgBox "SUBTITLE NOT FOUND: '" & subtitle & "'" & vbNewLine & _
-                   "Col B values searched:" & vbNewLine & DebugColBValues(wsData, sectionRow, nextSectionRow), _
-                   vbExclamation, "Step 3 Failed"
+            Debug.Print "Subtitle not found: " & subtitle & " under section: " & section
             GoTo NextRow
         End If
 
-        MsgBox "Subtitle '" & subtitle & "' found at row " & subtitleRow, vbInformation, "Step 3 OK"
-
-        ' Step 4: read value from col C
-        value = wsData.Cells(subtitleRow, 3).Value
-        MsgBox "About to append: " & placeholder & "=" & value
+        ' Step 4: read value from col D of that row
+        value = wsData.Cells(subtitleRow, 4).Value
         args = args & " """ & placeholder & "=" & value & """"
-        MsgBox "Args now: " & args
 
 NextRow:
     Next i
@@ -120,11 +98,7 @@ NextRow:
     wbConfig.Close SaveChanges:=False
     Application.ScreenUpdating = True
 
-    MsgBox "Final Args: " & args, vbInformation, "Debug"
-
     command = """" & pythonPath & """ """ & scriptPath & """" & args & " > """ & logPath & """ 2>&1"
-
-    MsgBox "Command: " & command, vbInformation, "Debug"
 
     Set wsh = CreateObject("WScript.Shell")
     Debug.Print "Command: " & command
@@ -145,17 +119,3 @@ ConfigError:
     Exit Sub
 
 End Sub
-
-
-Function DebugColBValues(ws As Worksheet, startRow As Long, endRow As Long) As String
-    Dim result As String
-    Dim k As Long
-    Dim cellVal As String
-    For k = startRow To endRow
-        cellVal = ws.Cells(k, 2).Value
-        If Trim(cellVal) <> "" Then
-            result = result & "Row " & k & ": '" & cellVal & "'" & vbNewLine
-        End If
-    Next k
-    DebugColBValues = result
-End Function
