@@ -12,17 +12,21 @@ Sub ExportOI_SOS()
     Dim exitCode As Long
     Dim args As String
     Dim placeholder As String
-    Dim rowNum As Integer
-    Dim colOffset As Integer
+    Dim section As String
+    Dim subtitle As String
     Dim value As String
     Dim lastRow As Long
     Dim i As Long
+    Dim sectionRow As Long
+    Dim subtitleRow As Long
+    Dim nextSectionRow As Long
+    Dim foundCell As Range
 
     oneDrivePath = Environ("OneDrive")
     pythonPath = "C:\ProgramData\Anaconda3\python.exe"
     scriptPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
     logPath = Environ("USERPROFILE") & "\Documents\error_log_wordexport.txt"
-    configPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\config.xlsx"  ' <-- adjust path as needed
+    configPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\config.xlsx"
 
     ' Reference data sheet in the already open workbook
     Set wsData = ThisWorkbook.Sheets("OI-SOS")
@@ -34,24 +38,57 @@ Sub ExportOI_SOS()
     Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
     On Error GoTo 0
 
-    Set wsConfig = wbConfig.Sheets(1)  ' <-- adjust sheet index/name as needed
+    Set wsConfig = wbConfig.Sheets(1)
 
-    ' Read col_offset from a fixed cell, e.g. E1
-    colOffset = CInt(wsConfig.Range("E1").Value)  ' <-- adjust cell as needed
-
-    ' Find last row of config table (columns A and B)
+    ' Find last row of config table
     lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
 
     ' Build args by iterating config rows (skip header in row 1)
     args = ""
     For i = 2 To lastRow
-        placeholder = Trim(wsConfig.Cells(i, 1).Value)   ' Column A: placeholder
-        rowNum = CInt(wsConfig.Cells(i, 2).Value)         ' Column B: row number
+        section = Trim(wsConfig.Cells(i, 1).Value)      ' Column A: section title
+        subtitle = Trim(wsConfig.Cells(i, 2).Value)     ' Column B: subtitle
+        placeholder = Trim(wsConfig.Cells(i, 3).Value)  ' Column C: placeholder
 
-        If placeholder = "" Then GoTo NextRow
+        If section = "" Or subtitle = "" Or placeholder = "" Then GoTo NextRow
 
-        ' Read value from OI-SOS sheet: column C (3) + offset
-        value = wsData.Cells(rowNum, 3 + colOffset).Value
+        ' Step 1: find the section title in col A of OI-SOS
+        Set foundCell = wsData.Columns("A").Find( _
+            What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+
+        If foundCell Is Nothing Then
+            Debug.Print "Section not found: " & section
+            GoTo NextRow
+        End If
+
+        sectionRow = foundCell.Row
+
+        ' Step 2: find the next section title in col A to bound the search
+        Dim nextCell As Range
+        Set nextCell = wsData.Columns("A").FindNext(foundCell)
+        If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
+            nextSectionRow = wsData.Cells(wsData.Rows.Count, "B").End(xlUp).Row
+        Else
+            nextSectionRow = nextCell.Row - 1
+        End If
+
+        ' Step 3: find the subtitle in col B between sectionRow and nextSectionRow
+        subtitleRow = 0
+        Dim j As Long
+        For j = sectionRow To nextSectionRow
+            If Trim(wsData.Cells(j, 2).Value) = subtitle Then
+                subtitleRow = j
+                Exit For
+            End If
+        Next j
+
+        If subtitleRow = 0 Then
+            Debug.Print "Subtitle not found: " & subtitle & " under section: " & section
+            GoTo NextRow
+        End If
+
+        ' Step 4: read value from col C of that row
+        value = wsData.Cells(subtitleRow, 3).Value
 
         ' Append as placeholder=value pair
         args = args & " """ & placeholder & "=" & value & """"
