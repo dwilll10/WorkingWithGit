@@ -21,6 +21,8 @@ Sub ExportOI_SOS()
     Dim subtitleRow As Long
     Dim nextSectionRow As Long
     Dim foundCell As Range
+    Dim nextCell As Range
+    Dim j As Long
 
     oneDrivePath = Environ("OneDrive")
     pythonPath = "C:\ProgramData\Anaconda3\python.exe"
@@ -46,13 +48,13 @@ Sub ExportOI_SOS()
     ' Build args by iterating config rows (skip header in row 1)
     args = ""
     For i = 2 To lastRow
-        section = Trim(wsConfig.Cells(i, 1).Value)      ' Column A: section title
-        subtitle = Trim(wsConfig.Cells(i, 2).Value)     ' Column B: subtitle
-        placeholder = Trim(wsConfig.Cells(i, 3).Value)  ' Column C: placeholder
+        section = Trim(wsConfig.Cells(i, 1).Value)
+        subtitle = Trim(wsConfig.Cells(i, 2).Value)
+        placeholder = Trim(wsConfig.Cells(i, 3).Value)
 
         If section = "" Or subtitle = "" Or placeholder = "" Then GoTo NextRow
 
-        ' Step 1: find the section title in col A of OI-SOS
+        ' Step 1: find section in col A of OI-SOS
         Set foundCell = wsData.Columns("A").Find( _
             What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
 
@@ -63,8 +65,7 @@ Sub ExportOI_SOS()
 
         sectionRow = foundCell.Row
 
-        ' Step 2: find the next section title in col A to bound the search
-        Dim nextCell As Range
+        ' Step 2: find next section to bound the search
         Set nextCell = wsData.Columns("A").FindNext(foundCell)
         If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
             nextSectionRow = wsData.Cells(wsData.Rows.Count, "B").End(xlUp).Row
@@ -72,9 +73,8 @@ Sub ExportOI_SOS()
             nextSectionRow = nextCell.Row - 1
         End If
 
-        ' Step 3: find the subtitle in col B between sectionRow and nextSectionRow
+        ' Step 3: find subtitle in col B within the bounded range
         subtitleRow = 0
-        Dim j As Long
         For j = sectionRow To nextSectionRow
             If Trim(wsData.Cells(j, 2).Value) = subtitle Then
                 subtitleRow = j
@@ -87,11 +87,11 @@ Sub ExportOI_SOS()
             GoTo NextRow
         End If
 
-        ' Step 4: read value from col C of that row
+        ' Step 4: read value from col C
         value = wsData.Cells(subtitleRow, 3).Value
-
-        ' Append as placeholder=value pair
+        MsgBox "About to append: " & placeholder & "=" & value
         args = args & " """ & placeholder & "=" & value & """"
+        MsgBox "Args now: " & args
 
 NextRow:
     Next i
@@ -100,7 +100,11 @@ NextRow:
     wbConfig.Close SaveChanges:=False
     Application.ScreenUpdating = True
 
+    MsgBox "Final Args: " & args, vbInformation, "Debug"
+
     command = """" & pythonPath & """ """ & scriptPath & """" & args & " > """ & logPath & """ 2>&1"
+
+    MsgBox "Command: " & command, vbInformation, "Debug"
 
     Set wsh = CreateObject("WScript.Shell")
     Debug.Print "Command: " & command
