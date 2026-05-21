@@ -2,11 +2,13 @@ Sub ExportOI_SOS()
     Dim pythonPath As String
     Dim scriptPath As String
     Dim logPath As String
+    Dim configPath As String
     Dim command As String
     Dim wsh As Object
     Dim oneDrivePath As String
     Dim wsData As Worksheet
     Dim wsConfig As Worksheet
+    Dim wbConfig As Workbook
     Dim exitCode As Long
     Dim args As String
     Dim placeholder As String
@@ -20,13 +22,22 @@ Sub ExportOI_SOS()
     pythonPath = "C:\ProgramData\Anaconda3\python.exe"
     scriptPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
     logPath = Environ("USERPROFILE") & "\Documents\error_log_wordexport.txt"
+    configPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\config.xlsx"  ' <-- adjust path as needed
 
-    ' Reference sheets in the already open workbook
+    ' Reference data sheet in the already open workbook
     Set wsData = ThisWorkbook.Sheets("OI-SOS")
-    Set wsConfig = ThisWorkbook.Sheets("Config")   ' <-- your config sheet name here
 
-    ' Read col_offset from a fixed cell in the Config sheet, e.g. E1
-    colOffset = CInt(wsConfig.Range("E1").Value)   ' <-- adjust cell as needed
+    ' Open config workbook silently, read, then close
+    Application.ScreenUpdating = False
+
+    On Error GoTo ConfigError
+    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
+    On Error GoTo 0
+
+    Set wsConfig = wbConfig.Sheets(1)  ' <-- adjust sheet index/name as needed
+
+    ' Read col_offset from a fixed cell, e.g. E1
+    colOffset = CInt(wsConfig.Range("E1").Value)  ' <-- adjust cell as needed
 
     ' Find last row of config table (columns A and B)
     lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
@@ -48,6 +59,10 @@ Sub ExportOI_SOS()
 NextRow:
     Next i
 
+    ' Close config workbook without saving
+    wbConfig.Close SaveChanges:=False
+    Application.ScreenUpdating = True
+
     command = """" & pythonPath & """ """ & scriptPath & """" & args & " > """ & logPath & """ 2>&1"
 
     Set wsh = CreateObject("WScript.Shell")
@@ -61,4 +76,11 @@ NextRow:
     End If
 
     Set wsh = Nothing
+    Exit Sub
+
+ConfigError:
+    Application.ScreenUpdating = True
+    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
+    Exit Sub
+
 End Sub
