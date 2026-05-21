@@ -72,11 +72,12 @@ Sub ExportOI_SOS()
             What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
 
         If foundCell Is Nothing Then
-            Debug.Print "Section not found: " & section
+            MsgBox "SECTION NOT FOUND: '" & section & "'", vbExclamation, "Step 1 Failed"
             GoTo NextRow
         End If
 
         sectionRow = foundCell.Row
+        MsgBox "Section '" & section & "' found at row " & sectionRow, vbInformation, "Step 1 OK"
 
         ' Step 2: find next section to bound the search
         Set nextCell = wsData.Columns("A").FindNext(foundCell)
@@ -85,6 +86,8 @@ Sub ExportOI_SOS()
         Else
             nextSectionRow = nextCell.Row - 1
         End If
+
+        MsgBox "Searching col B from row " & sectionRow & " to " & nextSectionRow, vbInformation, "Step 2"
 
         ' Step 3: find subtitle in col B within the bounded range
         subtitleRow = 0
@@ -96,9 +99,13 @@ Sub ExportOI_SOS()
         Next j
 
         If subtitleRow = 0 Then
-            Debug.Print "Subtitle not found: " & subtitle & " under section: " & section
+            MsgBox "SUBTITLE NOT FOUND: '" & subtitle & "'" & vbNewLine & _
+                   "Col B values searched:" & vbNewLine & DebugColBValues(wsData, sectionRow, nextSectionRow), _
+                   vbExclamation, "Step 3 Failed"
             GoTo NextRow
         End If
+
+        MsgBox "Subtitle '" & subtitle & "' found at row " & subtitleRow, vbInformation, "Step 3 OK"
 
         ' Step 4: read value from col C
         value = wsData.Cells(subtitleRow, 3).Value
@@ -138,3 +145,17 @@ ConfigError:
     Exit Sub
 
 End Sub
+
+
+Function DebugColBValues(ws As Worksheet, startRow As Long, endRow As Long) As String
+    Dim result As String
+    Dim k As Long
+    Dim cellVal As String
+    For k = startRow To endRow
+        cellVal = ws.Cells(k, 2).Value
+        If Trim(cellVal) <> "" Then
+            result = result & "Row " & k & ": '" & cellVal & "'" & vbNewLine
+        End If
+    Next k
+    DebugColBValues = result
+End Function
