@@ -1,6 +1,6 @@
 for name, fn in zip(fn_names, function_calls):
                 t_fn = time.time()
-                was_pending = name in pending_fn or name in pending_fs
+                was_pending = name.lower() in pending_fn or name.lower() in pending_fs  # <
                 result = tracker.run(name, fn)
                 if was_pending and result is not False:
                     sheets_written_this_run.add(name)
