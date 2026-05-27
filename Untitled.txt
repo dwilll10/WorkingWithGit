@@ -1,3 +1,13 @@
+for name, fn in zip(fn_names, function_calls):
+                t_fn = time.time()
+                was_pending = name in pending_fn or name in pending_fs
+                result = tracker.run(name, fn)
+                if was_pending and result is not False:
+                    sheets_written_this_run.add(name)
+                    logger.info(f"Marked '{name}' as written this run.")
+                logger.info(f"TIMING: {name} = {time.time() - t_fn:.2f}s")
+
+
 10:34:39 [INFO] gk_footing - Skipping 'Tie-Through' — sheet exists and no source sheets changed.
 10:34:39 [INFO] gk_footing - Skipping 'Tie-Through-fn to fn' — sheet exists and no source sheets changed.
 10:34:39 [INFO] gk_footing - Skipping 'Tie-Through fs to fs' — sheet exists and no source sheets changed.
