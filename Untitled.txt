@@ -1,7 +1,17 @@
-09:53:09 [INFO] gk_footing - Read back 'fsTofn': 66 rows, columns: ['FS_Line', 'FS_Line_Nr', 'FS_Line_Title', 'FN_Report_Name', 'FN_Tab', 'FN_Line', 'FN_Line_Nr', 'FN_Line_Title', 'Match Value', 'Match Line Title', 'FN Amount', 'FS Amount', 'Difference']
-09:53:09 [INFO] gk_footing - Read back 'fnTofn': 30 rows, columns: ['FN_Line_One', 'FN_Line_Nr_One', 'FN_Line_Title_One', 'FN_Report_Name_One', 'FN_Line_Two', 'FN_Line_Nr_Two', 'FN_Line_Title_Two', 'FN_Report_Name_Two', 'Match Value', 'Match Line Title', 'FN Amount One', 'FN Amount Two', 'Difference']
-09:53:09 [INFO] gk_footing - Read back 'fsTofs': 6 rows, columns: ['FS_Line_One', 'FS_Line_Nr_One', 'FS_Line_Title_One', 'FS_Report_Name_One', 'FS_Line_Two', 'FS_Line_Nr_Two', 'FS_Line_Title_Two', 'FS_Report_Name_Two', 'Match Value', 'Match Line Title', 'FS Amount One', 'FS Amount Two', 'Difference']
-09:53:09 [INFO] gk_footing - Read back 'internal_data': 31 rows, columns: ['Line_One', 'Line_Nr_One', 'Line_Title_One', 'Line_Two', 'Line_Nr_Two', 'Line_Title_Two', 'Match Value', 'Match Line Title', 'RN Amount One', 'RN Amount Two', 'Difference']
+else:
+                t0=time.time()
+                fsFn = stmt.fs_to_fn(fsTofn)
+                logger.info(f"fsFn: {len(fsFn)} rows, columns: {list(fsFn.columns)}")   # <
+                fnFn = stmt.fn_to_fn(fnTofn)
+                logger.info(f"fnFn: {len(fnFn)} rows, columns: {list(fnFn.columns)}")   # <
+                fsFs = stmt.fs_to_fs(fsTofs)
+                logger.info(f"fsFs: {len(fsFs)} rows, columns: {list(fsFs.columns)}")   # <
+                inte = stmt.internal_tie(internal_data)
+                logger.info(f"inte: {len(inte)} rows, columns: {list(inte.columns)}")   # <
+                main = stmt.stmt_tie(fsFn, fnFn, fsFs, inte)
+                logger.info(f"main: {len(main)} rows")
+                sheet = df_to_sheet(main, tabName, wb, skip_if_exists=False)
+                logger.info(f"TIMING: STMT TO STMT = {time.time()-t0:.2f}s")
 
 
 
