@@ -1,3 +1,9 @@
+# <<< debug — remove once confirmed working
+                for name, df in [('fsTofn', fsTofn), ('fnTofn', fnTofn), ('fsTofs', fsTofs), ('internal_data', internal_data)]:
+                    logger.info(f"Read back '{name}': {len(df)} rows, columns: {list(df.columns)}")
+                # <
+
+
 tabName = 'STMT to STMT'
             tie_sheets_all_existed = all(df.empty for df in [fsTofn, fnTofn, fsTofs, internal_data])  # <
 
