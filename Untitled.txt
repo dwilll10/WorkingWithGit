@@ -1,6 +1,34 @@
 tabName = 'STMT to STMT'
             tie_sheets_all_existed = all(df.empty for df in [fsTofn, fnTofn, fsTofs, internal_data])  # <
 
+            if tie_sheets_all_existed and tabName not in existing_sheets:  # <
+                # tie-through sheets were skipped but STMT to STMT is missing — read back from workbook  # <
+                logger.info("Tie-through sheets exist but STMT to STMT is missing — reading from workbook sheets.")  # <
+                fsTofn       = wb.sheets['Tie-Through'].range('A1').options(pd.DataFrame, expand='table', header=True).value  # <
+                fnTofn       = wb.sheets['Tie-Through-fn to fn'].range('A1').options(pd.DataFrame, expand='table', header=True).value  # <
+                fsTofs       = wb.sheets['Tie-Through fs to fs'].range('A1').options(pd.DataFrame, expand='table', header=True).value  # <
+                internal_data = wb.sheets['Tie-Through Internal'].range('A1').options(pd.DataFrame, expand='table', header=True).value  # <
+                tie_sheets_all_existed = False  # now we have data, let the block below run  # <
+
+            if tie_sheets_all_existed and tabName in existing_sheets:
+                logger.info(f"Skipping '{tabName}' — all tie-through sheets already exist.")
+            else:
+                t0=time.time()
+                fsFn = stmt.fs_to_fn(fsTofn)
+                fnFn = stmt.fn_to_fn(fnTofn)
+                fsFs = stmt.fs_to_fs(fsTofs)
+                inte = stmt.internal_tie(internal_data)
+                main = stmt.stmt_tie(fsFn, fnFn, fsFs, inte)
+                logger.info(f"main: {len(main)} rows")
+                sheet = df_to_sheet(main, tabName, wb, skip_if_exists=False)
+                logger.info(f"TIMING: STMT TO STMT = {time.time()-t0:.2f}s")
+
+
+
+
+tabName = 'STMT to STMT'
+            tie_sheets_all_existed = all(df.empty for df in [fsTofn, fnTofn, fsTofs, internal_data])  # <
+
             if tie_sheets_all_existed and tabName in existing_sheets:  # <
                 logger.info(f"Skipping '{tabName}' — all tie-through sheets already exist.")  # <
             else:  # <
