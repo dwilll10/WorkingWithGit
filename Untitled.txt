@@ -1,8 +1,167 @@
-09:58:33 [INFO] gk_footing - Tie-through sheets exist but STMT to STMT is missing — reading from workbook sheets.
-09:58:33 [INFO] gk_footing - fsTofn full columns: ['FS_Line', 'FS_Line_Nr', 'FS_Line_Title', 'FN_Report_Name', 'FN_Tab', 'FN_Line', 'FN_Line_Nr', 'FN_Line_Title', 'Match Value', 'Match Line Title', 'FN Amount', 'FS Amount', 'Difference']
-09:58:33 [INFO] gk_footing - fsTofn first row: {'FS_Line': 'Accounts Receivable, Net', 'FS_Line_Nr': 24.0, 'FS_Line_Title': 'Total Assets', 'FN_Report_Name': 'fn2', 'FN_Tab': 'NonEntityAssets', 'FN_Line': 'With The Public', 'FN_Line_Nr': 26.0, 'FN_Line_Title': 'Total Assets', 'Match Value': 'Yes', 'Match Line Title': 'Yes', 'FN Amount': 439971.0, 'FS Amount': 439971.0, 'Difference': 0.0}
-09:58:33 [ERROR] gk_footing - Error in reshape_tie: 'FS_Report_Name'
-09:58:33 [ERROR] gk_footing - Error in updateFile: object of type 'NoneType' has no len()
+import Tie_bs_fn as tie
+import Tie_fn_fn as tie_fn
+import Tie_fs_fs as tie_fs
+import internal_fn as internal
+import xlwings as xw
+import pandas as pd
+import mainScript as mn
+import numpy as np
+import file_paths as dir_p
+import robust_utils as ru
+logger = ru.logger
+
+
+# ----------------------------------------
+# Generalized reshaping function for any tie type
+# ----------------------------------------
+
+def reshape_tie(main, titles, fallbacks, amounts, section_label, report_names=None):
+    """
+    General function to reshape tie-through data into a uniform format.
+    
+    Parameters:
+    - main (DataFrame): The input data.
+    - titles (list): Two column names for the line titles.
+    - fallbacks (list): Columns to fall back to if title values are missing.
+    - amounts (list): Two column names for the amount values.
+    - section_label (str): Label to identify the section type (e.g., 'FS to FN').
+    - report_names (list, optional): Report name columns to prefix to titles.
+    
+    Returns:
+    - reshaped_df (DataFrame): The reshaped, sectioned data.
+    """
+    try:
+        # Fill missing titles with fallback values, optionally add report names
+        for i in range(2):
+            title_col = titles[i]
+            fallback_col = fallbacks[i]
+            report_col = report_names[i] if report_names else None
+
+            # Use fallback if title is empty
+            main[title_col] = np.where(
+                main[title_col].fillna('').str.strip() == '',
+                main[fallback_col],
+                main[title_col]
+            )
+
+            # Prepend report name if provided
+            if report_col:
+                main[title_col] = main[report_col].fillna('') + ' - ' + main[title_col]
+
+        # Keep only the relevant columns for reshaping
+        diff_col = 'Difference'
+        selected_cols = titles + amounts + [diff_col]
+        main = main[selected_cols]
+        
+
+        reshaped_rows = []
+        for _, row in main.iterrows():
+            # Add FS or FN lines, difference line, and spacing
+            reshaped_rows.append(["", "", ""])
+            reshaped_rows.append([row[titles[0]], row[amounts[0]], ""])
+            reshaped_rows.append([row[titles[1]], row[amounts[1]], ""])
+            reshaped_rows.append(["", "", row[diff_col]])
+            reshaped_rows.append(["", "", ""])
+
+        # Create final reshaped DataFrame
+        reshaped_df = pd.DataFrame(reshaped_rows, columns=["STATEMENT LINE NUMBER", "Amount", "Difference"])
+
+        # Add empty column for user comments
+        reshaped_df['COMMENTS/EXPLANATIONS'] = ''
+
+        # Add section header rows
+        blank_row = pd.DataFrame([["", "", "", ""]], columns=reshaped_df.columns)
+        section_header = pd.DataFrame([[section_label, "", "", ""]], columns=reshaped_df.columns)
+
+        # Concatenate: blank row → section label → blank row → data
+        reshaped_df = pd.concat([blank_row, section_header, reshaped_df], ignore_index=True)
+
+        return reshaped_df
+
+    except Exception as e:
+        logger.error(f"Error in reshape_tie: {e}")
+        return None
+
+# ----------------------------------------
+# Wrapper functions for specific tie types
+# ----------------------------------------
+
+def fs_to_fn(main):
+    return reshape_tie(
+        main,
+        titles=['FS_Line_Title', 'FN_Line_Title'],
+        fallbacks=['FS_Line', 'FN_Line'],
+        amounts=['FS Amount', 'FN Amount'],
+        section_label='Tie-Through FS to FN',
+        report_names=['FS_Report_Name', 'FN_Report_Name']
+    )
+
+def fn_to_fn(main):
+    return reshape_tie(
+        main,
+        titles=['FN_Line_Title_One', 'FN_Line_Title_Two'],
+        fallbacks=['FN_Line_One', 'FN_Line_Two'],
+        amounts=['FN Amount One', 'FN Amount Two'],
+        section_label='Tie-Through FN to FN',
+        report_names=['FN_Report_Name_One', 'FN_Report_Name_Two']
+    )
+
+def fs_to_fs(main):
+    return reshape_tie(
+        main,
+        titles=['FS_Line_Title_One', 'FS_Line_Title_Two'],
+        fallbacks=['FS_Line_One', 'FS_Line_Two'],
+        amounts=['FS Amount One', 'FS Amount Two'],
+        section_label='Tie-Through FS to FS',
+        report_names=['FS_Report_Name_One', 'FS_Report_Name_Two']
+    )
+
+def internal_tie(main):
+    return reshape_tie(
+        main,
+        titles=['Line_Title_One', 'Line_Title_Two'],
+        fallbacks=['Line_One', 'Line_Two'],
+        amounts=['RN Amount One', 'RN Amount Two'],
+        section_label='Internal Tie-Through',
+        report_names=['Report_Name', 'Report_Name']  # Same report name used for both sides
+    )
+
+# ----------------------------------------
+# Combine all reshaped tie DataFrames
+# ----------------------------------------
+
+def stmt_tie(*sections):
+    """
+    Concatenates all reshaped tie-through sections into one DataFrame.
+    """
+    return pd.concat(sections, ignore_index=True)
+
+# ----------------------------------------
+# Main script logic
+# ----------------------------------------
+
+if __name__ == "__main__":    
+    # Open workbook
+    app = xw.apps.active
+    wb = app.books.open(dir_p.gk_template())
+
+    # Extract raw data from Excel sheets using external modules
+    fsTofn = tie.tie_through('Tie-Through', wb)
+    fnTofn = tie_fn.tie_through('Tie-Through-fn to fn', wb)
+    fsTofs = tie_fs.tie_through('Tie-Through fs to fs', wb)
+    internal_data = internal.tie_through('Tie-Through Internal', wb)
+
+    # Reshape each section
+    fsFn = fs_to_fn(fsTofn)
+    fnFn = fn_to_fn(fnTofn)
+    fsFs = fs_to_fs(fsTofs)
+    inte = internal_tie(internal_data)
+
+    # Combine all reshaped sections
+    main = stmt_tie(fsFn, fnFn, fsFs, inte)
+
+    # Write final combined DataFrame to Excel
+    mn.df_to_sheet(main, 'STMT to STMT', wb)
 
 
 
