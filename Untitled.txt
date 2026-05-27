@@ -1,6 +1,9 @@
-fsTofn = wb.sheets['Tie-Through'].range('A1').options(pd.DataFrame, expand='table', header=True).value.reset_index()
-                logger.info(f"fsTofn full columns: {list(fsTofn.columns)}")  # <
-                logger.info(f"fsTofn first row: {fsTofn.iloc[0].to_dict()}")  # <
+09:58:33 [INFO] gk_footing - Tie-through sheets exist but STMT to STMT is missing — reading from workbook sheets.
+09:58:33 [INFO] gk_footing - fsTofn full columns: ['FS_Line', 'FS_Line_Nr', 'FS_Line_Title', 'FN_Report_Name', 'FN_Tab', 'FN_Line', 'FN_Line_Nr', 'FN_Line_Title', 'Match Value', 'Match Line Title', 'FN Amount', 'FS Amount', 'Difference']
+09:58:33 [INFO] gk_footing - fsTofn first row: {'FS_Line': 'Accounts Receivable, Net', 'FS_Line_Nr': 24.0, 'FS_Line_Title': 'Total Assets', 'FN_Report_Name': 'fn2', 'FN_Tab': 'NonEntityAssets', 'FN_Line': 'With The Public', 'FN_Line_Nr': 26.0, 'FN_Line_Title': 'Total Assets', 'Match Value': 'Yes', 'Match Line Title': 'Yes', 'FN Amount': 439971.0, 'FS Amount': 439971.0, 'Difference': 0.0}
+09:58:33 [ERROR] gk_footing - Error in reshape_tie: 'FS_Report_Name'
+09:58:33 [ERROR] gk_footing - Error in updateFile: object of type 'NoneType' has no len()
+
 
 
 
