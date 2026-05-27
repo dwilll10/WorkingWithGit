@@ -1,753 +1,343 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct  3 15:20:23 2024
-
-@author: EDWIN.TRUJILLO
-"""
-
-import time
-import RR_updateFn
-import RR_updateFs
-import time
-import xlwings as xw
-import Tie_bs_fn
-import Tie_fn_fn
-import Tie_fs_fs
-import internal_fn
-import pandas as pd
-import format_currency as fc
-import stmt
-import file_paths as dir_p
 import os
-from pathlib import Path
-import sys
+import re
+import pandas as pd
+import file_paths as dir_p
+import warnings
+import cProfile
 import robust_utils as ru
+
 logger = ru.logger
 
-
-
-
-def df_to_sheet(dataframe, sheet_name, wb, after_sheet_name='Start', skip_if_exists = True):
-    try:
-        # Reset index and drop any existing index column if present
-        dataframe = dataframe.reset_index(drop=True)
-
-        # Check if the sheet already exists, if it does
-        existing_sheets = [sheet.name for sheet in wb.sheets]
-        if sheet_name in existing_sheets:
-            if skip_if_exists:
-                logger.info(f"Sheet '{sheet_name}' already exists. Skipping")
-                return None
-            wb.sheets[sheet_name].delete()  # Delete the existing sheet
-            time.sleep(0.1)  # Optional: Pause briefly to ensure deletion is processed
-
-        # Determine where to insert the new sheet
-        if after_sheet_name in existing_sheets:
-            after_index = existing_sheets.index(after_sheet_name)
-            new_sheet = wb.sheets.add(sheet_name, after=wb.sheets[after_index])
-        else:
-            new_sheet = wb.sheets.add(sheet_name)
-
-        # Write the DataFrame to the new sheet, including headers
-        new_sheet.range('A1').options(index=False, header=True).value = dataframe
-
-        # Adjust column widths
-        for i in range(dataframe.shape[1]):
-            # Ensure column values are converted to string and handle NaN correctly
-            column_values = dataframe.iloc[:, i].fillna('').astype(str)
-
-            # Get the max length of the values in the column (including header)
-            max_length = max(column_values.map(len).max(), len(str(dataframe.columns[i])))  # Get max length including header
-
-            # Set column width with padding
-            new_sheet.range(new_sheet.cells(1, i + 1), new_sheet.cells(1, i + 1)).column_width = max_length + 2  # Add some padding
-
-        # Special handling for column B
-        if sheet_name not in ['FN10', 'FN19','FN21','FN25','FN30SNCP','RSI-SCA','RSI-LAND','FN30SNC']:  # If the sheet is not in the excluded list
-            # Set column B width to 5
-            new_sheet.range('B:B').column_width = 5  
-
-            # Center-align all cells in column B from row 1 to the last row (including the header)
-            new_sheet.range(f'B1:B{dataframe.shape[0] + 1}').api.HorizontalAlignment = xw.constants.HAlign.xlHAlignCenter
-
-        # Call custom formatting function (if needed)
-        fc.cur(new_sheet, dataframe)   
-
-        # Make column headers bold
-        header_range = f'A1:{new_sheet.cells(1, dataframe.shape[1]).address}'
-        new_sheet.range(header_range).api.Font.Bold = True  # Apply bold to the header row
-
-        # If sheet name is "STMT to STMT", set the header background color to blue
-        if sheet_name == "STMT to STMT":
-            new_sheet.range(header_range).api.Interior.Color = 16763904  # Blue color
-            new_sheet.range('1:1').row_height = 45  # Set header row height to 45
-            new_sheet.range('A:A').column_width = 63 
-            new_sheet.range('B:B').column_width = 18 
-            new_sheet.range('C:C').column_width = 17 
-            new_sheet.range('D:D').column_width = 39 
-            new_sheet.range('A:A').api.WrapText = True  # Enable text wrap
-            
-            # Freeze top row# Freeze header row
-            new_sheet.activate()
-            new_sheet.api.Application.ActiveWindow.FreezePanes = False  # Unfreeze first
-            new_sheet.range('A2').select()  # Select cell below the header
-            new_sheet.api.Application.ActiveWindow.FreezePanes = True
-        
-            # Center align header values
-            header_range_obj = new_sheet.range(header_range)
-            header_range_obj.api.HorizontalAlignment = xw.constants.HAlign.xlHAlignCenter
-            header_range_obj.api.VerticalAlignment = xw.constants.VAlign.xlVAlignCenter
-        
-            # Add borders to the header row (A1 to last column)
-            new_sheet.range(header_range).api.Borders(xw.constants.BordersIndex.xlEdgeBottom).LineStyle = 1  # Bottom border
-            new_sheet.range(header_range).api.Borders(xw.constants.BordersIndex.xlEdgeBottom).Color = 0  # Black color for the border
-            new_sheet.range(header_range).api.Borders(xw.constants.BordersIndex.xlEdgeBottom).Weight = 2  # Border thickness
-        
-            # Add vertical borders between each column in the header row
-            for col in range(1, dataframe.shape[1]):  # Loop through columns, excluding the last column
-                col_range = new_sheet.range(new_sheet.cells(1, col), new_sheet.cells(1, col + 1))  # Column range from header to next column
-                col_range.api.Borders(xw.constants.BordersIndex.xlEdgeRight).LineStyle = 1  # Right border for each column
-                col_range.api.Borders(xw.constants.BordersIndex.xlEdgeRight).Color = 0  # Black color for the vertical border
-                col_range.api.Borders(xw.constants.BordersIndex.xlEdgeRight).Weight = 2  # Border thickness
-        
-            # Add right border to the first column (A1)
-            new_sheet.range('A1').api.Borders(xw.constants.BordersIndex.xlEdgeRight).LineStyle = 1  # Right border for the first column
-            new_sheet.range('A1').api.Borders(xw.constants.BordersIndex.xlEdgeRight).Color = 0  # Black color for the vertical border
-            new_sheet.range('A1').api.Borders(xw.constants.BordersIndex.xlEdgeRight).Weight = 2  # Border thickness
-        
-            # The "Difference" column is the third column (index 3, starting from 1)
-            difference_column_index = 3  # Difference is in the third column (index 3)
-        
-            # Loop through all rows and apply borders if there's a value in column 3
-            # for row in range(2, dataframe.shape[0] + 2):  # Rows start at 2 (skip header row)
-            #     # Get the value in the "Difference" column
-            #     difference_value = new_sheet.cells(row, difference_column_index).value
-        
-            #     if difference_value not in [None, '']:  # Only proceed if there's a value
-            #         # Target the cell in column 3, current row
-            #         col3_cell = new_sheet.cells(row, difference_column_index)
-        
-            #         # --- Bottom double border on column 3 ---
-            #         bottom_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
-            #         bottom_border.LineStyle = xw.constants.LineStyle.xlDouble  # DOUBLE line
-            #         bottom_border.Color = 0
-            #         bottom_border.Weight = 4
-        
-            #         # --- Top border on column 3 ---
-            #         top_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeTop)
-            #         top_border.LineStyle = 1  # Solid
-            #         top_border.Color = 0
-            #         top_border.Weight = 2
-        
-            #         # --- Bottom border across columns 1 to 3 in the next row ---
-            #         next_row_range = new_sheet.range(
-            #             new_sheet.cells(row + 1, 1),
-            #             new_sheet.cells(row + 1, difference_column_index)
-            #         )
-        
-            #         next_row_border = next_row_range.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
-            #         next_row_border.LineStyle = 1  # Solid
-            #         next_row_border.Color = 0
-            #         next_row_border.Weight = 3
-
-            #         # --- Fill the cell to the right of the "Difference" column (column 4) with white color ---
-            #         cell_right = new_sheet.cells(row, difference_column_index + 1)
-            #         cell_right.api.Interior.Color = 13434828  # White color
-                                
-                   
-            #         # Look three rows down (row + 3), column A
-            #         value_in_column_A_third_row_down = new_sheet.cells(row + 3, 1).value
-            #         valid_values = ["Tie-Through FS to FN", "Tie-Through FN to FN", "Tie-Through FS to FS", "Internal Tie-Through"]
-                    
-            #         # Determine how far to extend the border
-            #         if value_in_column_A_third_row_down in valid_values:
-            #             # Move value up one row
-            #             new_sheet.cells(row + 2, 1).value = value_in_column_A_third_row_down
-            #             new_sheet.cells(row + 2, 1).api.Font.Bold = True
-                    
-            #             # Delete the original row
-            #             new_sheet.range(f"A{row + 3}").api.EntireRow.Delete()
-                    
-            #             # Extend the bottom border range to column 4 (include column to the right)
-            #             border_end_col = 4
-            #         else:
-            #             # Only go to column 3
-            #             border_end_col = 3
-                    
-            #         # --- Bottom border across columns 1 to border_end_col in the next row ---
-            #         next_row_range = new_sheet.range(
-            #             new_sheet.cells(row + 1, 1),
-            #             new_sheet.cells(row + 1, border_end_col)
-            #         )
-                    
-            #         next_row_border = next_row_range.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
-            #         next_row_border.LineStyle = 1  # Solid
-            #         next_row_border.Color = 0
-                    
-            #         # Adjust weight dynamically based on `border_end_col`
-            #         if border_end_col == 4:
-            #             next_row_border.Weight = 4  # Thicker border for extended range
-            #         else:
-            #             next_row_border.Weight = 3  # Default thickness
-
-            # Read the entire Difference column in ONE COM call instead of per-row
-            # Read data in bulk
-            difference_column_index = 3
-            last_data_row = dataframe.shape[0] + 1
-            difference_range = new_sheet.range(
-                new_sheet.cells(2, difference_column_index),
-                new_sheet.cells(last_data_row, difference_column_index)
-            )
-            difference_values = difference_range.value
-            if not isinstance(difference_values, list):
-                difference_values = [difference_values]
-            
-            # Read column A, including some buffer for lookahead
-            col_a_range = new_sheet.range(
-                new_sheet.cells(2, 1),
-                new_sheet.cells(last_data_row + 5, 1)
-            )
-            col_a_values = col_a_range.value
-            if not isinstance(col_a_values, list):
-                col_a_values = [col_a_values]
-            
-            valid_values = ["Tie-Through FS to FN", "Tie-Through FN to FN",
-                            "Tie-Through FS to FS", "Internal Tie-Through"]
-            
-            # ===== PASS 1: Collect plans, no sheet modifications =====
-            border_plans = []   # list of dicts describing what to do at each row
-            delete_rows = []    # list of rows to delete (will process in reverse at the end)
-            
-            for i, difference_value in enumerate(difference_values):
-                row = i + 2
+#warninig message will not not be displayed in the console
+warnings.filterwarnings("ignore", message="Data Validation extension is not supported")
+ 
+mapping_file = dir_p.mapping_table()           
                 
-                if difference_value in [None, '']:
-                    continue
-                
-                # Look 3 rows down in column A using in-memory data
-                lookahead_idx = i + 3
-                value_3_down = col_a_values[lookahead_idx] if lookahead_idx < len(col_a_values) else None
-                
-                if value_3_down in valid_values:
-                    # Will move this value up one row and delete the original row
-                    border_plans.append({
-                        'row': row,
-                        'move_value_to_row': row + 2,
-                        'move_value': value_3_down,
-                        'border_end_col': 4,
-                    })
-                    delete_rows.append(row + 3)
-                else:
-                    border_plans.append({
-                        'row': row,
-                        'move_value_to_row': None,
-                        'move_value': None,
-                        'border_end_col': 3,
-                    })
-            
-            # ===== PASS 2a: Apply borders and value moves (doesn't shift rows) =====
-            for plan in border_plans:
-                row = plan['row']
-                col3_cell = new_sheet.cells(row, difference_column_index)
-                
-                # Bottom double border on column 3
-                bottom_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
-                bottom_border.LineStyle = xw.constants.LineStyle.xlDouble
-                bottom_border.Color = 0
-                bottom_border.Weight = 4
-                
-                # Top border on column 3
-                top_border = col3_cell.api.Borders(xw.constants.BordersIndex.xlEdgeTop)
-                top_border.LineStyle = 1
-                top_border.Color = 0
-                top_border.Weight = 2
-                
-                # Fill cell right of Difference
-                new_sheet.cells(row, difference_column_index + 1).api.Interior.Color = 13434828
-                
-                # Move value up one row if needed (this is a write, not a delete — safe)
-                if plan['move_value'] is not None:
-                    new_sheet.cells(plan['move_value_to_row'], 1).value = plan['move_value']
-                    new_sheet.cells(plan['move_value_to_row'], 1).api.Font.Bold = True
-                
-                # Bottom border across row + 1
-                next_row_range = new_sheet.range(
-                    new_sheet.cells(row + 1, 1),
-                    new_sheet.cells(row + 1, plan['border_end_col'])
-                )
-                next_row_border = next_row_range.api.Borders(xw.constants.BordersIndex.xlEdgeBottom)
-                next_row_border.LineStyle = 1
-                next_row_border.Color = 0
-                next_row_border.Weight = 4 if plan['border_end_col'] == 4 else 3
-            
-            # ===== PASS 2b: Delete rows in REVERSE order =====
-            # Deleting row 50 first, then row 30 — means row 30 is still "row 30" when we delete it.
-            # If we did it forward, deleting row 30 first would make old row 50 become row 49.
-            for row_to_delete in sorted(delete_rows, reverse=True):
-                new_sheet.range(f"A{row_to_delete}").api.EntireRow.Delete()
-                    
-            # --- Move value from row 3 to row 2 if it exists ---
-            value_in_row_3 = new_sheet.cells(3, 1).value  # Index starts at 1
-            
-            if value_in_row_3 not in [None, '']:
-                # Move value to row 2
-                new_sheet.cells(2, 1).value = value_in_row_3
-                new_sheet.cells(2, 1).api.Font.Bold = True  # Bold the value
-            
-                # Delete row 3 (original location)
-                new_sheet.range("A3").api.EntireRow.Delete()
-            
-                                    
-                                        
-
-
-                # Activate the 'Start' sheet after adding the new one
-        if 'Start' in existing_sheets:
-                    wb.sheets['Start'].activate()
-
-        return new_sheet
-
-    except Exception as e:
-        logger.error(f"Error in df_to_sheet: {e}")
-        return None
-
-def reorder_sheets(wb, desired_order):
-    existing = [s.name for s in wb.sheets]
-    order = [name for name in desired_order if name in existing]
+def import_fn(fn_filter):
+    # Define the directory path containing your files
+    directory_path = dir_p.fn_path()
     
-    if not order:
-        logger.info("No sheets from desired_order found in workbook.")
-        return
+    df = pd.read_excel(mapping_file, sheet_name='Config')
+    files = dict(zip(df['report_key'].str.strip(), df['source_tab'].str.strip()))
     
-    logger.info(f"Reordering. Before: {[s.name for s in wb.sheets]}")
     
-    # Grab a stable COM reference to each sheet BEFORE any moves happen.
-    # Using the Sheets collection via the workbook's .api avoids xlwings re-lookups.
-    sheet_refs = {s.name: s.api for s in wb.sheets}
+    #Define the files dictionary
+    # files = {
+    #     'fn2': 'ENEAssets',
+    #     'fn3': 'FBWT',
+    #     'fn4': 'CashMonAssets',
+    #     'fn5': 'Investments',
+    #     'fn5_t': 'NARRDATA - AFR RF',
+    #     'fn6': 'AcctRec',
+    #     'fn6_t': 'FN6-AFR RF',
+    #     'fn7': 'TaxRcvbls',
+    #     'fn8': 'FN8 AFR RF',
+    #     'fn9': 'Inventory',
+    #     'fn10': 'FN10-AFR RF',
+    #     'fn11': 'FN11-AFR RF',
+    #     'fn12': 'FN12-AFR RF', 
+    #     'fn13': 'OtherAssets',
+    #     'fn14': 'CovUncov',
+    #     'fn15': 'FN15 - Debt',
+    #     'fn16': 'FN 16 AFR RF',
+    #     'fn17': 'FY25 EnvDispLiabs',
+    #     'fn18': 'FN18-AFR RF',
+    #     'fn19': 'Roll-Forward',
+    #     'fn20': 'FN20-AFR RF',
+    #     'fn21': 'CLL ARF',
+    #     'fn21_t': 'FN21 Funded NarrData',
+    #     'fn22': 'FN22 ',
+    #     'fn23': 'AvailBorrow ',
+    #     'fn25': 'FN25 AFR',
+    #     'fn26': 'UndelivOrd',
+    #     'fn27': 'AFR Note',
+    #     'fn28a': 'FN28A - AFR RF',
+    #     'fn28b': 'FN28B - AFR RF',
+    #     'fn29': 'AFR Presentation ',
+    #     'fn30snc': 'FN30 Roll-Forward',
+    #     'fn30scnp': 'FN 30',
+    #     'fn32': 'FN32 - AFR RF',
+    #     'oi-sos': 'SOS boc by component',
+    #     #'oi-sos': 'SOS   AFR',
+    #     'rsi-deferred': 'RSI-Deferred AFR RF',
+    #     'rsi-land': 'PP&E Land Totals',
+    #     'rsi-land_t': 'Stewardship Land Totals',
+    #     'rsi-sca': 'NARRDATA - AFR RF',
+    #     'rsi-sbr': 'AFR RF'
+    # }
+    #print(files)
+    # Create a list to hold FY, QTR, FN (File Number), Tab, and file name pairs
+    data = []
     
-    # Strategy: move each sheet in reverse order, placing it BEFORE the first sheet.
-    # After the loop, they end up in the correct forward order at the front of the workbook.
-    # Sheets not in `order` drift to the end naturally.
-    try:
-        for name in reversed(order):
-            sheet_api = sheet_refs[name]
-            # Re-fetch the first sheet each time — it changes as we move things
-            first_sheet_api = wb.sheets[0].api
-            if sheet_api is not first_sheet_api:
-                sheet_api.Move(Before=first_sheet_api)
-    except Exception as e:
-        logger.error(f"Failed during reorder: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return
-    
-    logger.info(f"Reordering complete. After: {[s.name for s in wb.sheets]}")
+   
+    # Iterate through files in the directory
+    for filename in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, filename)
 
-desired_order = ['Start',
-            'STMT to STMT',
-            'BS', 'SCA', 'SBR', 'SCNP', 'SNC',
-            'FN2', 'FN3', 'FN4', 'FN5', 'FN6', 'FN7', 'FN8', 'FN9',
-            'FN10', 'FN11', 'FN12', 'FN13', 'FN14', 'FN15', 'FN16',
-            'FN17', 'FN18', 'FN19', 'FN20', 'FN21', 'FN22', 'FN23',
-            'FN25', 'FN26', 'FN27', 'FN28', 'FN29', 'FN30SCNP',
-            'FN30SNC', 'FN32',
-            'RSI-DEFERRED', 'RSI-SBR', 'RSI-LAND', 'RSI-SCA',
-            'OI-SOS','Tie-Through',
-            'Tie-Through-fn to fn',
-            'Tie-Through fs to fs',
-            'Tie-Through Internal',
-         ]
+        # Check if it's a file (not a directory)
+        if os.path.isfile(full_path):
+            # Try to find the Fiscal Year (FY) and Quarter (QTR) using regex
+            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+            if fy_qtr_match:
+                fy = fy_qtr_match.group(1)  # Extract FY (e.g., "24")
+                qtr = fy_qtr_match.group(2)  # Extract QTR (e.g., "9" or "12")
+            else:
+                fy, qtr = None, None  # Default if not found
 
-def formatResult(sheet, dataframe):
-    try:
-        # Check if the sheet is None
-        if sheet is None:
-            logger.error("Error: sheet is None. Cannot format headers.")
-            return
-
-        # Get the number of columns
-        num_columns = sheet.cells(1, 1).end('right').column  # Assuming headers are in the first row
-        
-        # Bold the headers
-        for col in range(1, num_columns + 1):
-            sheet.cells(1, col).font.bold = True
-
-        # Set font size for headers
-        for col in range(1, num_columns + 1):
-            sheet.cells(1, col).font.size = 12
-
-        # Focus on column 2 for debugging purposes
-        col_to_adjust = 2
-        
-     
-
-        # Check if the dataframe has enough columns
-        if dataframe.shape[1] >= col_to_adjust:
-            # Get the max length of the values in the dataframe for column 2
-            max_length = max(dataframe.iloc[:, col_to_adjust - 1].astype(str).map(len).max(), len(sheet.cells(1, col_to_adjust).value))
-                  
+            # Try to find FN number using regex (e.g., FN30S, FN30SCNP, FN30SNC, etc.)
+            fn_match = re.search(r'FN\w+', filename)
             
-        else:
-            max_length = len(sheet.cells(1, col_to_adjust).value)
-  
+            if fn_match:
+                fn_number = fn_match.group(0).lower()  # Convert FN to lowercase
+              
+                # Only process if the fn_number matches the fn_filter
+                if fn_number.startswith(fn_filter) and (len(fn_number) == len(fn_filter) or not fn_number[len(fn_filter)].isdigit()):
+                    
+                #if fn_filter in fn_number:
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                
+                # Check if FN is one of the special cases (fn5_t, fn6_t, fn21_t)
+                # Add the case where you are looking for 'fn5_t' separately
+                if fn_number.startswith('fn5') and fn_filter == 'fn5_t':
+                    print('fn5_t')
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                    #data.append((fy, qtr, 'fn5_t', 'NARRDATA - AFR RF', filename))
+                elif fn_number.startswith('fn6') and fn_filter == 'fn6_t':
+                    print('fn6-t')
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                    #data.append((fy, qtr, 'fn6_t', 'FN6-AFR RF', filename))
+                elif fn_number.startswith('fn21') and fn_filter == 'fn21_t':
+                    print('fn21-t')
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                    #data.append((fy, qtr, 'fn21_t', 'FN21 Funded NarrData', filename))
 
-        # Apply the calculated width with some padding (e.g., 4)
-        sheet.range(sheet.cells(1, col_to_adjust), sheet.cells(1, col_to_adjust)).column_width = max_length + 4
-  
+            # Check if RSI term is in the filename
+            rsi_match = re.search(r'RSI[- ]?([^ ]+)', filename)
+            if rsi_match:
+                rsi_fn = rsi_match.group(0).replace('.xlsx', '').lower()  # Remove .xlsx and convert to lowercase
+                tab = files.get(rsi_fn, None)  # Get tab from the files dictionary, if exists
+                if tab and rsi_fn == fn_filter:
+                    data.append((fy, qtr, rsi_fn, tab, filename))
+                    
+                if rsi_fn == 'rsi-land' and fn_filter == 'rsi-land_t':
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                    #data.append((fy, qtr, 'rsi-land_t', 'Stewardship Land Totals', filename))
+
+            # Check if OI-SOS term is in the filename
+            oi_sos_match = re.search(r'OI-SOS', filename)
+            if oi_sos_match:
+                oi_sos_fn = oi_sos_match.group(0).lower()  # Convert OI-SOS to lowercase
+                if fn_filter in oi_sos_fn:
+                #if oi_sos_fn == fn_filter:
+                    tab = files.get(fn_filter, None)  # Get tab from the files dictionary, if exists
+                    if tab:
+                        data.append((fy, qtr, fn_filter, tab, filename))
+                    #data.append((fy, qtr, oi_sos_fn, 'SOS boc by component', filename))
+   
+    # Create a DataFrame from the list of tuples (FY, QTR, FN, Tab, File Name)
+    df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
+
+   
+    # Now, load the Excel file using the file name and the sheet name (Tab)
+    dfs = []  # This will hold all DataFrames that match the file name and tab
+    for _, row in df.iterrows():
+        file_path = os.path.join(directory_path, row['File Name'])
+        sheet_name = row['Tab']
         
-        # Initialize variables for columns
-        bs_amount_col = None
-        fn_amount_col = None
-        fn_amount_one_col = None
-        fn_amount_two_col = None
-        delta_col = None
-        fs_amount_one_col = None  # New column
-        fs_amount_two_col = None  # New column
-        rn_amount_one_col = None  # New column for RN Amount One
-        rn_amount_two_col = None  # New column for RN Amount Two
+        # Use flexible sheet name matching to handle trailing spaces, case changes, etc.
+        try:
+            actual_sheet = ru.find_sheet_name(file_path, sheet_name)
+            if actual_sheet != sheet_name:
+                logger.info("Sheet name normalised: '%s' -> '%s' in %s",
+                            sheet_name, actual_sheet, file_path)
+            sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet, engine='openpyxl')
+            if sheet_df.empty:
+                logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
+            dfs.append(sheet_df)
+        except ValueError as e:
+            logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
+        except Exception as e:
+            logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
 
-        # Check the headers and identify the relevant columns
-        for col in range(1, num_columns + 1):
-            header_value = sheet.cells(1, col).value
-            if header_value == 'FS Amount':
-                bs_amount_col = col
-            elif header_value == 'FN Amount':
-                fn_amount_col = col
-            elif header_value == 'FN Amount One':
-                fn_amount_one_col = col
-            elif header_value == 'FN Amount Two':
-                fn_amount_two_col = col
-            elif header_value == 'Difference':
-                delta_col = col
-            elif header_value == 'FS Amount One':  # New header check
-                fs_amount_one_col = col
-            elif header_value == 'FS Amount Two':  # New header check
-                fs_amount_two_col = col
-            elif header_value == 'RN Amount One':  # New header check for RN Amount One
-                rn_amount_one_col = col
-            elif header_value == 'RN Amount Two':  # New header check for RN Amount Two
-                rn_amount_two_col = col
+    # Combine all DataFrames into a single one (optional)
+    final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
-        # List of columns that must exist at least one
-        required_columns_found = any([bs_amount_col, fn_amount_one_col, fs_amount_one_col, rn_amount_one_col])
+    if final_df.empty:
+        logger.warning("import_fn('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
 
-        # Check if we found any of the required columns
-        if not required_columns_found or delta_col is None:
-            logger.error("Error: One or more required columns not found.")
-            return
-
-        # Apply accounting format to columns if found
-        last_row = sheet.cells(1, 1).end('down').row
-
-        # Accounting number format
-        accounting_format = '_-[$$-409]* #,##0.00_-;-[$$-409]* #,##0.00_-;_-[$$-409]* "-"_-;_-@_-'
-
-        # Apply accounting format to available columns
-        if bs_amount_col is not None:
-            sheet.range(sheet.cells(2, bs_amount_col), sheet.cells(last_row, bs_amount_col)).number_format = accounting_format
-        if fn_amount_col is not None:
-            sheet.range(sheet.cells(2, fn_amount_col), sheet.cells(last_row, fn_amount_col)).number_format = accounting_format
-        if fn_amount_one_col is not None:
-            sheet.range(sheet.cells(2, fn_amount_one_col), sheet.cells(last_row, fn_amount_one_col)).number_format = accounting_format
-        if fn_amount_two_col is not None:
-            sheet.range(sheet.cells(2, fn_amount_two_col), sheet.cells(last_row, fn_amount_two_col)).number_format = accounting_format
-        if delta_col is not None:
-            sheet.range(sheet.cells(2, delta_col), sheet.cells(last_row, delta_col)).number_format = accounting_format
-        if fs_amount_one_col is not None:  # Apply accounting format to FS Amount One
-            sheet.range(sheet.cells(2, fs_amount_one_col), sheet.cells(last_row, fs_amount_one_col)).number_format = accounting_format
-        if fs_amount_two_col is not None:  # Apply accounting format to FS Amount Two
-            sheet.range(sheet.cells(2, fs_amount_two_col), sheet.cells(last_row, fs_amount_two_col)).number_format = accounting_format
-        if rn_amount_one_col is not None:  # Apply accounting format to RN Amount One
-            sheet.range(sheet.cells(2, rn_amount_one_col), sheet.cells(last_row, rn_amount_one_col)).number_format = accounting_format
-        if rn_amount_two_col is not None:  # Apply accounting format to RN Amount Two
-            sheet.range(sheet.cells(2, rn_amount_two_col), sheet.cells(last_row, rn_amount_two_col)).number_format = accounting_format
-
-        # Adjust column widths for formatted columns
-        for col in [bs_amount_col, fn_amount_col, fn_amount_one_col, fn_amount_two_col, delta_col, fs_amount_one_col, fs_amount_two_col, rn_amount_one_col, rn_amount_two_col]:
-            if col is not None:  # Check that col is valid
-                try:
-                    # Adjust column width based on max length
-                    max_length = max(dataframe.iloc[:, col - 1].astype(str).map(len).max(), len(sheet.cells(1, col).value))  # Including header
-                except IndexError:
-                    # Handle if column index exceeds dataframe columns
-                    max_length = len(sheet.cells(1, col).value)
-
-                # Add a little padding to the column width
-                sheet.range(sheet.cells(1, col), sheet.cells(1, col)).column_width = max_length + 4
-
-        # Calculate totals and write them at the bottom
-        total_row = last_row + 2
-        if bs_amount_col is not None:
-            sheet.cells(total_row, bs_amount_col).formula = f'=SUM({sheet.cells(2, bs_amount_col).address}:{sheet.cells(last_row, bs_amount_col).address})'
-        if fn_amount_col is not None:
-            sheet.cells(total_row, fn_amount_col).formula = f'=SUM({sheet.cells(2, fn_amount_col).address}:{sheet.cells(last_row, fn_amount_col).address})'
-        if fn_amount_one_col is not None:
-            sheet.cells(total_row, fn_amount_one_col).formula = f'=SUM({sheet.cells(2, fn_amount_one_col).address}:{sheet.cells(last_row, fn_amount_one_col).address})'
-        if fn_amount_two_col is not None:
-            sheet.cells(total_row, fn_amount_two_col).formula = f'=SUM({sheet.cells(2, fn_amount_two_col).address}:{sheet.cells(last_row, fn_amount_two_col).address})'
-        if delta_col is not None:
-            sheet.cells(total_row, delta_col).formula = f'=SUM({sheet.cells(2, delta_col).address}:{sheet.cells(last_row, delta_col).address})'
-        if fs_amount_one_col is not None:  # Calculate total for FS Amount One
-            sheet.cells(total_row, fs_amount_one_col).formula = f'=SUM({sheet.cells(2, fs_amount_one_col).address}:{sheet.cells(last_row, fs_amount_one_col).address})'
-        if fs_amount_two_col is not None:  # Calculate total for FS Amount Two
-            sheet.cells(total_row, fs_amount_two_col).formula = f'=SUM({sheet.cells(2, fs_amount_two_col).address}:{sheet.cells(last_row, fs_amount_two_col).address})'
-        if rn_amount_one_col is not None:  # Calculate total for RN Amount One
-            sheet.cells(total_row, rn_amount_one_col).formula = f'=SUM({sheet.cells(2, rn_amount_one_col).address}:{sheet.cells(last_row, rn_amount_one_col).address})'
-        if rn_amount_two_col is not None:  # Calculate total for RN Amount Two
-            sheet.cells(total_row, rn_amount_two_col).formula = f'=SUM({sheet.cells(2, rn_amount_two_col).address}:{sheet.cells(last_row, rn_amount_two_col).address})'
-
-        # Bold the totals row
-        for col in [bs_amount_col, fn_amount_col, fn_amount_one_col, fn_amount_two_col, delta_col, fs_amount_one_col, fs_amount_two_col, rn_amount_one_col, rn_amount_two_col]:
-            if col is not None:  # Check that col is valid
-                sheet.cells(total_row, col).font.bold = True
-
-    except Exception as e:
-        logger.error(f"Error in formatResult: {e}")
+    return final_df
 
 
+# def import_fs(fn_filter):
+#     # Define the directory path containing your files
+#     directory_path = dir_p.fs_path()
+    
 
-# def updateFile(active_sheet_name='Start'):
-#     try:
-#         app = xw.apps.active
-#         #wb = app.books.open(dir_p.gk_template())
-#         wb = xw.apps.active.books.active
+#     # Create a list to hold FY, QTR, FN (File Number), Tab, and file name pairs
+#     data = []
 
-def updateFile(active_sheet_name='Start'):
-    try:
-        overall_start = time.time()
-        app = xw.apps.active
+#     # Iterate through files in the directory
+#     for filename in os.listdir(directory_path):
+#         full_path = os.path.join(directory_path, filename)
+        
+#         # Check if it's a file (not a directory)
+#         if os.path.isfile(full_path):
+#             # Try to find the Fiscal Year (FY) and Quarter (QTR) using regex
+#             fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+#             if fy_qtr_match:
+#                 fy = fy_qtr_match.group(1)  # Extract FY (e.g., "24")
+#                 qtr = fy_qtr_match.group(2)  # Extract QTR (e.g., "9" or "12")
+#             else:
+#                 fy, qtr = None, None  # Default if not found
 
-        # Find all workbooks that contain the target sheet
-        matching_books = [
-            wb for wb in app.books
-            if active_sheet_name in [sh.name for sh in wb.sheets]
-        ]
 
-        if len(matching_books) == 0:
-            raise ValueError(f"No open workbook contains a sheet named '{active_sheet_name}'.")
-        elif len(matching_books) > 1:
-            names = [wb.name for wb in matching_books]
-            raise ValueError(
-                f"Multiple open workbooks contain a sheet named '{active_sheet_name}': {names}. "
-                f"Please close the others and try again."
-            )
+#             # Check if OI-SOS term is in the filename
+#             bs_match = re.search(r'BS', filename)
+#             if bs_match:
+#                 bs_fn = bs_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if bs_fn == fn_filter:
+#                     data.append((fy, qtr, bs_fn, 'BalanceSheet', filename))
+                    
+#             # Check if SNC term is in the filename
+#             snc_match = re.search(r'SNC', filename)
+#             if snc_match:
+#                 snc_fn = snc_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if snc_fn == fn_filter:
+#                     data.append((fy, qtr, snc_fn, 'SNC (AFR)', filename))
+                    
+#             # Check if SNC term is in the filename
+#             scnp_match = re.search(r'SCNP', filename)
+#             if scnp_match:
+#                 scnp_fn = scnp_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if scnp_fn == fn_filter:
+#                     data.append((fy, qtr, scnp_fn, 'SCNP8', filename))
+                    
+#             # Check if SNC term is in the filename
+#             sca_match = re.search(r'SCA', filename)
+#             if sca_match:
+#                 sca_fn = sca_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if sca_fn == fn_filter:
+#                     data.append((fy, qtr, sca_fn, 'CustodialActivity', filename))
+                    
+#             # Check if SNC term is in the filename
+#             sbr_match = re.search(r'SBR', filename)
+#             if sbr_match:
+#                 sbr_fn = sbr_match.group(0).lower()  # Convert OI-SOS to lowercase
+#                 if sbr_fn == fn_filter:
+#                     data.append((fy, qtr, sbr_fn, 'SBRRealigned', filename))
+                    
+            
 
-        wb = matching_books[0]
-        logger.info(f"Using active workbook: {wb.name}")
+#     # Create a DataFrame from the list of tuples (FY, QTR, FN, Tab, File Name)
+#     df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
+
+#     # Now, load the Excel file using the file name and the sheet name (Tab)
+#     dfs = []  # This will hold all DataFrames that match the file name and tab
+#     for _, row in df.iterrows():
+#         file_path = os.path.join(directory_path, row['File Name'])
+#         sheet_name = row['Tab']
+        
+#         # Use flexible sheet name matching to handle trailing spaces, case changes, etc.
+#         try:
+#             actual_sheet = ru.find_sheet_name(file_path, sheet_name)
+#             if actual_sheet != sheet_name:
+#                 logger.info("Sheet name normalised: '%s' -> '%s' in %s",
+#                             sheet_name, actual_sheet, file_path)
+#             sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
+#             if sheet_df.empty:
+#                 logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
+#             dfs.append(sheet_df)
+#         except ValueError as e:
+#             logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
+#         except Exception as e:
+#             logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
+
+#     # Combine all DataFrames into a single one (optional)
+#     final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+#     if final_df.empty:
+#         logger.warning("import_fs('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
+
+#     return final_df
+
+
+def import_fs(fn_filter):
+    directory_path = dir_p.fs_path()
+    
+    df_config = pd.read_excel(mapping_file, sheet_name='Config-FS')
+    fs_config = dict(zip(df_config['report_key'].str.strip(), df_config['source_tab'].str.strip()))
+    
+    data = []
+    for filename in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, filename)
+        if os.path.isfile(full_path):
+            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
+            if fy_qtr_match:
+                fy = fy_qtr_match.group(1)
+                qtr = fy_qtr_match.group(2)
+            else:
+                fy, qtr = None, None
+
+            for file_code, sheet_name in fs_config.items():
+                match = re.search(file_code, filename)
+                if match:
+                    fn = match.group(0).lower()
+                    if fn == fn_filter:
+                        data.append((fy, qtr, fn, sheet_name, filename))
+                        break
+
+    df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
+
+    dfs = []
+    for _, row in df.iterrows():
+        file_path = os.path.join(directory_path, row['File Name'])
+        sheet_name = row['Tab']
 
         try:
-            logger.info(f"Workbook fullname: {wb.fullname}")
-        except Exception:
-            pass
+            actual_sheet = ru.find_sheet_name(file_path, sheet_name)
+            if actual_sheet != sheet_name:
+                logger.info("Sheet name normalised: '%s' -> '%s' in %s",
+                            sheet_name, actual_sheet, file_path)
+            sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
+            if sheet_df.empty:
+                logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
+            dfs.append(sheet_df)
+        except ValueError as e:
+            logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
+        except Exception as e:
+            logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
 
-        app.screen_updating = False
-        app.calculation = 'manual'
-        app.display_alerts = False
-        app.api.EnableEvents = False
+    final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+    if final_df.empty:
+        logger.warning("import_fs('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
+
+    return final_df
+
+if __name__ == "__main__":
     
-        try:
-            if active_sheet_name in [sheet.name for sheet in wb.sheets]:
-                wb.sheets[active_sheet_name].activate()       
+
+
+    # Combine folder path with filename
+    fn = os.path.join(dir_p.test_path(),"rawFootnote.csv")
+    fs = os.path.join(dir_p.test_path(),"rawfinancialstatement.csv")
+
     
-            # Activate the specified sheet (default is 'Start')
-            if active_sheet_name in [sheet.name for sheet in wb.sheets]:
-                wb.sheets[active_sheet_name].activate()  # Make the Start sheet active
+    import_fs('bs').to_csv(fs, index=False)
     
-            def write_tie_sheet(tab_name, df):
-                if df.empty:
-                    logger.error(f"Error: {tab_name} returned an empty DataFrame.")
-                    return
-                sheet = df_to_sheet(df, tab_name, wb, skip_if_exists=True)
-                if sheet is not None:
-                    formatResult(sheet, df)
-                else:
-                    logger.info(f"Skipped formatting for existing sheet '{tab_name}'.")
-    
-            
-            # Validate and get the DataFrame
-            tabName = 'Tie-Through'
-            t0=time.time()
-            fsTofn = Tie_bs_fn.tie_through(tabName, wb)
-            logger.info(f"TIMING: Tie_bs_fn.tie_through = {time.time()-t0:.2f}s")
-            t0=time.time()
-            write_tie_sheet(tabName, fsTofn)
-            logger.info(f"TIMING: Write tie through sheet = {time.time()-t0:.2f}s")
-            
-            # Check for missing columns
-            # if fsTofn.empty:
-            #     logger.error(f"Error: {tabName} returned an empty DataFrame.")
-            #     return
-    
-            # Create the Results sheet from the DataFrame
-            #sheet = df_to_sheet(fsTofn, tabName, wb)
-    
-            # Call formatResult with the sheet and DataFrame
-            #formatResult(sheet, fsTofn)
-            
-          
-            # Validate and get the DataFrame
-            tabName = 'Tie-Through-fn to fn'
-            t0=time.time()
-            fnTofn = Tie_fn_fn.tie_through(tabName, wb)
-            logger.info(f"TIMING: Tie_fn_fn.tie_through = {time.time()-t0:.2f}s")
-            t0=time.time()
-            write_tie_sheet(tabName, fnTofn)
-            logger.info(f"TIMING: Write fn-fn tie through = {time.time()-t0:.2f}s")
-            
-            # Check for missing columns
-            # if fnTofn.empty:
-            #     logger.error(f"Error: {tabName} returned an empty DataFrame.")
-            #     return
-    
-            # Create the Results sheet from the DataFrame
-            #sheet = df_to_sheet(fnTofn, tabName, wb)
-            
-            # Call formatResult with the sheet and DataFrame
-            #formatResult(sheet, fnTofn)
-            
-            
-            # Validate and get the DataFrame
-            tabName = 'Tie-Through fs to fs'
-            t0=time.time()
-            fsTofs = Tie_fs_fs.tie_through(tabName, wb)
-            logger.info(f"TIMING: Tie_fs_fs.tie_through = {time.time()-t0:.2f}s")
-            t0=time.time()
-            write_tie_sheet(tabName, fsTofs)
-            logger.info(f"TIMING: Write fs-fs tie through = {time.time()-t0:.2f}s")
-            
-            # Check for missing columns
-            # if fsTofs.empty:
-            #     logger.error(f"Error: {tabName} returned an empty DataFrame.")
-            #     return
-    
-            # Create the Results sheet from the DataFrame
-            #sheet = df_to_sheet(fsTofs, tabName, wb)
-            
-            # Call formatResult with the sheet and DataFrame
-            #formatResult(sheet, fsTofs)
-            
-            # Validate and get the DataFrame
-            tabName = 'Tie-Through Internal'
-            t0=time.time()
-            internal_data = internal_fn.tie_through(tabName, wb)
-            logger.info(f"TIMING: Tie_internal.tie_through = {time.time()-t0:.2f}s")
-            t0=time.time()
-            write_tie_sheet(tabName, internal_data)
-            logger.info(f"TIMING: Write internal tie through = {time.time()-t0:.2f}s")
-            
-            # Check for missing columns
-            # if internal_data.empty:
-            #     logger.error(f"Error: {tabName} returned an empty DataFrame.")
-            #     return
-    
-            # Create the Results sheet from the DataFrame
-            #sheet = df_to_sheet(internal_data, tabName, wb)
-            
-            # Call formatResult with the sheet and DataFrame
-            #formatResult(sheet, internal_data)
-            
-            
-            function_calls = [
-                lambda: RR_updateFn.rsiDeferred('RSI-DEFERRED', wb),
-                lambda: RR_updateFn.rsiSbr('RSI-SBR', wb),
-                lambda: RR_updateFn.oiSos('OI-SOS', wb),
-                lambda: RR_updateFn.rsiLand('RSI-LAND', wb),
-                lambda: RR_updateFn.RsiSca('RSI-SCA', wb),
-                lambda: RR_updateFn.fn32('FN32', wb),
-                lambda: RR_updateFn.fn30Scnp('FN30SCNP', wb),
-                lambda: RR_updateFn.fn30Snc('FN30SNC', wb),
-                lambda: RR_updateFn.fn29('FN29', wb),
-                lambda: RR_updateFn.fn28('FN28', wb),
-                lambda: RR_updateFn.fn27('FN27', wb),
-                lambda: RR_updateFn.fn26('FN26', wb),
-                lambda: RR_updateFn.fn25('FN25', wb),
-                lambda: RR_updateFn.fn23('FN23', wb),
-                lambda: RR_updateFn.fn22('FN22', wb),
-                lambda: RR_updateFn.fn21('FN21', wb),
-                lambda: RR_updateFn.fn20('FN20', wb),
-                lambda: RR_updateFn.fn19('FN19', wb),
-                lambda: RR_updateFn.fn18('FN18', wb),
-                lambda: RR_updateFn.fn17('FN17', wb),
-                lambda: RR_updateFn.fn16('FN16', wb),
-                lambda: RR_updateFn.fn15('FN15', wb),
-                lambda: RR_updateFn.fn14('FN14', wb),
-                lambda: RR_updateFn.fn13('FN13', wb),
-                lambda: RR_updateFn.fn12('FN12', wb),
-                lambda: RR_updateFn.fn11('FN11', wb),
-                lambda: RR_updateFn.fn10('FN10', wb),
-                lambda: RR_updateFn.fn9('FN9', wb),
-                lambda: RR_updateFn.fn8('FN8', wb),
-                lambda: RR_updateFn.fn7('FN7', wb),
-                lambda: RR_updateFn.fn6('FN6', wb),
-                lambda: RR_updateFn.fn5('FN5', wb),
-                lambda: RR_updateFn.fn4('FN4', wb),
-                lambda: RR_updateFn.fn3('FN3', wb),
-                lambda: RR_updateFn.fn2('FN2', wb),
-                lambda: RR_updateFs.scaFormat('SCA', wb),
-                lambda: RR_updateFs.sbrFormat('SBR', wb),
-                lambda: RR_updateFs.scnpFormat('SCNP', wb),
-                lambda: RR_updateFs.sncFormat('SNC', wb),
-                lambda: RR_updateFs.bsFormat('BS', wb)
-            ]
-            t0=time.time()
-            tracker = ru.PipelineTracker()
-            fn_names = [
-                'RSI-DEFERRED', 'RSI-SBR', 'OI-SOS', 'RSI-LAND', 'RSI-SCA',
-                'FN32', 'FN30SCNP', 'FN30SNC', 'FN29', 'FN28', 'FN27', 'FN26',
-                'FN25', 'FN23', 'FN22', 'FN21', 'FN20', 'FN19', 'FN18', 'FN17',
-                'FN16', 'FN15', 'FN14', 'FN13', 'FN12', 'FN11', 'FN10', 'FN9',
-                'FN8', 'FN7', 'FN6', 'FN5', 'FN4', 'FN3', 'FN2',
-                'SCA', 'SBR', 'SCNP', 'SNC', 'BS'
-            ]
-            for name, fn in zip(fn_names, function_calls):
-                t_fn=time.time()
-                tracker.run(name, fn)
-                logger.info(f"TIMING: {name} = {time.time()- t_fn:.2f}s")
-            tracker.summary()
-            logger.info(f"TIMING: full pipeline = {time.time()- t0:.2f}s")
-    
-            
-    
-            # Try to find FN11 in them — adjust column name to whatever identifies the FN
-            for df_name, df in [('fsTofn', fsTofn), ('fnTofn', fnTofn), ('fsTofs', fsTofs), ('internal_data', internal_data)]:
-                for col in df.columns:
-                    mask = df[col].astype(str).str.contains('FN11', na=False, case=False)
-                    if mask.any():
-                        logger.info(f"  FN11 found in {df_name}.{col}: {mask.sum()} rows")
-    
-           
-            tabName = 'STMT to STMT'
-            t0=time.time()
-            # Reshape each section
-            fsFn = stmt.fs_to_fn(fsTofn)
-            fnFn = stmt.fn_to_fn(fnTofn)
-            fsFs = stmt.fs_to_fs(fsTofs)
-            inte = stmt.internal_tie(internal_data)
+    import_fn('fn30scnp').to_csv(fn, index=False)
     
     
     
-            # Combine all reshaped sections
-            main = stmt.stmt_tie(fsFn, fnFn, fsFs, inte)
-            # Create the Results sheet from the DataFrame
-            logger.info(f"main: {len(main)} rows")
-            
-            sheet = df_to_sheet(main, tabName, wb, skip_if_exists=False)
-            logger.info(f"TIMING: STMT TO STMT = {time.time()-t0:.2f}s")
-           
-            reorder_sheets(wb, desired_order)
-            logger.info(f"TIMING: overall = {time.time()-overall_start:.2f}s")
-            # Save the workbook
-            wb.save()
-        finally:
-            app.screen_updating = True
-            app.calculation = 'automatic'
-            app.display_alerts = True
-            app.api.EnableEvents = True
-                    
-    except Exception as e:
-        logger.error(f"Error in updateFile: {e}")
-        
-     
-if __name__ == "__main__":    
-        
-   updateFile()
+    
+    #cProfile.runctx("updateFile()", globals(), locals())
