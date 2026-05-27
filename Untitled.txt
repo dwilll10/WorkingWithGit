@@ -1,5 +1,6 @@
-09:55:48 [ERROR] gk_footing - Error in reshape_tie: 'FS_Report_Name'
-09:55:48 [ERROR] gk_footing - Error in updateFile: object of type 'NoneType' has no len()
+fsTofn = wb.sheets['Tie-Through'].range('A1').options(pd.DataFrame, expand='table', header=True).value.reset_index()
+                logger.info(f"fsTofn full columns: {list(fsTofn.columns)}")  # <
+                logger.info(f"fsTofn first row: {fsTofn.iloc[0].to_dict()}")  # <
 
 
 
