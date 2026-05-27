@@ -1,7 +1,9 @@
 tabName = 'STMT to STMT'
-            if tie_sheets_all_existed and tabName in existing_sheets:  # <
-                logger.info(f"Skipping '{tabName}' — all tie-through sheets already exist.")  # <
-            else:
+            if tabName in existing_sheets:                                              # <
+                logger.info(f"Skipping '{tabName}' — sheet already exists.")           # <
+            elif any(df.empty for df in [fsTofn, fnTofn, fsTofs, internal_data]):      # <
+                logger.warning(f"Skipping '{tabName}' — one or more tie-through DataFrames are empty.")  # <
+            else:                                                                        # <
                 t0=time.time()
                 fsFn = stmt.fs_to_fn(fsTofn)
                 fnFn = stmt.fn_to_fn(fnTofn)
