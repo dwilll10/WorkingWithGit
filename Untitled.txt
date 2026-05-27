@@ -1,3 +1,68 @@
+tabName = 'Tie-Through'
+            if tabName not in existing_sheets:  # <
+                t0=time.time()
+                fsTofn = Tie_bs_fn.tie_through(tabName, wb)
+                logger.info(f"TIMING: Tie_bs_fn.tie_through = {time.time()-t0:.2f}s")
+                t0=time.time()
+                write_tie_sheet(tabName, fsTofn)
+                logger.info(f"TIMING: Write tie through sheet = {time.time()-t0:.2f}s")
+            else:                               # <
+                logger.info(f"Skipping '{tabName}' — sheet already exists.")  # <
+                fsTofn = pd.DataFrame()         # <
+
+            tabName = 'Tie-Through-fn to fn'
+            if tabName not in existing_sheets:  # <
+                t0=time.time()
+                fnTofn = Tie_fn_fn.tie_through(tabName, wb)
+                logger.info(f"TIMING: Tie_fn_fn.tie_through = {time.time()-t0:.2f}s")
+                t0=time.time()
+                write_tie_sheet(tabName, fnTofn)
+                logger.info(f"TIMING: Write fn-fn tie through = {time.time()-t0:.2f}s")
+            else:                               # <
+                logger.info(f"Skipping '{tabName}' — sheet already exists.")  # <
+                fnTofn = pd.DataFrame()         # <
+
+            tabName = 'Tie-Through fs to fs'
+            if tabName not in existing_sheets:  # <
+                t0=time.time()
+                fsTofs = Tie_fs_fs.tie_through(tabName, wb)
+                logger.info(f"TIMING: Tie_fs_fs.tie_through = {time.time()-t0:.2f}s")
+                t0=time.time()
+                write_tie_sheet(tabName, fsTofs)
+                logger.info(f"TIMING: Write fs-fs tie through = {time.time()-t0:.2f}s")
+            else:                               # <
+                logger.info(f"Skipping '{tabName}' — sheet already exists.")  # <
+                fsTofs = pd.DataFrame()         # <
+
+            tabName = 'Tie-Through Internal'
+            if tabName not in existing_sheets:  # <
+                t0=time.time()
+                internal_data = internal_fn.tie_through(tabName, wb)
+                logger.info(f"TIMING: Tie_internal.tie_through = {time.time()-t0:.2f}s")
+                t0=time.time()
+                write_tie_sheet(tabName, internal_data)
+                logger.info(f"TIMING: Write internal tie through = {time.time()-t0:.2f}s")
+            else:                               # <
+                logger.info(f"Skipping '{tabName}' — sheet already exists.")  # <
+                internal_data = pd.DataFrame()  # <
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def get_pending_fn_filters(existing_sheets: set[str], wb) -> list[str]:
     """
     Returns the list of fn_filter keys whose output sheet is NOT yet in the workbook.
