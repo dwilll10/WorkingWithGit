@@ -1,3 +1,195 @@
+def get_pending_fn_filters(existing_sheets: set[str], wb) -> list[str]:
+    """
+    Returns the list of fn_filter keys whose output sheet is NOT yet in the workbook.
+    Uses the same Config mapping that import_fn/import_fs already reads.
+    """
+    # Load the same config import_fn uses
+    mapping_file = dir_p.mapping_table()
+    df_fn  = pd.read_excel(mapping_file, sheet_name='Config')
+    df_fs  = pd.read_excel(mapping_file, sheet_name='Config-FS')
+
+    fn_keys = df_fn['report_key'].str.strip().str.lower().tolist()   # e.g. ['fn2', 'fn3', ...]
+    fs_keys = df_fs['report_key'].str.strip().str.lower().tolist()   # e.g. ['bs', 'snc', ...]
+
+    # Map fn_filter key → output sheet name in the workbook
+    # The sheet name is the uppercased key, matching your fn_names list
+    # e.g. 'fn2' → 'FN2', 'rsi-deferred' → 'RSI-DEFERRED', 'bs' → 'BS'
+    def to_sheet_name(key: str) -> str:
+        return key.upper()
+
+    pending_fn = [k for k in fn_keys if to_sheet_name(k) not in existing_sheets]
+    pending_fs = [k for k in fs_keys if to_sheet_name(k) not in existing_sheets]
+
+    return pending_fn, pending_fs
+
+
+
+
+
+def updateFile(active_sheet_name='Start'):
+    try:
+        overall_start = time.time()
+        app = xw.apps.active
+
+        matching_books = [
+            wb for wb in app.books
+            if active_sheet_name in [sh.name for sh in wb.sheets]
+        ]
+
+        if len(matching_books) == 0:
+            raise ValueError(f"No open workbook contains a sheet named '{active_sheet_name}'.")
+        elif len(matching_books) > 1:
+            names = [wb.name for wb in matching_books]
+            raise ValueError(
+                f"Multiple open workbooks contain a sheet named '{active_sheet_name}': {names}. "
+                f"Please close the others and try again."
+            )
+
+        wb = matching_books[0]
+        logger.info(f"Using active workbook: {wb.name}")
+
+        try:
+            logger.info(f"Workbook fullname: {wb.fullname}")
+        except Exception:
+            pass
+
+        # <<< Pre-flight skip check
+        existing_sheets = {sh.name for sh in wb.sheets}
+        pending_fn, pending_fs = get_pending_fn_filters(existing_sheets, wb)
+        if not pending_fn and not pending_fs:
+            logger.info("All sheets already present — nothing to process.")
+            return
+        logger.info(f"Pending FN filters: {pending_fn}")
+        logger.info(f"Pending FS filters: {pending_fs}")
+        # <
+
+        app.screen_updating = False
+        app.calculation = 'manual'
+        app.display_alerts = False
+        app.api.EnableEvents = False
+    
+        try:
+            if active_sheet_name in [sheet.name for sheet in wb.sheets]:
+                wb.sheets[active_sheet_name].activate()       
+    
+            if active_sheet_name in [sheet.name for sheet in wb.sheets]:
+                wb.sheets[active_sheet_name].activate()
+    
+            def write_tie_sheet(tab_name, df):
+                if df.empty:
+                    logger.error(f"Error: {tab_name} returned an empty DataFrame.")
+                    return
+                sheet = df_to_sheet(df, tab_name, wb, skip_if_exists=True)
+                if sheet is not None:
+                    formatResult(sheet, df)
+                else:
+                    logger.info(f"Skipped formatting for existing sheet '{tab_name}'.")
+    
+            tabName = 'Tie-Through'
+            t0=time.time()
+            fsTofn = Tie_bs_fn.tie_through(tabName, wb)
+            logger.info(f"TIMING: Tie_bs_fn.tie_through = {time.time()-t0:.2f}s")
+            t0=time.time()
+            write_tie_sheet(tabName, fsTofn)
+            logger.info(f"TIMING: Write tie through sheet = {time.time()-t0:.2f}s")
+
+            tabName = 'Tie-Through-fn to fn'
+            t0=time.time()
+            fnTofn = Tie_fn_fn.tie_through(tabName, wb)
+            logger.info(f"TIMING: Tie_fn_fn.tie_through = {time.time()-t0:.2f}s")
+            t0=time.time()
+            write_tie_sheet(tabName, fnTofn)
+            logger.info(f"TIMING: Write fn-fn tie through = {time.time()-t0:.2f}s")
+
+            tabName = 'Tie-Through fs to fs'
+            t0=time.time()
+            fsTofs = Tie_fs_fs.tie_through(tabName, wb)
+            logger.info(f"TIMING: Tie_fs_fs.tie_through = {time.time()-t0:.2f}s")
+            t0=time.time()
+            write_tie_sheet(tabName, fsTofs)
+            logger.info(f"TIMING: Write fs-fs tie through = {time.time()-t0:.2f}s")
+
+            tabName = 'Tie-Through Internal'
+            t0=time.time()
+            internal_data = internal_fn.tie_through(tabName, wb)
+            logger.info(f"TIMING: Tie_internal.tie_through = {time.time()-t0:.2f}s")
+            t0=time.time()
+            write_tie_sheet(tabName, internal_data)
+            logger.info(f"TIMING: Write internal tie through = {time.time()-t0:.2f}s")
+            
+            function_calls = [
+                lambda: RR_updateFn.rsiDeferred('RSI-DEFERRED', wb) if 'rsi-deferred' in pending_fn else None,  # <
+                lambda: RR_updateFn.rsiSbr('RSI-SBR', wb)           if 'rsi-sbr'      in pending_fn else None,  # <
+                lambda: RR_updateFn.oiSos('OI-SOS', wb)             if 'oi-sos'        in pending_fn else None,  # <
+                lambda: RR_updateFn.rsiLand('RSI-LAND', wb)         if 'rsi-land'     in pending_fn else None,  # <
+                lambda: RR_updateFn.RsiSca('RSI-SCA', wb)           if 'rsi-sca'      in pending_fn else None,  # <
+                lambda: RR_updateFn.fn32('FN32', wb)                 if 'fn32'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn30Scnp('FN30SCNP', wb)        if 'fn30scnp'     in pending_fn else None,  # <
+                lambda: RR_updateFn.fn30Snc('FN30SNC', wb)          if 'fn30snc'      in pending_fn else None,  # <
+                lambda: RR_updateFn.fn29('FN29', wb)                 if 'fn29'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn28('FN28', wb)                 if 'fn28'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn27('FN27', wb)                 if 'fn27'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn26('FN26', wb)                 if 'fn26'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn25('FN25', wb)                 if 'fn25'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn23('FN23', wb)                 if 'fn23'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn22('FN22', wb)                 if 'fn22'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn21('FN21', wb)                 if 'fn21'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn20('FN20', wb)                 if 'fn20'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn19('FN19', wb)                 if 'fn19'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn18('FN18', wb)                 if 'fn18'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn17('FN17', wb)                 if 'fn17'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn16('FN16', wb)                 if 'fn16'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn15('FN15', wb)                 if 'fn15'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn14('FN14', wb)                 if 'fn14'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn13('FN13', wb)                 if 'fn13'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn12('FN12', wb)                 if 'fn12'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn11('FN11', wb)                 if 'fn11'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn10('FN10', wb)                 if 'fn10'         in pending_fn else None,  # <
+                lambda: RR_updateFn.fn9('FN9', wb)                   if 'fn9'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn8('FN8', wb)                   if 'fn8'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn7('FN7', wb)                   if 'fn7'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn6('FN6', wb)                   if 'fn6'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn5('FN5', wb)                   if 'fn5'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn4('FN4', wb)                   if 'fn4'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn3('FN3', wb)                   if 'fn3'          in pending_fn else None,  # <
+                lambda: RR_updateFn.fn2('FN2', wb)                   if 'fn2'          in pending_fn else None,  # <
+                lambda: RR_updateFs.scaFormat('SCA', wb)             if 'sca'          in pending_fs else None,  # <
+                lambda: RR_updateFs.sbrFormat('SBR', wb)             if 'sbr'          in pending_fs else None,  # <
+                lambda: RR_updateFs.scnpFormat('SCNP', wb)           if 'scnp'         in pending_fs else None,  # <
+                lambda: RR_updateFs.sncFormat('SNC', wb)             if 'snc'          in pending_fs else None,  # <
+                lambda: RR_updateFs.bsFormat('BS', wb)               if 'bs'           in pending_fs else None,  # <
+            ]
+
+            # rest of function unchanged from here...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import re
 import pandas as pd
