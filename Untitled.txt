@@ -1,17 +1,6 @@
-else:
-                t0=time.time()
-                fsFn = stmt.fs_to_fn(fsTofn)
-                logger.info(f"fsFn: {len(fsFn)} rows, columns: {list(fsFn.columns)}")   # <
-                fnFn = stmt.fn_to_fn(fnTofn)
-                logger.info(f"fnFn: {len(fnFn)} rows, columns: {list(fnFn.columns)}")   # <
-                fsFs = stmt.fs_to_fs(fsTofs)
-                logger.info(f"fsFs: {len(fsFs)} rows, columns: {list(fsFs.columns)}")   # <
-                inte = stmt.internal_tie(internal_data)
-                logger.info(f"inte: {len(inte)} rows, columns: {list(inte.columns)}")   # <
-                main = stmt.stmt_tie(fsFn, fnFn, fsFs, inte)
-                logger.info(f"main: {len(main)} rows")
-                sheet = df_to_sheet(main, tabName, wb, skip_if_exists=False)
-                logger.info(f"TIMING: STMT TO STMT = {time.time()-t0:.2f}s")
+09:55:48 [ERROR] gk_footing - Error in reshape_tie: 'FS_Report_Name'
+09:55:48 [ERROR] gk_footing - Error in updateFile: object of type 'NoneType' has no len()
+
 
 
 
