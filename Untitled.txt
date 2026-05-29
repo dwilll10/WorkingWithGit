@@ -1,1 +1,61 @@
+def cleanSnc():
+    
+    # import the SNC as dataframe
+    snc = impt.import_fs('snc')
+    
+    #Search value and return row index
+    first_row = find_row(snc,'Combined Balance', 0)
+    
+    #Create new dataframe from the row index
+    snc = snc.iloc[first_row:,[0,7]].reset_index(drop=True)
+    
+    # Set the second row (index 1) as the header
+    new_header = snc.iloc[1]  # Get the second row for the header
+    snc = snc[2:]  # Take the data after the third row
+    snc.columns = new_header  # Set the new header
+    
+    # Change the name of the second column
+    snc.columns.values[1] = 'Consolidated'
+    
+    # Create new column 'new_column' based on the condition for column 'c'
+    snc['Line'] = snc['DHS OPERATIONAL COMPONENTS'].where(snc['Consolidated'].isna() | (snc['Consolidated'] == ''), None)
 
+    # Remove the value from column 'b' where the condition for moving to 'new_column' is met
+    snc['DHS OPERATIONAL COMPONENTS'] = snc['DHS OPERATIONAL COMPONENTS'].where(snc['Consolidated'].notna() & (snc['Consolidated'] != ''), None)
+    
+    # Rename the second column (index 1) to 'Line Title'
+    snc.rename(columns={snc.columns[0]: 'Line Title'}, inplace=True)
+    
+    # Add 'LineNr' column at the second position (index 1)
+    snc['LineNr'] = range(1, len(snc) + 1)
+
+    # Identify headers for both 'Line' and 'Line Title'
+    snc['Is_Header'] = snc['Line'].apply(lambda x: isinstance(x, str) and x != '')
+    snc['Is_Header_2'] = snc['Line Title'].apply(lambda x: isinstance(x, str) and x != '')
+    
+    # Step 2: Forward fill headers for both columns using .loc
+    snc.loc[:, 'Line'] = snc['Line'].where(snc['Is_Header']).ffill()
+    snc.loc[:, 'Line Title'] = snc['Line Title'].where(snc['Is_Header_2']).ffill()
+    
+    # Step 3: Filter to keep only the relevant columns
+    selected_columns = snc[['Line','LineNr','Line Title', 'Consolidated']].copy()
+    
+    # Step 4: Remove rows where 'Consolidated' is blank (NaN)
+    selected_columns = selected_columns.dropna(subset=['Consolidated'])
+    
+    # Remove rows where 'Consolidated' is 0
+    # selected_columns = selected_columns[selected_columns['Consolidated'] != 0]
+    
+    # Remove duplicate rows
+    selected_columns = selected_columns.drop_duplicates()
+    
+    # Function to add spacing based on changes in the 'Line' column
+    # Add spacing to the DataFrame
+    # Add spacing (generic implementation from robust_utils)
+    selected_columns = ru.add_spacing(selected_columns, group_col='Line')
+    
+    # Reset index if necessary
+    selected_columns.reset_index(drop=True, inplace=True)
+    
+    #return dataframe
+    return selected_columns
