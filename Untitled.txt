@@ -1,172 +1,96 @@
-def import_fs(fn_filter, visible_rows_only=False):
-    directory_path = dir_p.fs_path()
-    
-    df_config = pd.read_excel(mapping_file, sheet_name='Config-FS')
-    fs_config = dict(zip(df_config['report_key'].str.strip(), df_config['source_tab'].str.strip()))
-    
-    data = []
-    for filename in os.listdir(directory_path):
-        full_path = os.path.join(directory_path, filename)
-        if os.path.isfile(full_path):
-            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
-            if fy_qtr_match:
-                fy = fy_qtr_match.group(1)
-                qtr = fy_qtr_match.group(2)
-            else:
-                fy, qtr = None, None
-            for file_code, sheet_name in fs_config.items():
-                match = re.search(file_code, filename)
-                if match:
-                    fn = match.group(0).lower()
-                    if fn == fn_filter:
-                        data.append((fy, qtr, fn, sheet_name, filename))
-                        break
+import os
+import sys
+import zipfile
+import shutil
+from lxml import etree
 
-    df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
-    dfs = []
-    for _, row in df.iterrows():
-        file_path = os.path.join(directory_path, row['File Name'])
-        sheet_name = row['Tab']
-        try:
-            actual_sheet = ru.find_sheet_name(file_path, sheet_name)
-            if actual_sheet != sheet_name:
-                logger.info("Sheet name normalised: '%s' -> '%s' in %s",
-                            sheet_name, actual_sheet, file_path)
-
-            # ---- CHANGED BLOCK ----
-            if visible_rows_only:
-                sheet_df = _read_excel_visible_rows(file_path, actual_sheet)
-            else:
-                sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
-            # ---- END CHANGED BLOCK ----
-
-            if sheet_df.empty:
-                logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
-            dfs.append(sheet_df)
-        except ValueError as e:
-            logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
-        except Exception as e:
-            logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
-
-    final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-    if final_df.empty:
-        logger.warning("import_fs('%s') returned an empty DataFrame.", fn_filter)
-    return final_df
+BASE_DIR = os.path.join(os.environ["OneDrive"], "Documents")
+W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 
-def _read_excel_visible_rows(file_path, sheet_name):
-    """Read an Excel sheet into a DataFrame, skipping hidden rows."""
-    wb = openpyxl.load_workbook(file_path, data_only=True)
-    ws = wb[sheet_name]
-
-    visible_rows = []
-    for row in ws.iter_rows():
-        row_num = row[0].row
-        if ws.row_dimensions[row_num].hidden:
-            continue
-        visible_rows.append([cell.value for cell in row])
-
-    if not visible_rows:
-        return pd.DataFrame()
-
-    # Use the first visible row as the header (mirrors pd.read_excel default)
-    header = visible_rows[0]
-    data   = visible_rows[1:]
-    return pd.DataFrame(data, columns=header)
+def format_value(value):
+    # convert negative numbers to parentheses format and add commas
+    try:
+        num = float(value.replace(",", ""))
+        if num < 0:
+            return "(" + f"{abs(num):,.0f}" + ")"
+        else:
+            return f"{num:,.0f}"
+    except ValueError:
+        return value
 
 
+def parse_args(argv):
+    # parse placeholder=value pairs passed in from VBA
+    replacements = {}
+    for arg in argv[1:]:
+        if "=" in arg:
+            placeholder, value = arg.split("=", 1)
+            replacements[placeholder.strip()] = format_value(value.strip())
+    return replacements
 
 
+def replace_in_xml(xml_bytes, placeholder, value):
+    tree = etree.fromstring(xml_bytes)
+
+    for elem in tree.iter(f"{{{W}}}t"):
+        if elem.text and placeholder in elem.text:
+            elem.text = elem.text.replace(placeholder, value)
+
+    # handle placeholders split across multiple runs in a paragraph
+    for para in tree.iter(f"{{{W}}}p"):
+        runs = para.findall(f".//{{{W}}}r")
+        full_text = "".join((r.find(f"{{{W}}}t").text or "") for r in runs if r.find(f"{{{W}}}t") is not None)
+
+        if placeholder in full_text:
+            new_text = full_text.replace(placeholder, value)
+            text_runs = [r for r in runs if r.find(f"{{{W}}}t") is not None]
+            if text_runs:
+                text_runs[0].find(f"{{{W}}}t").text = new_text
+                for run in text_runs[1:]:
+                    run.find(f"{{{W}}}t").text = ""
+
+    return etree.tostring(tree, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
+def fill_word_from_values(word_path, replacements, output_path):
+    shutil.copy2(word_path, output_path)
+
+    xml_parts = [
+        "word/document.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml",
+        "word/footer1.xml",
+        "word/footer2.xml",
+        "word/footer3.xml",
+    ]
+
+    tmp_path = output_path + ".tmp"
+
+    with zipfile.ZipFile(output_path, "r") as zin:
+        with zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename in xml_parts:
+                    for placeholder, value in replacements.items():
+                        data = replace_in_xml(data, placeholder, value)
+                zout.writestr(item, data)
+
+    os.replace(tmp_path, output_path)
+    print(f"\nSaved to {output_path}")
+    print("Automation was successfully completed without errors")
 
 
-def import_fs(fn_filter):
-    directory_path = dir_p.fs_path()
-    
-    df_config = pd.read_excel(mapping_file, sheet_name='Config-FS')
-    fs_config = dict(zip(df_config['report_key'].str.strip(), df_config['source_tab'].str.strip()))
-    
-    data = []
-    for filename in os.listdir(directory_path):
-        full_path = os.path.join(directory_path, filename)
-        if os.path.isfile(full_path):
-            fy_qtr_match = re.search(r'FY(\d{2})\s*PD(\d{1,2})', filename)
-            if fy_qtr_match:
-                fy = fy_qtr_match.group(1)
-                qtr = fy_qtr_match.group(2)
-            else:
-                fy, qtr = None, None
+if __name__ == "__main__":
+    # parse placeholder=value pairs from command line arguments passed in from VBA
+    replacements = parse_args(sys.argv)
 
-            for file_code, sheet_name in fs_config.items():
-                match = re.search(file_code, filename)
-                if match:
-                    fn = match.group(0).lower()
-                    if fn == fn_filter:
-                        data.append((fy, qtr, fn, sheet_name, filename))
-                        break
+    for placeholder, value in replacements.items():
+        print(f"{placeholder} = {value}")
 
-    df = pd.DataFrame(data, columns=['FY', 'QTR', 'FN', 'Tab', 'File Name'])
-
-    dfs = []
-    for _, row in df.iterrows():
-        file_path = os.path.join(directory_path, row['File Name'])
-        sheet_name = row['Tab']
-
-        try:
-            actual_sheet = ru.find_sheet_name(file_path, sheet_name)
-            if actual_sheet != sheet_name:
-                logger.info("Sheet name normalised: '%s' -> '%s' in %s",
-                            sheet_name, actual_sheet, file_path)
-            sheet_df = pd.read_excel(file_path, sheet_name=actual_sheet)
-            if sheet_df.empty:
-                logger.warning("Sheet '%s' in %s is empty.", actual_sheet, file_path)
-            dfs.append(sheet_df)
-        except ValueError as e:
-            logger.error("Sheet lookup failed for '%s' in %s: %s", sheet_name, file_path, e)
-        except Exception as e:
-            logger.error("Error loading file %s, sheet %s: %s", file_path, sheet_name, e)
-
-    final_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-
-    if final_df.empty:
-        logger.warning("import_fs('%s') returned an empty DataFrame. Check file paths and sheet names.", fn_filter)
-
-    return final_df
-
-
-
-import openpyxl
-import pandas as pd
-
-def import_excel_visible_rows(filepath, sheet_name=0):
-    wb = openpyxl.load_workbook(filepath, data_only=True)
-    
-    # Handle sheet_name as index or string
-    if isinstance(sheet_name, int):
-        ws = wb.worksheets[sheet_name]
-    else:
-        ws = wb[sheet_name]
-    
-    data = []
-    for row in ws.iter_rows():
-        row_num = row[0].row
-        # Skip hidden rows (row_dimensions height == 0 or hidden flag)
-        if ws.row_dimensions[row_num].hidden:
-            continue
-        data.append([cell.value for cell in row])
-    
-    if not data:
-        return pd.DataFrame()
-    
-    df = pd.DataFrame(data)
-    return df
-
-
-def cleanSnc():
-    
-    # Import SNC, skipping hidden rows
-    filepath = impt.get_fs_path('snc')  # however you resolve the path
-    snc = import_excel_visible_rows(filepath, sheet_name=0)
-    
-    # ... rest of your code unchanged ...
+    fill_word_from_values(
+        word_path=os.path.join(BASE_DIR, "FY 2026 DHS AFR - Q2 - OI-SOS-Template.docx"),
+        replacements=replacements,
+        output_path=os.path.join(BASE_DIR, "filled_output.docx")
+    )
