@@ -1,1 +1,137 @@
+Sub ExportOI_SOS()
+    Dim pythonPath As String
+    Dim scriptPath As String
+    Dim logPath As String
+    Dim configPath As String
+    Dim command As String
+    Dim wsh As Object
+    Dim oneDrivePath As String
+    Dim wsData As Worksheet
+    Dim wsConfig As Worksheet
+    Dim wbConfig As Workbook
+    Dim exitCode As Long
+    Dim args As String
+    Dim placeholder As String
+    Dim section As String
+    Dim subtitle As String
+    Dim value As String
+    Dim lastRow As Long
+    Dim i As Long
+    Dim sectionRow As Long
+    Dim subtitleRow As Long
+    Dim nextSectionRow As Long
+    Dim foundCell As Range
+    Dim nextCell As Range
+    Dim j As Long
 
+    oneDrivePath = Environ("OneDrive")
+    pythonPath = "C:\ProgramData\Anaconda3\python.exe"
+    scriptPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
+    logPath = Environ("USERPROFILE") & "\Documents\error_log_wordexport.txt"
+    configPath = oneDrivePath & "\Documents\config.xlsx"
+
+    ' Reference data sheet in the already open workbook
+    Set wsData = ThisWorkbook.Sheets("OI-SOS")
+
+    ' Open config workbook silently, read, then close
+    Application.ScreenUpdating = False
+
+    On Error GoTo ConfigError
+    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
+    On Error GoTo 0
+
+    Set wsConfig = wbConfig.Sheets(1)
+
+
+
+    ' Find last row of config table
+    lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
+
+    ' Build args by iterating config rows (skip header in row 1)
+    args = ""
+    For i = 2 To lastRow
+        section = Trim(wsConfig.Cells(i, 1).value)
+        subtitle = Trim(wsConfig.Cells(i, 2).value)
+        placeholder = Trim(wsConfig.Cells(i, 3).value)
+
+        
+        If section = "" Or subtitle = "" Or placeholder = "" Then
+            
+            GoTo NextRow
+        End If
+
+        ' Step 1: find section in col A of OI-SOS
+        Set foundCell = wsData.Columns("A").Find( _
+            What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+
+        If foundCell Is Nothing Then
+            
+            GoTo NextRow
+        End If
+
+        sectionRow = foundCell.Row
+        
+        ' Step 2: find next section to bound the search
+        Set nextCell = wsData.Columns("A").FindNext(foundCell)
+        If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
+            nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+        Else
+            nextSectionRow = nextCell.Row - 1
+        End If
+
+        
+
+        ' Step 3: find subtitle in col C within the bounded range
+        subtitleRow = 0
+        For j = sectionRow To nextSectionRow
+            If Trim(wsData.Cells(j, 3).value) = subtitle Then
+                subtitleRow = j
+                Exit For
+            End If
+        Next j
+
+        If subtitleRow = 0 Then
+           
+            GoTo NextRow
+        End If
+
+        
+
+        ' Step 4: read value from col D of that row
+        value = wsData.Cells(subtitleRow, 4).value
+       
+        args = args & " """ & placeholder & "=" & value & """"
+        
+
+NextRow:
+    Next i
+
+    ' Close config workbook without saving
+    wbConfig.Close SaveChanges:=False
+    Application.ScreenUpdating = True
+
+   
+
+    command = """" & pythonPath & """ """ & scriptPath & """" & args & " > """ & logPath & """ 2>&1"
+
+    
+
+    Set wsh = CreateObject("WScript.Shell")
+    Debug.Print "Command: " & command
+    exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
+
+    If exitCode = 0 Then
+        MsgBox "Word document generated successfully!", vbInformation, "Done"
+    Else
+        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
+    End If
+
+    Set wsh = Nothing
+    Exit Sub
+
+ConfigError:
+    Application.ScreenUpdating = True
+    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
+    Exit Sub
+
+End Sub
