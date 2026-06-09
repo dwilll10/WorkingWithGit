@@ -1,87 +1,106 @@
-parsedDate = DateTime.ParseExact(dateString, "MM/dd/yyyy h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
-isoFormattedString = parsedDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+import os
+import sys
+import zipfile
+import shutil
+from lxml import etree
+
+W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 
-if(key2.Contains("formattedValue")){
-	
-	var checkBoxObj = ocrNameAttrDict[key1][key2];
-	string checkBox = checkBoxObj != null ? checkBoxObj.ToString() : string.Empty;
-
-	
-	if ((checkBox=="☒") || (checkBox=="☐")){
-		checkBox=checkBox.Replace("☒","yes").Replace("☐","no");
-	}
-	
-}
-
+def format_value(value):
+    """Convert negative numbers to parentheses format and add commas."""
+    try:
+        num = float(value.replace(",", ""))
+        if num < 0:
+            return "(" + f"{abs(num):,.0f}" + ")"
+        else:
+            return f"{num:,.0f}"
+    except ValueError:
+        return value
 
 
-string checkBox = checkBoxObj != null ? checkBoxObj.ToString() : string.Empty;
+def parse_args(argv):
+    """
+    argv[1] = word_template_path
+    argv[2] = output_path
+    argv[3..] = placeholder=value pairs
+    """
+    if len(argv) < 3:
+        print("Usage: WordExportOISOS.py <word_template> <output_path> [placeholder=value ...]")
+        sys.exit(1)
+
+    word_path   = argv[1]
+    output_path = argv[2]
+    replacements = {}
+
+    for arg in argv[3:]:
+        if "=" in arg:
+            placeholder, value = arg.split("=", 1)
+            replacements[placeholder.strip()] = format_value(value.strip())
+
+    return word_path, output_path, replacements
 
 
-var checkBox = ocrNameAttrDict[key1]["formattedValue"];
-	
-	if ((checkBox="☒") || (checkBox="☐")){
-		checkBox=checkBox.Replace("☒","yes").Replace("☐","no");
-	}
+def replace_in_xml(xml_bytes, placeholder, value):
+    """Replace placeholder in XML, handling both single-run and split-run cases."""
+    tree = etree.fromstring(xml_bytes)
+
+    # Single-run: placeholder fully contained in one <w:t>
+    for elem in tree.iter(f"{{{W}}}t"):
+        if elem.text and placeholder in elem.text:
+            elem.text = elem.text.replace(placeholder, value)
+
+    # Split-run: placeholder spans multiple <w:r> elements inside a paragraph
+    for para in tree.iter(f"{{{W}}}p"):
+        runs = para.findall(f".//{{{W}}}r")
+        text_runs = [r for r in runs if r.find(f"{{{W}}}t") is not None]
+        full_text = "".join((r.find(f"{{{W}}}t").text or "") for r in text_runs)
+        if placeholder in full_text:
+            new_text = full_text.replace(placeholder, value)
+            if text_runs:
+                text_runs[0].find(f"{{{W}}}t").text = new_text
+                for run in text_runs[1:]:
+                    run.find(f"{{{W}}}t").text = ""
+
+    return etree.tostring(tree, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
+def fill_word(word_path, replacements, output_path):
+    """Copy template and replace all placeholders."""
+    shutil.copy2(word_path, output_path)
+
+    xml_parts = [
+        "word/document.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml",
+        "word/footer1.xml",
+        "word/footer2.xml",
+        "word/footer3.xml",
+    ]
+
+    tmp_path = output_path + ".tmp"
+    with zipfile.ZipFile(output_path, "r") as zin:
+        with zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename in xml_parts:
+                    for placeholder, value in replacements.items():
+                        data = replace_in_xml(data, placeholder, value)
+                zout.writestr(item, data)
+
+    os.replace(tmp_path, output_path)
+    print(f"\nSaved to {output_path}")
+    print("Automation was successfully completed without errors")
 
 
-if (key2.Contains("formattedValue"))
-{
-    ResultsDataPoint rdpBox = caf8821ExtractionResults.GetField(key1);
+if __name__ == "__main__":
+    word_path, output_path, replacements = parse_args(sys.argv)
 
-    if (rdpBox != null && rdpBox.Values != null && rdpBox.Values.Length > 0)
-    {
-        string existingValue = rdpBox.Values[0]?.Value;
+    print(f"Template: {word_path}")
+    print(f"Output:   {output_path}")
+    print(f"Replacements ({len(replacements)}):")
+    for p, v in replacements.items():
+        print(f"  {p} = {v}")
 
-        if (!string.IsNullOrEmpty(existingValue) && (existingValue.Contains("☒") || existingValue.Contains("☐")))
-        {
-            string booleanValue = existingValue.Contains("☒") ? "Yes" : "No";
-
-            ResultsContentReference rcBox = new ResultsContentReference();
-            ResultsValue rval = new ResultsValue(booleanValue, rcBox, 1.0f, 1.0f);
-            ResultsValue[] rvalArrayBox = new ResultsValue[1];
-            rvalArrayBox[0] = rval;
-
-            rdpBox.Values = rvalArrayBox;
-        }
-    }
-}
-
-
-
-
-if (key2.Contains("formattedValue")){
-				ResultsDataPoint rdpBox =   caf8821ExtractionResults.GetField(key1);
-				
-				if(rdpBox.Values(0).Value.Contains("☒")){
-					ResultsContentReference rcBox = new ResultsContentReference();
-					string booleanValue = "Yes";
-					ResultsValue rval = new ResultsValue(booleanValue,rcBox, 1.0f,1.0f);	
-					ResultsValue[] rvalArrayBox = new ResultsValue[1];	
-					rvalArrayBox[0] = rval;
-					rdpBox.Values = rvalArrayBox;
-					}
-
-
-
-
-
-
-
-if(!cumulativeErrorMap.ContainsKey("designee1Designation")) {
-		string designation1 = ocrNameAttrDict.GetValueOrDefault("NoGroup.NoCategory.CAF2848.designee1Designation").GetValueOrDefault("formattedValue").ToString();
-		designation1=designation1.Replace(",","");
-			
-		Console.WriteLine(designation1);	
-			
-		char[] chardesignation1=designation1.ToCharArray();
-		Array.Sort(chardesignation1);
-		designation1=new string(chardesignation1);
-			
-		Console.WriteLine(designation1);		
-			
-		ocrNameAttrDict["NoGroup.NoCategory.CAF2848.designee1Designation"]["formattedValue"]=designation1[0].ToString();
-		}
+    fill_word(word_path, replacements, output_path)
