@@ -3,22 +3,37 @@
 
 
 
-& "C:\ProgramData\Anaconda3\python.exe" "C:\path\to\test_copy.py" "C:\path\to\template.docx" "C:\path\to\test_output.docx"
-
 import sys
 import zipfile
-import os
+from lxml import etree
 
-word_path   = sys.argv[1]
-output_path = sys.argv[2]
+W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
-if os.path.exists(output_path):
-    os.remove(output_path)
+word_path = sys.argv[1]
 
-# Just copy every file from template zip to output zip — zero processing
+XML_PARTS = [
+    "word/document.xml",
+    "word/header1.xml",
+    "word/header2.xml",
+    "word/header3.xml",
+    "word/footer1.xml",
+    "word/footer2.xml",
+    "word/footer3.xml",
+]
+
 with zipfile.ZipFile(word_path, "r") as zin:
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zout:
-        for item in zin.infolist():
-            zout.writestr(item, zin.read(item.filename))
-
-print(f"Done. Wrote {output_path}")
+    for item in zin.infolist():
+        print(f"{item.filename:50s}  compress_type={item.compress_type}  size={item.file_size}")
+        if item.filename in XML_PARTS:
+            data = zin.read(item.filename)
+            print(f"  First 100 bytes: {data[:100]}")
+            try:
+                tree = etree.fromstring(data)
+                # Try serializing back
+                result = etree.tostring(tree, encoding="unicode").encode("utf-8")
+                print(f"  Parse+serialize OK — before={len(data)} after={len(result)}")
+                # Check if result is valid XML
+                etree.fromstring(result)
+                print(f"  Re-parse OK")
+            except Exception as e:
+                print(f"  ERROR: {e}")
