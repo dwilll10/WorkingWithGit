@@ -1,25 +1,85 @@
-' Step 4: read value(s) based on which sheet we're processing
-If sheetName = "SCNP" Then
-    Dim phD_SCNP As String, phE_SCNP As String, phF_SCNP As String, phG_SCNP As String
-    phD_SCNP = Trim(wsConfig.Cells(i, 3).Value)
-    phE_SCNP = Trim(wsConfig.Cells(i, 4).Value)
-    phF_SCNP = Trim(wsConfig.Cells(i, 5).Value)
-    phG_SCNP = Trim(wsConfig.Cells(i, 6).Value)
-    If phD_SCNP <> "" Then args = args & " """ & phD_SCNP & "=" & wsData.Cells(subtitleRow, 4).Value & """"
-    If phE_SCNP <> "" Then args = args & " """ & phE_SCNP & "=" & wsData.Cells(subtitleRow, 5).Value & """"
-    If phF_SCNP <> "" Then args = args & " """ & phF_SCNP & "=" & wsData.Cells(subtitleRow, 6).Value & """"
-    If phG_SCNP <> "" Then args = args & " """ & phG_SCNP & "=" & wsData.Cells(subtitleRow, 7).Value & """"
+If bsExists Then
+    Set wsBs = ThisWorkbook.Sheets("BS")
+    
+    ' @@InvestmentsNet@@
+    bsSumVal = GetSum(wsBs, _
+        Array("Investments, net", "Investments, net"), _
+        Array("Federal investments", "Interest receivable - investments"))
+    args = args & " """ & "@@InvestmentsNet@@" & "=" & bsSumVal & """"
+    Debug.Print "@@InvestmentsNet@@ = " & bsSumVal
 
-ElseIf sheetName = "SBR" Then
-    Dim phD_SBR As String, phE_SBR As String
-    phD_SBR = Trim(wsConfig.Cells(i, 3).Value)
-    phE_SBR = Trim(wsConfig.Cells(i, 4).Value)
-    If phD_SBR <> "" Then args = args & " """ & phD_SBR & "=" & wsData.Cells(subtitleRow, 4).Value & """"
-    If phE_SBR <> "" Then args = args & " """ & phE_SBR & "=" & wsData.Cells(subtitleRow, 5).Value & """"
+    ' @@AccountsReceivableNet@@
+    bsSumVal = GetSum(wsBs, _
+        Array("Accounts receivable, net", "Accounts receivable, net"), _
+        Array("Accounts receivable, net", "Transfers receivable"))
+    args = args & " """ & "@@AccountsReceivableNet@@" & "=" & bsSumVal & """"
+    Debug.Print "@@AccountsReceivableNet@@ = " & bsSumVal
 
-Else
-    ' Default: single value from col D
-    placeholder = Trim(wsConfig.Cells(i, 3).Value)
-    value = wsData.Cells(subtitleRow, 4).Value
-    args = args & " """ & placeholder & "=" & value & """"
+    ' @@AccountsPayable@@
+    bsSumVal = GetSum(wsBs, _
+        Array("Accounts Payable", "Accounts Payable", "Accounts Payable"), _
+        Array("Accounts Payable, capital transers", "Accounts payable", "Transfers payable"))
+    args = args & " """ & "@@AccountsPayable@@" & "=" & bsSumVal & """"
+    Debug.Print "@@AccountsPayable@@ = " & bsSumVal
+
+    ' @@InterestPayable@@
+    bsSumVal = GetSum(wsBs, _
+        Array("Federal debt and interest payable", "Debt", "Debt"), _
+        Array("Interest payable - debt", "Interest payable - loans and other funds", "Loans payable"))
+    args = args & " """ & "@@InterestPayable@@" & "=" & bsSumVal & """"
+    Debug.Print "@@InterestPayable@@ = " & bsSumVal
+
+    ' @@OtherLiabilities@@
+    bsSumVal = GetSum(wsBs, _
+        Array("Other liabilities", "Other liabilities", "Other liabilities", _
+              "Other liabilities", "Other liabilities", "Other liabilities"), _
+        Array("Advances from others and deferred revenue", _
+              "Other liabilities (without reciprocals)", _
+              "Other liabilities", _
+              "Liability to agency other than the General Fund of the U.S. Government for custodial and other non-entity assets", _
+              "Other current liabilities - Benefit contributions payable", _
+              "Other Liabilities - Reimbursable Activities"))
+    args = args & " """ & "@@OtherLiabilities@@" & "=" & bsSumVal & """"
+    Debug.Print "@@OtherLiabilities@@ = " & bsSumVal
+
+
+Function GetSum(wsData As Worksheet, sections As Variant, subtitles As Variant) As Double
+    Dim total As Double
+    Dim i As Long
+    Dim foundCell As Range
+    Dim nextCell As Range
+    Dim sectionRow As Long
+    Dim nextSectionRow As Long
+    Dim subtitleRow As Long
+    Dim j As Long
+    
+    total = 0
+    For i = 0 To UBound(sections)
+        Set foundCell = wsData.Columns("A").Find( _
+            What:=sections(i), LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
+        If foundCell Is Nothing Then GoTo NextItem
+        
+        sectionRow = foundCell.Row
+        Set nextCell = wsData.Columns("A").FindNext(foundCell)
+        If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
+            nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+        Else
+            nextSectionRow = nextCell.Row - 1
+        End If
+        
+        subtitleRow = 0
+        For j = sectionRow To nextSectionRow
+            If Trim(wsData.Cells(j, 3).Value) = subtitles(i) Then
+                subtitleRow = j
+                Exit For
+            End If
+        Next j
+        
+        If subtitleRow = 0 Then GoTo NextItem
+        total = total + wsData.Cells(subtitleRow, 4).Value
+NextItem:
+    Next i
+    GetSum = total
+End Function
+
 End If
