@@ -1,10 +1,3 @@
-' Print bat file contents to Immediate Window
-Dim checkFile As Integer
-Dim checkLine As String
-checkFile = FreeFile
-Open batPath For Input As #checkFile
-Do While Not EOF(checkFile)
-    Line Input #checkFile, checkLine
-    Debug.Print checkLine
-Loop
-Close #checkFile
+"C:\ProgramData\Anaconda3\python.exe" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\WordExportOISOS.py" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\FY 2026 DHS AFR -Template.docx" "C:\Users\DIEDRICH.WILLERS\Documents\test123.docx" "@@FundTreasury@@=55555" "@@InvestmentsNet@@=7864" "=47" "@@Accounts ReceivableNet@@=687" "=454" "@@IntragovtOtherAssets@@=869" "@@IntragovtAssets@@=7894" "@@CashandOther@@=551" "@@AccountsRecNet@@=265" "@@TaxRecNet@@=76543" "@@LoansRecNet@@=44" "@@InvRelatedProp@@=8457" "@@PropPlantEqup@@=7596" "=0" "@@PublicOtherAssets@@=4568" "@@TotalPublic@@=35473" "@@TotalAssets@@=254789" "@@AccountsPayable@@=0" "=1056" "=2297" "@@InterestPayable@@=0" "=0" "=22534" "=261" "=-775" "@@OtherLiabilities@@=0" "@@NonEntityAssets@@=42563" "=106" "=862" "=143" "@@TotalLiabilities@@=5454879" "@@PublicAccPayable@@=7589" "=0" "@@FedEmplBenefits@@=4253" "@@FedEmplPension@@=45789" "@@EnvDispo
+sal@@=745" "=0" "=0" "@@InsProgramLiab@@=7544" "@@PubOtherLiabilities@@=0" "@@TotwithPublic@@=89654" "@@PubTotalLiabilities@@=45474" "@@FundsDedicated@@=3547" "@@FundsOther@@=789654" "=0" "@@TotalUnexpApps@@=978456" "@@CumeFFDC@@=3555" "@@CumeOtherColls@@=35648" "=0" "@@TotalCume@@=48795" "@@TotalNetPosition@@=789546" "@@TotalLiabNetPos@@=12365" "@@CustomsGrossCost@@=78965" "@@CustomsLessRev@@=-555" "@@CustomsNetCost@@=69875" "@@FEMAGrossCost@@=65478" "@@FEMALessRev@@=-4789" "@@FEMANetCost@@=78956" "@@ImmigrationGrossCost@@=4563" "@@ImmigrationLessRev@@=-44" "@@ImmigrationNetCost@@=7896" "@@TSAGrossCost@@=4567" "@@TSALessRev@@=-3654" "@@TSANetCost@@=7895" "@@USCGGrossCost@@=78965" "@@USCGLessRev@@=-878" "@@USCGNetCost@@=7895" "@@CitizenGrossCost@@=3544" "@@CitizenLessRev@@=-7895 "@@CitizenNetCost@@=24" "@@USSSGrossCost@@=7896" "@@USSSLessRev@@=0" "@@USSSNetCost@@=3654" "@@CISAGrossCost@@=144" "@@CISALessRev@@=0" "@@CISANetCost@@=777" "@@OtherGrossCost@@=8546" "@@OtherLessRev@@=-8796" "@@OtherNetCost@@=4689
+" "@@TotalGrossCost@@=78541" "@@TotalLessRev@@=-3325" "@@NetCostBefore@@=457" "@@GainLossChange@@=224" "@@TotalNetCost@@=46577"
