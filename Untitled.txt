@@ -1,3 +1,12 @@
+' Close output doc if already open in Word
+Dim wdDoc As Object
+For Each wdDoc In Application.Workbooks
+    If wdDoc.FullName = outputPath Then
+        wdDoc.Close SaveChanges:=False
+    End If
+Next wdDoc
+
+
 import os
 import sys
 import zipfile
