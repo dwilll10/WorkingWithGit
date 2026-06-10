@@ -1,1 +1,153 @@
 
+[Content_Types].xml                                 compress_type=8  size=9591
+_rels/.rels                                         compress_type=8  size=737
+word/document.xml                                   compress_type=8  size=5354310
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:document xmlns:wpc="http://schemas.micro'
+  Parse+serialize OK — before=5354310 after=5354253
+  Re-parse OK
+word/_rels/document.xml.rels                        compress_type=8  size=9318
+word/_rels/footer6.xml.rels                         compress_type=8  size=1501
+word/_rels/header10.xml.rels                        compress_type=8  size=421
+word/_rels/header11.xml.rels                        compress_type=8  size=421
+word/_rels/footer7.xml.rels                         compress_type=8  size=1500
+word/_rels/footer8.xml.rels                         compress_type=8  size=1500
+word/_rels/header13.xml.rels                        compress_type=8  size=421
+word/_rels/header14.xml.rels                        compress_type=8  size=421
+word/_rels/footer9.xml.rels                         compress_type=8  size=1501
+word/_rels/footer10.xml.rels                        compress_type=8  size=1501
+word/_rels/header4.xml.rels                         compress_type=8  size=553
+word/_rels/header17.xml.rels                        compress_type=8  size=421
+word/_rels/footer11.xml.rels                        compress_type=8  size=1500
+word/footnotes.xml                                  compress_type=8  size=5448
+word/endnotes.xml                                   compress_type=8  size=3154
+word/_rels/footer12.xml.rels                        compress_type=8  size=1500
+word/footer3.xml                                    compress_type=8  size=25180
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:ftr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=25180 after=25123
+  Re-parse OK
+word/_rels/header19.xml.rels                        compress_type=8  size=421
+word/_rels/header20.xml.rels                        compress_type=8  size=421
+word/_rels/footer13.xml.rels                        compress_type=8  size=289
+word/_rels/footer14.xml.rels                        compress_type=8  size=289
+word/header1.xml                                    compress_type=8  size=18656
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:hdr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=18656 after=18599
+  Re-parse OK
+word/_rels/header22.xml.rels                        compress_type=8  size=421
+word/header2.xml                                    compress_type=8  size=18716
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:hdr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=18716 after=18659
+  Re-parse OK
+word/footer1.xml                                    compress_type=8  size=19282
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:ftr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=19282 after=19225
+  Re-parse OK
+word/_rels/header23.xml.rels                        compress_type=8  size=421
+word/footer2.xml                                    compress_type=8  size=18706
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:ftr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=18706 after=18649
+  Re-parse OK
+word/header3.xml                                    compress_type=8  size=9517
+  First 100 bytes: b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<w:hdr xmlns:wpc="http://schemas.microsoft.'
+  Parse+serialize OK — before=9517 after=9460
+  Re-parse OK
+word/_rels/footer15.xml.rels                        compress_type=8  size=290
+word/header4.xml                                    compress_type=8  size=21053
+word/_rels/footer16.xml.rels                        compress_type=8  size=290
+word/header5.xml                                    compress_type=8  size=18741
+word/_rels/header25.xml.rels                        compress_type=8  size=421
+word/_rels/header26.xml.rels                        compress_type=8  size=421
+word/_rels/footer17.xml.rels                        compress_type=8  size=289
+word/_rels/footer18.xml.rels                        compress_type=8  size=289
+word/_rels/header16.xml.rels                        compress_type=8  size=421
+word/footer4.xml                                    compress_type=8  size=24369
+word/header6.xml                                    compress_type=8  size=9497
+word/header7.xml                                    compress_type=8  size=18594
+word/header8.xml                                    compress_type=8  size=18638
+word/footer5.xml                                    compress_type=8  size=24620
+word/footer6.xml                                    compress_type=8  size=24407
+word/header9.xml                                    compress_type=8  size=9496
+word/header10.xml                                   compress_type=8  size=18695
+word/header11.xml                                   compress_type=8  size=18740
+word/footer7.xml                                    compress_type=8  size=24610
+word/footer8.xml                                    compress_type=8  size=24300
+word/header12.xml                                   compress_type=8  size=4139
+word/header13.xml                                   compress_type=8  size=18590
+word/header14.xml                                   compress_type=8  size=18592
+word/footer9.xml                                    compress_type=8  size=24666
+word/footer10.xml                                   compress_type=8  size=24610
+word/header15.xml                                   compress_type=8  size=9497
+word/header16.xml                                   compress_type=8  size=18697
+word/header17.xml                                   compress_type=8  size=18743
+word/footer11.xml                                   compress_type=8  size=24592
+word/footer12.xml                                   compress_type=8  size=24365
+word/header18.xml                                   compress_type=8  size=4139
+word/header19.xml                                   compress_type=8  size=18697
+word/header20.xml                                   compress_type=8  size=18747
+word/footer13.xml                                   compress_type=8  size=18695
+word/footer14.xml                                   compress_type=8  size=18713
+word/header21.xml                                   compress_type=8  size=9517
+word/header22.xml                                   compress_type=8  size=18593
+word/header23.xml                                   compress_type=8  size=18676
+word/footer15.xml                                   compress_type=8  size=18761
+word/footer16.xml                                   compress_type=8  size=18749
+word/header24.xml                                   compress_type=8  size=9497
+word/header25.xml                                   compress_type=8  size=18696
+word/header26.xml                                   compress_type=8  size=18749
+word/footer17.xml                                   compress_type=8  size=18694
+word/footer18.xml                                   compress_type=8  size=18713
+word/header27.xml                                   compress_type=8  size=4139
+word/header28.xml                                   compress_type=8  size=2806
+word/header29.xml                                   compress_type=8  size=8575
+word/footer19.xml                                   compress_type=8  size=2766
+word/footer20.xml                                   compress_type=8  size=2766
+word/header30.xml                                   compress_type=8  size=4139
+word/_rels/header1.xml.rels                         compress_type=8  size=421
+word/_rels/header2.xml.rels                         compress_type=8  size=421
+word/_rels/footer1.xml.rels                         compress_type=8  size=289
+word/_rels/footer2.xml.rels                         compress_type=8  size=289
+word/_rels/header5.xml.rels                         compress_type=8  size=421
+word/_rels/footer3.xml.rels                         compress_type=8  size=1500
+word/_rels/footer4.xml.rels                         compress_type=8  size=1500
+word/_rels/header7.xml.rels                         compress_type=8  size=421
+word/_rels/header8.xml.rels                         compress_type=8  size=421
+word/_rels/footer5.xml.rels                         compress_type=8  size=1501
+word/media/image5.png                               compress_type=0  size=50650
+word/media/image3.png                               compress_type=0  size=49956
+word/media/image1.png                               compress_type=0  size=89488
+word/comments.xml                                   compress_type=8  size=59056
+word/media/image4.png                               compress_type=0  size=15989
+word/media/image6.png                               compress_type=0  size=53812
+word/media/image2.png                               compress_type=0  size=50712
+word/media/image7.png                               compress_type=0  size=3986
+word/media/image8.svg                               compress_type=0  size=3074
+word/media/image9.png                               compress_type=0  size=2361
+word/media/image10.svg                              compress_type=0  size=847
+word/theme/theme1.xml                               compress_type=8  size=8397
+word/media/image11.png                              compress_type=0  size=3626
+word/media/image13.png                              compress_type=0  size=23277
+word/media/image12.svg                              compress_type=0  size=569
+word/settings.xml                                   compress_type=8  size=58295
+word/commentsExtended.xml                           compress_type=8  size=8114
+word/commentsIds.xml                                compress_type=8  size=9347
+word/commentsExtensible.xml                         compress_type=8  size=13738
+customXml/item1.xml                                 compress_type=8  size=1030
+customXml/itemProps1.xml                            compress_type=8  size=954
+customXml/item2.xml                                 compress_type=8  size=219
+customXml/itemProps2.xml                            compress_type=8  size=335
+customXml/item3.xml                                 compress_type=8  size=289
+customXml/itemProps3.xml                            compress_type=8  size=341
+customXml/item4.xml                                 compress_type=8  size=14739
+customXml/_rels/item3.xml.rels                      compress_type=8  size=296
+customXml/_rels/item4.xml.rels                      compress_type=8  size=296
+word/fontTable.xml                                  compress_type=8  size=2864
+word/people.xml                                     compress_type=8  size=2981
+customXml/itemProps4.xml                            compress_type=8  size=1149
+docProps/core.xml                                   compress_type=8  size=823
+word/numbering.xml                                  compress_type=8  size=152665
+docProps/app.xml                                    compress_type=8  size=1028
+docProps/custom.xml                                 compress_type=8  size=1832
+word/styles.xml                                     compress_type=8  size=80615
+word/webSettings.xml                                compress_type=8  size=15051
+customXml/_rels/item1.xml.rels                      compress_type=8  size=296
+customXml/_rels/item2.xml.rels                      compress_type=8  size=296
