@@ -1,4 +1,5 @@
-& "C:\ProgramData\Anaconda3\python.exe" "C:\Users\YourName\OneDrive\Documents\z. Python Program\GK_new_format\test_replace_one.py" "C:\Users\YourName\OneDrive\Documents\FY 2026 DHS AFR -Template.docx" "C:\Users\YourName\OneDrive\Documents\test_replace_output.docx" "@@YOUR_PLACEHOLDER@@" "99999"
+& "C:\ProgramData\Anaconda3\python.exe" "C:\Users\YourName\OneDrive\Documents\z. Python Program\GK_new_format\test_replace_multi.py" "C:\Users\YourName\OneDrive\Documents\FY 2026 DHS AFR -Template.docx" "C:\Users\YourName\OneDrive\Documents\test_multi_output.docx" "@@PLACEHOLDER1@@" "111" "@@PLACEHOLDER2@@" "222" "@@PLACEHOLDER3@@" "333"
+
 
 
 import sys
@@ -10,8 +11,14 @@ W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 word_path   = sys.argv[1]
 output_path = sys.argv[2]
-placeholder = sys.argv[3]  # e.g. @@MY_PLACEHOLDER@@
-value       = sys.argv[4]  # e.g. 12345
+
+# Hardcode a few dummy replacements to test chaining
+# Replace these with some of your actual placeholders
+replacements = {
+    sys.argv[3]: sys.argv[4],
+    sys.argv[5]: sys.argv[6],
+    sys.argv[7]: sys.argv[8],
+}
 
 if os.path.exists(output_path):
     os.remove(output_path)
@@ -19,19 +26,15 @@ if os.path.exists(output_path):
 def replace_in_xml(xml_bytes, placeholder, value):
     tree = etree.fromstring(xml_bytes)
 
-    # Pass 1: single run
     for elem in tree.iter(f"{{{W}}}t"):
         if elem.text and placeholder in elem.text:
-            print(f"  FOUND single-run match: '{elem.text[:80]}'")
             elem.text = elem.text.replace(placeholder, value)
 
-    # Pass 2: split run
     for para in tree.iter(f"{{{W}}}p"):
         runs = para.findall(f".//{{{W}}}r")
         text_runs = [r for r in runs if r.find(f"{{{W}}}t") is not None]
         full_text = "".join((r.find(f"{{{W}}}t").text or "") for r in text_runs)
         if placeholder in full_text:
-            print(f"  FOUND split-run match: '{full_text[:80]}'")
             new_text = full_text.replace(placeholder, value)
             if text_runs:
                 text_runs[0].find(f"{{{W}}}t").text = new_text
@@ -45,9 +48,10 @@ with zipfile.ZipFile(word_path, "r") as zin:
         for item in zin.infolist():
             data = zin.read(item.filename)
             if item.filename == "word/document.xml":
-                print(f"Processing {item.filename}...")
-                data = replace_in_xml(data, placeholder, value)
-                print(f"Done.")
+                for i, (placeholder, value) in enumerate(replacements.items()):
+                    print(f"Replacement {i+1}: {placeholder} = {value}  (data size: {len(data)})")
+                    data = replace_in_xml(data, placeholder, value)
+                print(f"All replacements done. Final size: {len(data)}")
             zout.writestr(item, data)
 
 print(f"Written to {output_path}")
