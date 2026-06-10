@@ -1,20 +1,19 @@
-Dim sumOccurrence As Long
-            sumOccurrence = 1
-            If Trim(wsSums.Cells(sRow, 5).Value) <> "" Then
-                sumOccurrence = CLng(wsSums.Cells(sRow, 5).Value)
+' Step 3: find subtitle in col C within the bounded range
+            Dim occurrence As Long
+            occurrence = 1
+            If Trim(wsConfig.Cells(i, 4).Value) <> "" Then
+                occurrence = CLng(wsConfig.Cells(i, 4).Value)
             End If
 
-            Dim sumSubRow As Long
-            Dim sumMatchCount As Long
-            sumSubRow = 0
-            sumMatchCount = 0
-            Dim sk As Long
-            For sk = sumSectionRow To sumNextSectionRow
-                If Trim(sumDataSheet.Cells(sk, 3).Value) = sumSubtitle Then
-                    sumMatchCount = sumMatchCount + 1
-                    If sumMatchCount = sumOccurrence Then
-                        sumSubRow = sk
+            Dim matchCount As Long
+            subtitleRow = 0
+            matchCount = 0
+            For j = sectionRow To nextSectionRow
+                If Trim(wsData.Cells(j, 3).Value) = subtitle Then
+                    matchCount = matchCount + 1
+                    If matchCount = occurrence Then
+                        subtitleRow = j
                         Exit For
                     End If
                 End If
-            Next sk
+            Next j
