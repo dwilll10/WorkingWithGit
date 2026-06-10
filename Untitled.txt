@@ -1,7 +1,2 @@
-Debug.Print "Bat file path: " & batPath
-
-If Dir(batPath) = "" Then
-    MsgBox "Batch file was not created at: " & batPath, vbCritical, "Error"
-    Exit Sub
-End If
-Debug.Print "Bat file created successfully"
+@echo off
+"C:\ProgramData\Anaconda3\python.exe" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\WordExportOISOS.py" "C:\Users\DIEDRICH.WILLERS\OneDrive\Documents\FY 2026 DHS AFR -Template.docx" "C:\Users\DIEDRICH.WILLERS\OneDrive\Documents\filled_output_afr.docx" "@@FundTreasury@@=4526" "@@InvestmentsNet@@=3659" "=47" "@@Accounts ReceivableNet@@=845" "=454"
