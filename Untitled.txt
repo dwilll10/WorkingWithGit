@@ -1,21 +1,7 @@
-command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" & args
+Debug.Print "Bat file path: " & batPath
 
-    Dim batPath As String
-    batPath = Environ("USERPROFILE") & "\Documents\run_export.bat"
-    
-    Dim fileNum As Integer
-    fileNum = FreeFile
-    Open batPath For Output As #fileNum
-    Print #fileNum, "@echo off"
-    Print #fileNum, command & " > """ & logPath & """ 2>&1"
-    Close #fileNum
-
-    Set wsh = CreateObject("WScript.Shell")
-    Debug.Print "Command: " & command
-    exitCode = wsh.Run("cmd /c """ & batPath & """", 0, True)
-
-    If exitCode = 0 Then
-        MsgBox "Word document generated successfully!" & vbNewLine & outputPath, vbInformation, "Done"
-    Else
-        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
-    End If
+If Dir(batPath) = "" Then
+    MsgBox "Batch file was not created at: " & batPath, vbCritical, "Error"
+    Exit Sub
+End If
+Debug.Print "Bat file created successfully"
