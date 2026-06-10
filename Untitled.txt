@@ -1,114 +1,20 @@
-'--------------------------------------------------------------------------
-    ' Sum placeholders from Sums tab in config
-    '--------------------------------------------------------------------------
-    Dim wsSums As Worksheet
-    Dim sumsExists As Boolean
-    sumsExists = False
-    Dim sumWs As Worksheet
-    For Each sumWs In wbConfig.Worksheets
-        If sumWs.Name = "Sums" Then
-            sumsExists = True
-            Set wsSums = sumWs
-            Exit For
-        End If
-    Next sumWs
-
-    If sumsExists Then
-        Dim sumsLastRow As Long
-        sumsLastRow = wsSums.Cells(wsSums.Rows.Count, "A").End(xlUp).Row
-
-        Dim sumPlaceholders As Object
-        Set sumPlaceholders = CreateObject("Scripting.Dictionary")
-
-        ' First pass — collect all unique placeholders and their running totals
-        Dim sRow As Long
-        For sRow = 2 To sumsLastRow
-            Dim sumPh As String
-            Dim sumSheet As String
-            Dim sumSection As String
-            Dim sumSubtitle As String
-
-            sumPh      = Trim(wsSums.Cells(sRow, 1).Value)  ' Col A: placeholder
-            sumSheet   = Trim(wsSums.Cells(sRow, 2).Value)  ' Col B: sheet name
-            sumSection = Trim(wsSums.Cells(sRow, 3).Value)  ' Col C: section
-            sumSubtitle = Trim(wsSums.Cells(sRow, 4).Value) ' Col D: subtitle
-
-            If sumPh = "" Or sumSheet = "" Or sumSection = "" Or sumSubtitle = "" Then
-                GoTo NextSumRow
-            End If
-
-            ' Check data sheet exists
-            Dim sumDataSheet As Worksheet
-            Dim sumDataExists As Boolean
-            sumDataExists = False
-            For Each sumDataSheet In ThisWorkbook.Worksheets
-                If sumDataSheet.Name = sumSheet Then
-                    sumDataExists = True
-                    Exit For
-                End If
-            Next sumDataSheet
-
-            If Not sumDataExists Then
-                Debug.Print "Sums: sheet '" & sumSheet & "' not found — skipped"
-                GoTo NextSumRow
-            End If
-
-            ' Look up the value
-            Dim sumFoundCell As Range
-            Set sumFoundCell = sumDataSheet.Columns("A").Find( _
-                What:=sumSection, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
-
-            If sumFoundCell Is Nothing Then
-                Debug.Print "Sums: section '" & sumSection & "' not found in " & sumSheet
-                GoTo NextSumRow
-            End If
-
-            Dim sumSectionRow As Long
-            Dim sumNextSectionRow As Long
-            Dim sumNextCell As Range
-            sumSectionRow = sumFoundCell.Row
-
-            Set sumNextCell = sumDataSheet.Columns("A").FindNext(sumFoundCell)
-            If sumNextCell Is Nothing Or sumNextCell.Row <= sumSectionRow Then
-                sumNextSectionRow = sumDataSheet.Cells(sumDataSheet.Rows.Count, "C").End(xlUp).Row
-            Else
-                sumNextSectionRow = sumNextCell.Row - 1
+Dim sumOccurrence As Long
+            sumOccurrence = 1
+            If Trim(wsSums.Cells(sRow, 5).Value) <> "" Then
+                sumOccurrence = CLng(wsSums.Cells(sRow, 5).Value)
             End If
 
             Dim sumSubRow As Long
+            Dim sumMatchCount As Long
             sumSubRow = 0
+            sumMatchCount = 0
             Dim sk As Long
             For sk = sumSectionRow To sumNextSectionRow
                 If Trim(sumDataSheet.Cells(sk, 3).Value) = sumSubtitle Then
-                    sumSubRow = sk
-                    Exit For
+                    sumMatchCount = sumMatchCount + 1
+                    If sumMatchCount = sumOccurrence Then
+                        sumSubRow = sk
+                        Exit For
+                    End If
                 End If
             Next sk
-
-            If sumSubRow = 0 Then
-                Debug.Print "Sums: subtitle '" & sumSubtitle & "' not found under '" & sumSection & "'"
-                GoTo NextSumRow
-            End If
-
-            ' Add value to running total for this placeholder
-            Dim sumCellVal As Double
-            sumCellVal = Val(Replace(CStr(sumDataSheet.Cells(sumSubRow, 4).Value), ",", ""))
-
-            If sumPlaceholders.Exists(sumPh) Then
-                sumPlaceholders(sumPh) = sumPlaceholders(sumPh) + sumCellVal
-            Else
-                sumPlaceholders.Add sumPh, sumCellVal
-            End If
-
-            Debug.Print "  Sums: " & sumPh & " += " & sumCellVal & " (" & sumSubtitle & ")"
-
-NextSumRow:
-        Next sRow
-
-        ' Second pass — add all sum placeholders to args
-        Dim sumKey As Variant
-        For Each sumKey In sumPlaceholders.Keys
-            args = args & " """ & sumKey & "=" & sumPlaceholders(sumKey) & """"
-            Debug.Print "SUM " & sumKey & " = " & sumPlaceholders(sumKey)
-        Next sumKey
-    End If
