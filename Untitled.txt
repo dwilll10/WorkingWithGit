@@ -1,1 +1,19 @@
 & "C:\ProgramData\Anaconda3\python.exe" "C:\path\to\test_copy.py" "C:\path\to\template.docx" "C:\path\to\test_output.docx"
+
+import sys
+import zipfile
+import os
+
+word_path   = sys.argv[1]
+output_path = sys.argv[2]
+
+if os.path.exists(output_path):
+    os.remove(output_path)
+
+# Just copy every file from template zip to output zip — zero processing
+with zipfile.ZipFile(word_path, "r") as zin:
+    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            zout.writestr(item, zin.read(item.filename))
+
+print(f"Done. Wrote {output_path}")
