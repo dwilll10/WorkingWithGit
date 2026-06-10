@@ -1,180 +1,25 @@
+' Step 4: read value(s) based on which sheet we're processing
+If sheetName = "SCNP" Then
+    Dim phD_SCNP As String, phE_SCNP As String, phF_SCNP As String, phG_SCNP As String
+    phD_SCNP = Trim(wsConfig.Cells(i, 3).Value)
+    phE_SCNP = Trim(wsConfig.Cells(i, 4).Value)
+    phF_SCNP = Trim(wsConfig.Cells(i, 5).Value)
+    phG_SCNP = Trim(wsConfig.Cells(i, 6).Value)
+    If phD_SCNP <> "" Then args = args & " """ & phD_SCNP & "=" & wsData.Cells(subtitleRow, 4).Value & """"
+    If phE_SCNP <> "" Then args = args & " """ & phE_SCNP & "=" & wsData.Cells(subtitleRow, 5).Value & """"
+    If phF_SCNP <> "" Then args = args & " """ & phF_SCNP & "=" & wsData.Cells(subtitleRow, 6).Value & """"
+    If phG_SCNP <> "" Then args = args & " """ & phG_SCNP & "=" & wsData.Cells(subtitleRow, 7).Value & """"
 
-Sub ExportAllSheets()
+ElseIf sheetName = "SBR" Then
+    Dim phD_SBR As String, phE_SBR As String
+    phD_SBR = Trim(wsConfig.Cells(i, 3).Value)
+    phE_SBR = Trim(wsConfig.Cells(i, 4).Value)
+    If phD_SBR <> "" Then args = args & " """ & phD_SBR & "=" & wsData.Cells(subtitleRow, 4).Value & """"
+    If phE_SBR <> "" Then args = args & " """ & phE_SBR & "=" & wsData.Cells(subtitleRow, 5).Value & """"
 
-    '--------------------------------------------------------------------------
-    ' Paths
-    '--------------------------------------------------------------------------
-    Dim oneDrivePath As String:  oneDrivePath = Environ("OneDrive")
-    Dim pythonPath   As String:  pythonPath   = "C:\ProgramData\Anaconda3\python.exe"
-    Dim scriptPath   As String:  scriptPath   = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
-    Dim logPath      As String:  logPath      = Environ("USERPROFILE") & "\Documents\error_log_wordexport.txt"
-    Dim configPath   As String:  configPath   = oneDrivePath & "\Documents\config.xlsx"
-    Dim wordTemplate As String:  wordTemplate = oneDrivePath & "\Documents\FY 2026 DHS AFR - Q2 - OI-SOS-Template.docx"
-    Dim outputPath   As String:  outputPath   = oneDrivePath & "\Documents\filled_output.docx"
-
-    '--------------------------------------------------------------------------
-    ' Objects / variables
-    '--------------------------------------------------------------------------
-    Dim wbConfig        As Workbook
-    Dim wsConfig        As Worksheet
-    Dim wsData          As Worksheet
-    Dim wsh             As Object
-    Dim foundCell       As Range
-    Dim nextCell        As Range
-
-    Dim args            As String
-    Dim command         As String
-    Dim sheetName       As String
-    Dim section         As String
-    Dim subtitle        As String
-    Dim placeholder     As String
-    Dim value           As String
-
-    Dim lastRow         As Long
-    Dim sectionRow      As Long
-    Dim nextSectionRow  As Long
-    Dim subtitleRow     As Long
-    Dim exitCode        As Long
-    Dim i As Long, j As Long
-
-    '--------------------------------------------------------------------------
-    ' Open config workbook silently
-    '--------------------------------------------------------------------------
-    Application.ScreenUpdating = False
-    On Error GoTo ConfigError
-    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
-    On Error GoTo 0
-
-    args = ""
-
-    '--------------------------------------------------------------------------
-    ' Loop every tab in config.xlsx
-    ' Convention: config tab name must exactly match a sheet in ThisWorkbook
-    '--------------------------------------------------------------------------
-    Dim ws As Worksheet
-    For Each ws In wbConfig.Worksheets
-
-        sheetName = ws.Name
-
-        ' Skip the OI-SOS config tab — handled by a separate macro
-        If sheetName = "OI-SOS" Then GoTo NextSheet
-
-        ' Skip if ThisWorkbook doesn't have a matching data sheet
-        Dim dataExists As Boolean
-        dataExists = False
-        Dim testWs As Worksheet
-        For Each testWs In ThisWorkbook.Worksheets
-            If testWs.Name = sheetName Then
-                dataExists = True
-                Exit For
-            End If
-        Next testWs
-
-        If Not dataExists Then
-            Debug.Print "Config tab '" & sheetName & "' has no matching data sheet — skipped."
-            GoTo NextSheet
-        End If
-
-        Set wsConfig = ws
-        Set wsData   = ThisWorkbook.Sheets(sheetName)
-
-        lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
-
-        Debug.Print "Processing sheet: " & sheetName & " (" & lastRow - 1 & " config rows)"
-
-        '----------------------------------------------------------------------
-        ' Loop config rows for this sheet (row 1 = header, skip it)
-        '----------------------------------------------------------------------
-        For i = 2 To lastRow
-
-            section     = Trim(wsConfig.Cells(i, 1).Value)   ' Col A
-            subtitle    = Trim(wsConfig.Cells(i, 2).Value)   ' Col B
-            placeholder = Trim(wsConfig.Cells(i, 3).Value)   ' Col C
-
-            If section = "" Or subtitle = "" Or placeholder = "" Then
-                GoTo NextRow
-            End If
-
-            ' Step 1: find section header in col A of the data sheet
-            Set foundCell = wsData.Columns("A").Find( _
-                What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
-
-            If foundCell Is Nothing Then
-                Debug.Print "  NOT FOUND section: '" & section & "'"
-                GoTo NextRow
-            End If
-
-            sectionRow = foundCell.Row
-
-            ' Step 2: bound the search — find the NEXT section header in col A
-            Set nextCell = wsData.Columns("A").FindNext(foundCell)
-            If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
-                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-            Else
-                nextSectionRow = nextCell.Row - 1
-            End If
-
-            ' Step 3: find subtitle in col C within the bounded range
-            subtitleRow = 0
-            For j = sectionRow To nextSectionRow
-                If Trim(wsData.Cells(j, 3).Value) = subtitle Then
-                    subtitleRow = j
-                    Exit For
-                End If
-            Next j
-
-            If subtitleRow = 0 Then
-                Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                GoTo NextRow
-            End If
-
-            ' Step 4: read value from col D
-            value = wsData.Cells(subtitleRow, 4).Value
-
-            args = args & " """ & placeholder & "=" & value & """"
-
-            Debug.Print "  " & placeholder & " = " & value
-
-NextRow:
-        Next i
-
-NextSheet:
-    Next ws
-
-    '--------------------------------------------------------------------------
-    ' Close config workbook
-    '--------------------------------------------------------------------------
-    wbConfig.Close SaveChanges:=False
-    Application.ScreenUpdating = True
-
-    If args = "" Then
-        MsgBox "No placeholder values were found. Check your config tabs and data sheets.", _
-               vbExclamation, "Nothing to Replace"
-        Exit Sub
-    End If
-
-    '--------------------------------------------------------------------------
-    ' Call Python: pass word template, output path, then all placeholder=value pairs
-    '--------------------------------------------------------------------------
-    command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" _
-              & args & " > """ & logPath & """ 2>&1"
-
-    Set wsh = CreateObject("WScript.Shell")
-    Debug.Print "Command: " & command
-    exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
-
-    If exitCode = 0 Then
-        MsgBox "Word document generated successfully!" & vbNewLine & outputPath, vbInformation, "Done"
-    Else
-        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
-    End If
-
-    Set wsh = Nothing
-    Exit Sub
-
-ConfigError:
-    Application.ScreenUpdating = True
-    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
-    Exit Sub
-
-End Sub
+Else
+    ' Default: single value from col D
+    placeholder = Trim(wsConfig.Cells(i, 3).Value)
+    value = wsData.Cells(subtitleRow, 4).Value
+    args = args & " """ & placeholder & "=" & value & """"
+End If
