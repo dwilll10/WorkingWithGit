@@ -1,11 +1,2 @@
-# Verify output is a valid zip/docx
-import zipfile as _zf
-try:
-    with _zf.ZipFile(output_path, "r") as _z:
-        bad = _z.testzip()
-        if bad:
-            print(f"ZIP ERROR: first bad file is {bad}")
-        else:
-            print(f"ZIP OK: {len(_z.namelist())} files, size={os.path.getsize(output_path)}")
-except Exception as e:
-    print(f"ZIP OPEN FAILED: {e}")
+& "C:\ProgramData\Anaconda3\python.exe" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\z. Python Program\GK_new_format\WordExportOISOS.py" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\FY 2026 DHS AFR -Template.docx" "C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\Documents\test123.docx" "@@FundTreasury@@=4526" "@@InvestmentsNet@@=3659" "@@AccountsReceivableNet@@=845"
+
