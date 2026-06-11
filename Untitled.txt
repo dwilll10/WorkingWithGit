@@ -1,19 +1,92 @@
-' Step 3: find subtitle in col C within the bounded range
-            Dim occurrence As Long
-            occurrence = 1
-            If Trim(wsConfig.Cells(i, 4).Value) <> "" Then
-                occurrence = CLng(wsConfig.Cells(i, 4).Value)
-            End If
+# Check if SCA term is in the filename
+            sca_match = re.search(r'SCA', filename)
+            if sca_match:
+                sca_fn = sca_match.group(0).lower()
+                if sca_fn == fn_filter:
+                    data.append((fy, qtr, sca_fn, 'CustodialActivity', filename))
+                # Handle breakout sheet from the same SCA file
+                if fn_filter == 'sca_breakout':
+                    data.append((fy, qtr, 'sca_breakout', 'Breakout', filename))
 
-            Dim matchCount As Long
-            subtitleRow = 0
-            matchCount = 0
-            For j = sectionRow To nextSectionRow
-                If Trim(wsData.Cells(j, 3).Value) = subtitle Then
-                    matchCount = matchCount + 1
-                    If matchCount = occurrence Then
-                        subtitleRow = j
-                        Exit For
-                    End If
-                End If
-            Next j
+
+
+def cleanSca():
+    
+    # import the SCA as dataframe
+    sca = impt.import_fs('sca')
+    
+    #Search value and return row index
+    first_row = find_row(sca,'Line', 0)
+    
+    #Search value and return column index
+    last_column = find_column(sca, 'AFR Rounding', 0)
+    
+    #Create new dataframe from the row and column index
+    sca = sca.iloc[first_row:,[0,1,last_column]].reset_index(drop=True)
+    # Set the second row (index 1) as the header
+    new_header = sca.iloc[0]
+    sca = sca[1:]
+    sca.columns = new_header
+     
+    def is_nan_or_numeric(x):
+        return pd.isna(x) or isinstance(x, (int, float))
+    
+    sca = sca[~(sca['Line Title'].apply(is_nan_or_numeric) & sca['Line'].apply(is_nan_or_numeric))]
+    
+    selected_columns = sca.copy()
+    
+    ru.rename_col(selected_columns, 'AFR Rounding', 'Consolidated')
+    
+    selected_columns['LineNr'] = selected_columns['Line']
+    
+    selected_columns['Is_Header'] = selected_columns['Line'].apply(lambda x: isinstance(x, str) and x != '')
+    selected_columns['Is_Header_2'] = selected_columns['Line Title'].apply(lambda x: isinstance(x, str) and x != '')
+      
+    selected_columns.loc[:, 'Line'] = selected_columns['Line'].where(selected_columns['Is_Header']).ffill()
+    selected_columns.loc[:, 'Line Title'] = selected_columns['Line Title'].where(selected_columns['Is_Header_2']).ffill()
+    
+    selected_columns = selected_columns[['Line','LineNr','Line Title', 'Consolidated']]
+   
+    selected_columns = selected_columns.dropna(subset=['Consolidated'])
+    
+    selected_columns = selected_columns.drop_duplicates()
+    
+    selected_columns = ru.add_spacing(selected_columns, group_col='Line')
+    
+    selected_columns.reset_index(drop=True, inplace=True)
+
+    # -------------------------------------------------------------------------
+    # Append Breakout sheet — columns A and F (Rounding)
+    # -------------------------------------------------------------------------
+    breakout = impt.import_fs('sca_breakout')
+
+    # Find the row where headers start by locating 'Rounding' in col F
+    breakout_first_row = find_row(breakout, 'Rounding', 5)  # col index 5 = col F
+
+    # Slice to just columns A (0) and F (5) from the header row onward
+    breakout = breakout.iloc[breakout_first_row:, [0, 5]].reset_index(drop=True)
+
+    # Set header row
+    breakout.columns = breakout.iloc[0]
+    breakout = breakout[1:].reset_index(drop=True)
+
+    # Rename to match main dataframe columns
+    ru.rename_col(breakout, 'Rounding', 'Consolidated')
+
+    # Drop rows where Consolidated is blank
+    breakout = breakout.dropna(subset=['Consolidated'])
+
+    # Col A is Line Title — set Line and LineNr to blank since these are breakout rows
+    breakout = breakout.rename(columns={breakout.columns[0]: 'Line Title'})
+    breakout['Line'] = ''
+    breakout['LineNr'] = ''
+
+    # Reorder to match
+    breakout = breakout[['Line', 'LineNr', 'Line Title', 'Consolidated']]
+
+    breakout = breakout.drop_duplicates()
+
+    # Append to main dataframe
+    selected_columns = pd.concat([selected_columns, breakout], ignore_index=True)
+
+    return selected_columns
