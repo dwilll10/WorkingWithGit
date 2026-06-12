@@ -1,92 +1,82 @@
-# Check if SCA term is in the filename
-            sca_match = re.search(r'SCA', filename)
-            if sca_match:
-                sca_fn = sca_match.group(0).lower()
-                if sca_fn == fn_filter:
-                    data.append((fy, qtr, sca_fn, 'CustodialActivity', filename))
-                # Handle breakout sheet from the same SCA file
-                if fn_filter == 'sca_breakout':
-                    data.append((fy, qtr, 'sca_breakout', 'Breakout', filename))
+' Loop config rows for this sheet (row 1 = header, skip it)
+        '----------------------------------------------------------------------
+        For i = 2 To lastRow
 
+            section = Trim(wsConfig.Cells(i, 1).value)       ' Col A
+            subtitle = Trim(wsConfig.Cells(i, 2).value)      ' Col B
+            placeholder = Trim(wsConfig.Cells(i, 3).value)   ' Col C
 
+            If section = "" Or subtitle = "" Or placeholder = "" Then
+                GoTo NextRow
+            End If
 
-def cleanSca():
-    
-    # import the SCA as dataframe
-    sca = impt.import_fs('sca')
-    
-    #Search value and return row index
-    first_row = find_row(sca,'Line', 0)
-    
-    #Search value and return column index
-    last_column = find_column(sca, 'AFR Rounding', 0)
-    
-    #Create new dataframe from the row and column index
-    sca = sca.iloc[first_row:,[0,1,last_column]].reset_index(drop=True)
-    # Set the second row (index 1) as the header
-    new_header = sca.iloc[0]
-    sca = sca[1:]
-    sca.columns = new_header
-     
-    def is_nan_or_numeric(x):
-        return pd.isna(x) or isinstance(x, (int, float))
-    
-    sca = sca[~(sca['Line Title'].apply(is_nan_or_numeric) & sca['Line'].apply(is_nan_or_numeric))]
-    
-    selected_columns = sca.copy()
-    
-    ru.rename_col(selected_columns, 'AFR Rounding', 'Consolidated')
-    
-    selected_columns['LineNr'] = selected_columns['Line']
-    
-    selected_columns['Is_Header'] = selected_columns['Line'].apply(lambda x: isinstance(x, str) and x != '')
-    selected_columns['Is_Header_2'] = selected_columns['Line Title'].apply(lambda x: isinstance(x, str) and x != '')
-      
-    selected_columns.loc[:, 'Line'] = selected_columns['Line'].where(selected_columns['Is_Header']).ffill()
-    selected_columns.loc[:, 'Line Title'] = selected_columns['Line Title'].where(selected_columns['Is_Header_2']).ffill()
-    
-    selected_columns = selected_columns[['Line','LineNr','Line Title', 'Consolidated']]
-   
-    selected_columns = selected_columns.dropna(subset=['Consolidated'])
-    
-    selected_columns = selected_columns.drop_duplicates()
-    
-    selected_columns = ru.add_spacing(selected_columns, group_col='Line')
-    
-    selected_columns.reset_index(drop=True, inplace=True)
+            ' Step 1: find section header in col A of the data sheet
+            Set foundCell = wsData.Columns("A").Find( _
+                What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
 
-    # -------------------------------------------------------------------------
-    # Append Breakout sheet — columns A and F (Rounding)
-    # -------------------------------------------------------------------------
-    breakout = impt.import_fs('sca_breakout')
+            If foundCell Is Nothing Then
+                Debug.Print "  NOT FOUND section: '" & section & "'"
+                GoTo NextRow
+            End If
 
-    # Find the row where headers start by locating 'Rounding' in col F
-    breakout_first_row = find_row(breakout, 'Rounding', 5)  # col index 5 = col F
+            sectionRow = foundCell.Row
 
-    # Slice to just columns A (0) and F (5) from the header row onward
-    breakout = breakout.iloc[breakout_first_row:, [0, 5]].reset_index(drop=True)
+            ' Step 2: bound the search — find the NEXT section header in col A
+            Set nextCell = wsData.Columns("A").FindNext(foundCell)
+            If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
+                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+            Else
+                nextSectionRow = nextCell.Row - 1
+            End If
 
-    # Set header row
-    breakout.columns = breakout.iloc[0]
-    breakout = breakout[1:].reset_index(drop=True)
+            ' Step 3: find subtitle in col C within the bounded range
+            Dim occurrence As Long
+            occurrence = 1
+            If Trim(wsConfig.Cells(i, 7).value) <> "" Then
+                occurrence = CLng(wsConfig.Cells(i, 7).value)
+            End If
 
-    # Rename to match main dataframe columns
-    ru.rename_col(breakout, 'Rounding', 'Consolidated')
+            Dim matchCount As Long
+            subtitleRow = 0
+            matchCount = 0
+            For j = sectionRow To nextSectionRow
+                If Trim(wsData.Cells(j, 3).value) = subtitle Then
+                    matchCount = matchCount + 1
+                    If matchCount = occurrence Then
+                        subtitleRow = j
+                        Exit For
+                    End If
+                End If
+            Next j
 
-    # Drop rows where Consolidated is blank
-    breakout = breakout.dropna(subset=['Consolidated'])
+            If subtitleRow = 0 Then
+                Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
+                GoTo NextRow
+            End If
 
-    # Col A is Line Title — set Line and LineNr to blank since these are breakout rows
-    breakout = breakout.rename(columns={breakout.columns[0]: 'Line Title'})
-    breakout['Line'] = ''
-    breakout['LineNr'] = ''
+            ' Step 4: read value(s) based on which sheet we're processing
+            If sheetName = "SCNP" Then
+                Dim phD_SCNP As String, phE_SCNP As String, phF_SCNP As String, phG_SCNP As String
+                phD_SCNP = Trim(wsConfig.Cells(i, 3).value)
+                phE_SCNP = Trim(wsConfig.Cells(i, 4).value)
+                phF_SCNP = Trim(wsConfig.Cells(i, 5).value)
+                phG_SCNP = Trim(wsConfig.Cells(i, 6).value)
+                If phD_SCNP <> "" Then args = args & " """ & phD_SCNP & "=" & wsData.Cells(subtitleRow, 4).value & """"
+                If phE_SCNP <> "" Then args = args & " """ & phE_SCNP & "=" & wsData.Cells(subtitleRow, 5).value & """"
+                If phF_SCNP <> "" Then args = args & " """ & phF_SCNP & "=" & wsData.Cells(subtitleRow, 6).value & """"
+                If phG_SCNP <> "" Then args = args & " """ & phG_SCNP & "=" & wsData.Cells(subtitleRow, 7).value & """"
 
-    # Reorder to match
-    breakout = breakout[['Line', 'LineNr', 'Line Title', 'Consolidated']]
+            ElseIf sheetName = "SBR" Then
+                Dim phD_SBR As String, phE_SBR As String
+                phD_SBR = Trim(wsConfig.Cells(i, 3).value)
+                phE_SBR = Trim(wsConfig.Cells(i, 4).value)
+                If phD_SBR <> "" Then args = args & " """ & phD_SBR & "=" & wsData.Cells(subtitleRow, 4).value & """"
+                If phE_SBR <> "" Then args = args & " """ & phE_SBR & "=" & wsData.Cells(subtitleRow, 5).value & """"
 
-    breakout = breakout.drop_duplicates()
-
-    # Append to main dataframe
-    selected_columns = pd.concat([selected_columns, breakout], ignore_index=True)
-
-    return selected_columns
+            Else
+             ' Default: single value from col D
+                placeholder = Trim(wsConfig.Cells(i, 3).value)
+                value = wsData.Cells(subtitleRow, 4).value
+                args = args & " """ & placeholder & "=" & value & """"
+            End If
+            Debug.Print "  " & placeholder & " = " & value
