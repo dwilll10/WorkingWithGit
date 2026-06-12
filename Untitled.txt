@@ -1,8 +1,1 @@
-Set nextCell = wsData.Columns("A").FindNext(foundCell)
-            If nextCell Is Nothing Then
-                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-            ElseIf nextCell.Row <= sectionRow Then
-                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-            Else
-                nextSectionRow = nextCell.Row - 1
-            End If
+
