@@ -1,82 +1,16 @@
-' Loop config rows for this sheet (row 1 = header, skip it)
-        '----------------------------------------------------------------------
-        For i = 2 To lastRow
+Private Function StripSpaces(s As String) As String
+    StripSpaces = Replace(s, " ", "")
+End Function
 
-            section = Trim(wsConfig.Cells(i, 1).value)       ' Col A
-            subtitle = Trim(wsConfig.Cells(i, 2).value)      ' Col B
-            placeholder = Trim(wsConfig.Cells(i, 3).value)   ' Col C
-
-            If section = "" Or subtitle = "" Or placeholder = "" Then
-                GoTo NextRow
-            End If
-
-            ' Step 1: find section header in col A of the data sheet
-            Set foundCell = wsData.Columns("A").Find( _
-                What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
-
-            If foundCell Is Nothing Then
-                Debug.Print "  NOT FOUND section: '" & section & "'"
-                GoTo NextRow
-            End If
-
-            sectionRow = foundCell.Row
-
-            ' Step 2: bound the search — find the NEXT section header in col A
-            Set nextCell = wsData.Columns("A").FindNext(foundCell)
-            If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
-                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-            Else
-                nextSectionRow = nextCell.Row - 1
-            End If
-
-            ' Step 3: find subtitle in col C within the bounded range
-            Dim occurrence As Long
-            occurrence = 1
-            If Trim(wsConfig.Cells(i, 7).value) <> "" Then
-                occurrence = CLng(wsConfig.Cells(i, 7).value)
-            End If
-
-            Dim matchCount As Long
-            subtitleRow = 0
-            matchCount = 0
-            For j = sectionRow To nextSectionRow
-                If Trim(wsData.Cells(j, 3).value) = subtitle Then
-                    matchCount = matchCount + 1
-                    If matchCount = occurrence Then
-                        subtitleRow = j
-                        Exit For
-                    End If
+' Step 1: find section header in col A of the data sheet
+            Dim k As Long
+            Set foundCell = Nothing
+            For k = 1 To wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
+                If StripSpaces(Trim(wsData.Cells(k, 1).value)) = StripSpaces(section) Then
+                    Set foundCell = wsData.Cells(k, 1)
+                    Exit For
                 End If
-            Next j
+            Next k
 
-            If subtitleRow = 0 Then
-                Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                GoTo NextRow
-            End If
 
-            ' Step 4: read value(s) based on which sheet we're processing
-            If sheetName = "SCNP" Then
-                Dim phD_SCNP As String, phE_SCNP As String, phF_SCNP As String, phG_SCNP As String
-                phD_SCNP = Trim(wsConfig.Cells(i, 3).value)
-                phE_SCNP = Trim(wsConfig.Cells(i, 4).value)
-                phF_SCNP = Trim(wsConfig.Cells(i, 5).value)
-                phG_SCNP = Trim(wsConfig.Cells(i, 6).value)
-                If phD_SCNP <> "" Then args = args & " """ & phD_SCNP & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_SCNP <> "" Then args = args & " """ & phE_SCNP & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_SCNP <> "" Then args = args & " """ & phF_SCNP & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                If phG_SCNP <> "" Then args = args & " """ & phG_SCNP & "=" & wsData.Cells(subtitleRow, 7).value & """"
-
-            ElseIf sheetName = "SBR" Then
-                Dim phD_SBR As String, phE_SBR As String
-                phD_SBR = Trim(wsConfig.Cells(i, 3).value)
-                phE_SBR = Trim(wsConfig.Cells(i, 4).value)
-                If phD_SBR <> "" Then args = args & " """ & phD_SBR & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_SBR <> "" Then args = args & " """ & phE_SBR & "=" & wsData.Cells(subtitleRow, 5).value & """"
-
-            Else
-             ' Default: single value from col D
-                placeholder = Trim(wsConfig.Cells(i, 3).value)
-                value = wsData.Cells(subtitleRow, 4).value
-                args = args & " """ & placeholder & "=" & value & """"
-            End If
-            Debug.Print "  " & placeholder & " = " & value
+If StripSpaces(Trim(wsData.Cells(j, 3).value)) = StripSpaces(subtitle) Then
