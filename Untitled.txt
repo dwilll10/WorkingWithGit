@@ -1,46 +1,8 @@
-Sub ExportAllSheets()
-
-    '--------------------------------------------------------------------------
-    ' Paths
-    '--------------------------------------------------------------------------
-    Dim oneDrivePath As String:  oneDrivePath = Environ("OneDrive")
-    Dim pythonPath   As String:  pythonPath = "C:\ProgramData\Anaconda3\python.exe"
-    Dim scriptPath   As String:  scriptPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
-    Dim logPath      As String:  logPath = oneDrivePath & "\Documents\error_log_AFRwordexport.txt"
-    Dim configPath   As String:  configPath = oneDrivePath & "\Documents\config.xlsx"
-    Dim wordTemplate As String:  wordTemplate = oneDrivePath & "\Documents\FY 2026 DHS AFR -Template.docx"
-    Dim outputPath   As String:  outputPath = oneDrivePath & "\Documents\filled_AFRoutput.docx"
-
-    '--------------------------------------------------------------------------
-    ' Objects / variables
-    '--------------------------------------------------------------------------
-    Dim wbConfig        As Workbook
-    Dim wsConfig        As Worksheet
-    Dim wsData          As Worksheet
-    Dim wsBs            As Worksheet
-    Dim wsh             As Object
-    Dim foundCell       As Range
-    Dim nextCell        As Range
-
-    Dim args            As String
-    Dim command         As String
-    Dim sheetName       As String
-    Dim section         As String
-    Dim subtitle        As String
-    Dim placeholder     As String
-    Dim value           As String
-
-    Dim lastRow         As Long
-    Dim sectionRow      As Long
-    Dim nextSectionRow  As Long
-    Dim subtitleRow     As Long
-    Dim exitCode        As Long
-    Dim i As Long, j As Long
-
-    '--------------------------------------------------------------------------
-    ' Open config workbook silently
-    '--------------------------------------------------------------------------
-    Application.ScreenUpdating = False
-    On Error GoTo ConfigError
-    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
-    On Error GoTo 0
+Set nextCell = wsData.Columns("A").FindNext(foundCell)
+            If nextCell Is Nothing Then
+                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+            ElseIf nextCell.Row <= sectionRow Then
+                nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+            Else
+                nextSectionRow = nextCell.Row - 1
+            End If
