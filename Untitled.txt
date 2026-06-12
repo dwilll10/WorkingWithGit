@@ -1,16 +1,27 @@
-Private Function StripSpaces(s As String) As String
-    StripSpaces = Replace(s, " ", "")
+'--------------------------------------------------------------------------
+    ' Call Python: pass word template, output path, then all placeholder=value pairs
+    '--------------------------------------------------------------------------
+    command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" _
+              & args & " > """ & logPath & """ 2>&1"
+
+    Set wsh = CreateObject("WScript.Shell")
+    Debug.Print "Command: " & command
+    exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
+
+    If exitCode = 0 Then
+        MsgBox "Word document generated successfully!" & vbNewLine & outputPath, vbInformation, "Done"
+    Else
+        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
+    End If
+
+    Set wsh = Nothing
+    Exit Function
+    
+    
+
+ConfigError:
+    Application.ScreenUpdating = True
+    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
+    Exit Function
+
 End Function
-
-' Step 1: find section header in col A of the data sheet
-            Dim k As Long
-            Set foundCell = Nothing
-            For k = 1 To wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
-                If StripSpaces(Trim(wsData.Cells(k, 1).value)) = StripSpaces(section) Then
-                    Set foundCell = wsData.Cells(k, 1)
-                    Exit For
-                End If
-            Next k
-
-
-If StripSpaces(Trim(wsData.Cells(j, 3).value)) = StripSpaces(subtitle) Then
