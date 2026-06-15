@@ -1,9 +1,1 @@
-def get_pending_fn_filters(existing_sheets: set[str], wb) -> tuple[list, list]:
-    mapping_file = dir_p.mapping_table()
-    df_fn = pd.read_excel(mapping_file, sheet_name='Config')
-    df_fs = pd.read_excel(mapping_file, sheet_name='Config-FS')
-    fn_keys = df_fn['report_key'].str.strip().str.lower().tolist()
-    fs_keys = df_fs['report_key'].str.strip().str.lower().tolist()
-    pending_fn = [k for k in fn_keys if k.upper() not in existing_sheets]
-    pending_fs = [k for k in fs_keys if k.upper() not in existing_sheets]
-    return pending_fn, pending_fs
+Debug.Print "fn5 row " & i & ": phD='" & phD_FN5 & "' phE='" & phE_FN5 & "' phF='" & phF_FN5 & "' phG='" & phG_FN5 & "' phH='" & phH_FN5 & "'"
