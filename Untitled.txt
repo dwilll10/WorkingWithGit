@@ -1,3 +1,5 @@
-End If  ' end of sheetName <> "FN10" wrapper
-            
-            Debug.Print "Reached Step 4: sheetName='" & sheetName & "' subtitleRow=" & subtitleRow & " section='" & section & "' subtitle='" & subtitle & "'"
+For i = 2 To lastRow
+            Debug.Print "Loop row " & i & " sheetName='" & sheetName & "' section='" & Trim(wsConfig.Cells(i, 1).Value) & "' subtitle='" & Trim(wsConfig.Cells(i, 2).Value) & "'"
+
+            section = Trim(wsConfig.Cells(i, 1).Value)
+            subtitle = Trim(wsConfig.Cells(i, 2).Value)
