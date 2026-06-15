@@ -1,5 +1,8 @@
-For i = 2 To lastRow
-            Debug.Print "Loop row " & i & " sheetName='" & sheetName & "' section='" & Trim(wsConfig.Cells(i, 1).Value) & "' subtitle='" & Trim(wsConfig.Cells(i, 2).Value) & "'"
-
-            section = Trim(wsConfig.Cells(i, 1).Value)
-            subtitle = Trim(wsConfig.Cells(i, 2).Value)
+Debug.Print "FN10 searching: subtitle='" & subtitle & "' in col=" & subCol_FN10 & " rows 1 to " & wsData.Cells(wsData.Rows.Count, subCol_FN10).End(xlUp).Row
+For sk10 = 1 To wsData.Cells(wsData.Rows.Count, subCol_FN10).End(xlUp).Row
+    Debug.Print "  checking row " & sk10 & ": '" & Trim(wsData.Cells(sk10, subCol_FN10).Value) & "'"
+    If Trim(wsData.Cells(sk10, subCol_FN10).Value) = subtitle Then
+        subtitleRow10 = sk10
+        Exit For
+    End If
+Next sk10
