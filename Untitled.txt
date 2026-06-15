@@ -1,1 +1,51 @@
-Debug.Print "fn5 row " & i & ": phD='" & phD_FN5 & "' phE='" & phE_FN5 & "' phF='" & phF_FN5 & "' phG='" & phG_FN5 & "' phH='" & phH_FN5 & "'"
+ElseIf sheetName = "fn10" Then
+                Dim phE_FN10 As String, phF_FN10 As String
+                Dim phG_FN10 As String, phH_FN10 As String
+                Dim subCol_FN10 As Long
+                
+                phE_FN10 = Trim(wsConfig.Cells(i, 3).Value)
+                phF_FN10 = Trim(wsConfig.Cells(i, 4).Value)
+                phG_FN10 = Trim(wsConfig.Cells(i, 5).Value)
+                phH_FN10 = Trim(wsConfig.Cells(i, 6).Value)
+                
+                ' Col G of config: subtitle column override — blank defaults to C (3)
+                If UCase(Trim(wsConfig.Cells(i, 7).Value)) = "D" Then
+                    subCol_FN10 = 4  ' col D
+                Else
+                    subCol_FN10 = 3  ' col C default
+                End If
+
+                ' Find subtitle in the appropriate column
+                Dim subtitleRow10 As Long
+                subtitleRow10 = 0
+                Dim sk10 As Long
+
+                If sheetName = "fn10" And section = "" Then
+                    ' No section — search entire column
+                    For sk10 = 1 To wsData.Cells(wsData.Rows.Count, subCol_FN10).End(xlUp).Row
+                        If Trim(wsData.Cells(sk10, subCol_FN10).Value) = subtitle Then
+                            subtitleRow10 = sk10
+                            Exit For
+                        End If
+                    Next sk10
+                Else
+                    ' Has section — search within bounded range
+                    For sk10 = sectionRow To nextSectionRow
+                        If Trim(wsData.Cells(sk10, subCol_FN10).Value) = subtitle Then
+                            subtitleRow10 = sk10
+                            Exit For
+                        End If
+                    Next sk10
+                End If
+
+                If subtitleRow10 = 0 Then
+                    Debug.Print "  fn10 NOT FOUND subtitle: '" & subtitle & "' in col " & subCol_FN10
+                    GoTo NextRow
+                End If
+
+                If phE_FN10 <> "" Then args = args & " """ & phE_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 5).Value), Chr(10), ""), Chr(13), "") & """"
+                If phF_FN10 <> "" Then args = args & " """ & phF_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 6).Value), Chr(10), ""), Chr(13), "") & """"
+                If phG_FN10 <> "" Then args = args & " """ & phG_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 7).Value), Chr(10), ""), Chr(13), "") & """"
+                If phH_FN10 <> "" Then args = args & " """ & phH_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 8).Value), Chr(10), ""), Chr(13), "") & """"
+
+                Debug.Print "fn10 row " & i & ": subtitle='" & subtitle & "' col=" & subCol_FN10 & " subtitleRow=" & subtitleRow10
