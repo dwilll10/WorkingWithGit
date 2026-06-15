@@ -23,23 +23,28 @@
 
 def parse_args(argv):
     if len(argv) < 3:
-        print("Usage: WordExportOISOS.py <word_template> <output_path> <args_file>")
+        print("Usage: WordExportOISOS.py <word_template> <output_path> [args_file | placeholder=value ...]")
         sys.exit(1)
 
     word_path   = argv[1]
     output_path = argv[2]
-    args_file   = argv[3]
     replacements = {}
 
-    with open(args_file, 'r') as f:
-        args_string = f.read()
-
-    # Parse the args string — each pair is wrapped in quotes
-    import re
-    pairs = re.findall(r'"([^"]+)"', args_string)
-    for pair in pairs:
-        if "=" in pair:
-            placeholder, value = pair.split("=", 1)
-            replacements[placeholder.strip()] = format_value(value.strip())
+    # If third argument is a .txt file, read args from it
+    if len(argv) == 4 and argv[3].endswith('.txt'):
+        import re
+        with open(argv[3], 'r') as f:
+            args_string = f.read()
+        pairs = re.findall(r'"([^"]+)"', args_string)
+        for pair in pairs:
+            if "=" in pair:
+                placeholder, value = pair.split("=", 1)
+                replacements[placeholder.strip()] = format_value(value.strip())
+    else:
+        # Original behaviour — placeholder=value pairs from command line
+        for arg in argv[3:]:
+            if "=" in arg:
+                placeholder, value = arg.split("=", 1)
+                replacements[placeholder.strip()] = format_value(value.strip())
 
     return word_path, output_path, replacements
