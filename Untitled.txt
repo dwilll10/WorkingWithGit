@@ -1,2 +1,3 @@
-Set wsConfig = ws
-Debug.Print "Config tab: '" & wsConfig.Name & "' lastRow=" & wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
+End If  ' end of sheetName <> "FN10" wrapper
+            
+            Debug.Print "Reached Step 4: sheetName='" & sheetName & "' subtitleRow=" & subtitleRow & " section='" & section & "' subtitle='" & subtitle & "'"
