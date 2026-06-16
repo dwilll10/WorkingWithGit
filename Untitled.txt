@@ -1,44 +1,26 @@
-ElseIf sheetName = "FN17" Then
-                Dim phE_FN17 As String, phF_FN17 As String
-                Dim phG_FN17 As String, phH_FN17 As String
-                
-                phE_FN17 = Trim(wsConfig.Cells(i, 3).Value)
-                phF_FN17 = Trim(wsConfig.Cells(i, 4).Value)
-                phG_FN17 = Trim(wsConfig.Cells(i, 5).Value)
-                phH_FN17 = Trim(wsConfig.Cells(i, 6).Value)
+ElseIf sheetName = "FN18" Then
+                Dim phB_FN18 As String, phC_FN18 As String
+                phB_FN18 = Trim(wsConfig.Cells(i, 3).Value)
+                phC_FN18 = Trim(wsConfig.Cells(i, 4).Value)
 
-                ' Read occurrence from col 8 of config — blank defaults to 1
-                Dim occur17 As Long
-                occur17 = 1
-                If Trim(CStr(wsConfig.Cells(i, 8).Value)) <> "" Then
-                    occur17 = CLng(wsConfig.Cells(i, 8).Value)
-                End If
+                ' No section — search entire col A for subtitle
+                Dim subtitleRow18 As Long
+                Dim sk18 As Long
+                subtitleRow18 = 0
 
-                ' No section — search entire col C with occurrence counting
-                Dim subtitleRow17 As Long
-                Dim matchCount17 As Long
-                Dim sk17 As Long
-                subtitleRow17 = 0
-                matchCount17 = 0
-
-                For sk17 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk17, 3).Value)) = Trim(subtitle) Then
-                        matchCount17 = matchCount17 + 1
-                        If matchCount17 = occur17 Then
-                            subtitleRow17 = sk17
-                            Exit For
-                        End If
+                For sk18 = 1 To wsData.Cells(wsData.Rows.Count, 1).End(xlUp).Row
+                    If Trim(CStr(wsData.Cells(sk18, 1).Value)) = Trim(subtitle) Then
+                        subtitleRow18 = sk18
+                        Exit For
                     End If
-                Next sk17
+                Next sk18
 
-                If subtitleRow17 = 0 Then
-                    Debug.Print "  FN17 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur17
+                If subtitleRow18 = 0 Then
+                    Debug.Print "  FN18 NOT FOUND subtitle: '" & subtitle & "'"
                     GoTo NextRow
                 End If
 
-                Debug.Print "FN17 row " & i & ": subtitle='" & subtitle & "' occur=" & occur17 & " foundRow=" & subtitleRow17
+                Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow18
 
-                If phE_FN17 <> "" Then args = args & " """ & phE_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 4).Value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN17 <> "" Then args = args & " """ & phF_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 5).Value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN17 <> "" Then args = args & " """ & phG_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 6).Value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN17 <> "" Then args = args & " """ & phH_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 7).Value), Chr(10), ""), Chr(13), "") & """"
+                If phB_FN18 <> "" Then args = args & " """ & phB_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 2).Value), Chr(10), ""), Chr(13), "") & """"
+                If phC_FN18 <> "" Then args = args & " """ & phC_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 3).Value), Chr(10), ""), Chr(13), "") & """"
