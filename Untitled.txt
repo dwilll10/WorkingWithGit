@@ -1,2 +1,36 @@
-ElseIf sheetName = "FN18" Then
-                Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' section='" & section & "'"
+ElseIf sheetName = "FN19" Then
+                Dim phD_FN19 As String
+                phD_FN19 = Trim(wsConfig.Cells(i, 3).Value)
+
+                ' Read occurrence from col 4 of config — blank defaults to 1
+                Dim occur19 As Long
+                occur19 = 1
+                If Trim(CStr(wsConfig.Cells(i, 4).Value)) <> "" Then
+                    occur19 = CLng(wsConfig.Cells(i, 4).Value)
+                End If
+
+                ' No section — search entire col C with occurrence counting
+                Dim subtitleRow19 As Long
+                Dim matchCount19 As Long
+                Dim sk19 As Long
+                subtitleRow19 = 0
+                matchCount19 = 0
+
+                For sk19 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
+                    If Trim(CStr(wsData.Cells(sk19, 3).Value)) = Trim(subtitle) Then
+                        matchCount19 = matchCount19 + 1
+                        If matchCount19 = occur19 Then
+                            subtitleRow19 = sk19
+                            Exit For
+                        End If
+                    End If
+                Next sk19
+
+                If subtitleRow19 = 0 Then
+                    Debug.Print "  FN19 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur19
+                    GoTo NextRow
+                End If
+
+                Debug.Print "FN19 row " & i & ": subtitle='" & subtitle & "' occur=" & occur19 & " foundRow=" & subtitleRow19
+
+                If phD_FN19 <> "" Then args = args & " """ & phD_FN19 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow19, 4).Value), Chr(10), ""), Chr(13), "") & """"
