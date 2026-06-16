@@ -1,7 +1,8 @@
 ElseIf sheetName = "FN18" Then
-                Dim phB_FN18 As String, phC_FN18 As String
+                Dim phB_FN18 As String, phC_FN18 As String, phSum_FN18 As String
                 phB_FN18 = Trim(wsConfig.Cells(i, 3).Value)
                 phC_FN18 = Trim(wsConfig.Cells(i, 4).Value)
+                phSum_FN18 = Trim(wsConfig.Cells(i, 5).Value)
 
                 ' No section — search entire col A for subtitle
                 Dim subtitleRow18 As Long
@@ -20,7 +21,12 @@ ElseIf sheetName = "FN18" Then
                     GoTo NextRow
                 End If
 
-                Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow18
+                Dim valB_FN18 As Double, valC_FN18 As Double
+                valB_FN18 = Val(Replace(Trim(CStr(wsData.Cells(subtitleRow18, 2).Value)), ",", ""))
+                valC_FN18 = Val(Replace(Trim(CStr(wsData.Cells(subtitleRow18, 3).Value)), ",", ""))
+
+                Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow18 & " B=" & valB_FN18 & " C=" & valC_FN18 & " Sum=" & valB_FN18 + valC_FN18
 
                 If phB_FN18 <> "" Then args = args & " """ & phB_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 2).Value), Chr(10), ""), Chr(13), "") & """"
                 If phC_FN18 <> "" Then args = args & " """ & phC_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 3).Value), Chr(10), ""), Chr(13), "") & """"
+                If phSum_FN18 <> "" Then args = args & " """ & phSum_FN18 & "=" & (valB_FN18 + valC_FN18) & """"
