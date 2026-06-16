@@ -1,35 +1,8 @@
-ElseIf sheetName = "FN21" Then
-                Dim phD_FN21 As String, phE_FN21 As String, phF_FN21 As String
-                Dim phG_FN21 As String, phH_FN21 As String, phI_FN21 As String
-                Dim phJ_FN21 As String, phK_FN21 As String, phL_FN21 As String
-                Dim phM_FN21 As String
-
-                phD_FN21 = Trim(wsConfig.Cells(i, 3).Value)
-                phE_FN21 = Trim(wsConfig.Cells(i, 4).Value)
-                phF_FN21 = Trim(wsConfig.Cells(i, 5).Value)
-                phG_FN21 = Trim(wsConfig.Cells(i, 6).Value)
-                phH_FN21 = Trim(wsConfig.Cells(i, 7).Value)
-                phI_FN21 = Trim(wsConfig.Cells(i, 9).Value)   ' skip col 8 — reserved for occurrence
-                phJ_FN21 = Trim(wsConfig.Cells(i, 10).Value)
-                phK_FN21 = Trim(wsConfig.Cells(i, 11).Value)
-                phL_FN21 = Trim(wsConfig.Cells(i, 12).Value)
-                phM_FN21 = Trim(wsConfig.Cells(i, 13).Value)
-
-                ' subtitleRow already set by Steps 1-3 since FN21 has sections
-                If subtitleRow = 0 Then
-                    Debug.Print "  FN21 NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                Debug.Print "FN21 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow
-
-                If phD_FN21 <> "" Then args = args & " """ & phD_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 4).Value), Chr(10), ""), Chr(13), "") & """"
-                If phE_FN21 <> "" Then args = args & " """ & phE_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 5).Value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN21 <> "" Then args = args & " """ & phF_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 6).Value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN21 <> "" Then args = args & " """ & phG_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 7).Value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN21 <> "" Then args = args & " """ & phH_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 8).Value), Chr(10), ""), Chr(13), "") & """"
-                If phI_FN21 <> "" Then args = args & " """ & phI_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 9).Value), Chr(10), ""), Chr(13), "") & """"
-                If phJ_FN21 <> "" Then args = args & " """ & phJ_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 10).Value), Chr(10), ""), Chr(13), "") & """"
-                If phK_FN21 <> "" Then args = args & " """ & phK_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 11).Value), Chr(10), ""), Chr(13), "") & """"
-                If phL_FN21 <> "" Then args = args & " """ & phL_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 12).Value), Chr(10), ""), Chr(13), "") & """"
-                If phM_FN21 <> "" Then args = args & " """ & phM_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 13).Value), Chr(10), ""), Chr(13), "") & """"
+Sub AddSuffix()
+    Dim cell As Range
+    For Each cell In Selection
+        If cell.Value <> "" Then
+            cell.Value = cell.Value & "@@"
+        End If
+    Next cell
+End Sub
