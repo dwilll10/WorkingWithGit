@@ -1,41 +1,35 @@
-ElseIf sheetName = "FN20" Then
-                Dim phB_FN20 As String, phC_FN20 As String, phD_FN20 As String
+ElseIf sheetName = "FN21" Then
+                Dim phD_FN21 As String, phE_FN21 As String, phF_FN21 As String
+                Dim phG_FN21 As String, phH_FN21 As String, phI_FN21 As String
+                Dim phJ_FN21 As String, phK_FN21 As String, phL_FN21 As String
+                Dim phM_FN21 As String
 
-                phB_FN20 = Trim(wsConfig.Cells(i, 3).Value)
-                phC_FN20 = Trim(wsConfig.Cells(i, 4).Value)
-                phD_FN20 = Trim(wsConfig.Cells(i, 5).Value)
+                phD_FN21 = Trim(wsConfig.Cells(i, 3).Value)
+                phE_FN21 = Trim(wsConfig.Cells(i, 4).Value)
+                phF_FN21 = Trim(wsConfig.Cells(i, 5).Value)
+                phG_FN21 = Trim(wsConfig.Cells(i, 6).Value)
+                phH_FN21 = Trim(wsConfig.Cells(i, 7).Value)
+                phI_FN21 = Trim(wsConfig.Cells(i, 9).Value)   ' skip col 8 — reserved for occurrence
+                phJ_FN21 = Trim(wsConfig.Cells(i, 10).Value)
+                phK_FN21 = Trim(wsConfig.Cells(i, 11).Value)
+                phL_FN21 = Trim(wsConfig.Cells(i, 12).Value)
+                phM_FN21 = Trim(wsConfig.Cells(i, 13).Value)
 
-                ' Read occurrence from col 6 of config — blank defaults to 1
-                Dim occur20 As Long
-                occur20 = 1
-                If Trim(CStr(wsConfig.Cells(i, 6).Value)) <> "" Then
-                    occur20 = CLng(wsConfig.Cells(i, 6).Value)
-                End If
-
-                ' No section — search entire col A with occurrence counting
-                Dim subtitleRow20 As Long
-                Dim matchCount20 As Long
-                Dim sk20 As Long
-                subtitleRow20 = 0
-                matchCount20 = 0
-
-                For sk20 = 1 To wsData.Cells(wsData.Rows.Count, 1).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk20, 1).Value)) = Trim(subtitle) Then
-                        matchCount20 = matchCount20 + 1
-                        If matchCount20 = occur20 Then
-                            subtitleRow20 = sk20
-                            Exit For
-                        End If
-                    End If
-                Next sk20
-
-                If subtitleRow20 = 0 Then
-                    Debug.Print "  FN20 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur20
+                ' subtitleRow already set by Steps 1-3 since FN21 has sections
+                If subtitleRow = 0 Then
+                    Debug.Print "  FN21 NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
                     GoTo NextRow
                 End If
 
-                Debug.Print "FN20 row " & i & ": subtitle='" & subtitle & "' occur=" & occur20 & " foundRow=" & subtitleRow20
+                Debug.Print "FN21 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow
 
-                If phB_FN20 <> "" Then args = args & " """ & phB_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 2).Value), Chr(10), ""), Chr(13), "") & """"
-                If phC_FN20 <> "" Then args = args & " """ & phC_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 3).Value), Chr(10), ""), Chr(13), "") & """"
-                If phD_FN20 <> "" Then args = args & " """ & phD_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 4).Value), Chr(10), ""), Chr(13), "") & """"
+                If phD_FN21 <> "" Then args = args & " """ & phD_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 4).Value), Chr(10), ""), Chr(13), "") & """"
+                If phE_FN21 <> "" Then args = args & " """ & phE_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 5).Value), Chr(10), ""), Chr(13), "") & """"
+                If phF_FN21 <> "" Then args = args & " """ & phF_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 6).Value), Chr(10), ""), Chr(13), "") & """"
+                If phG_FN21 <> "" Then args = args & " """ & phG_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 7).Value), Chr(10), ""), Chr(13), "") & """"
+                If phH_FN21 <> "" Then args = args & " """ & phH_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 8).Value), Chr(10), ""), Chr(13), "") & """"
+                If phI_FN21 <> "" Then args = args & " """ & phI_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 9).Value), Chr(10), ""), Chr(13), "") & """"
+                If phJ_FN21 <> "" Then args = args & " """ & phJ_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 10).Value), Chr(10), ""), Chr(13), "") & """"
+                If phK_FN21 <> "" Then args = args & " """ & phK_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 11).Value), Chr(10), ""), Chr(13), "") & """"
+                If phL_FN21 <> "" Then args = args & " """ & phL_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 12).Value), Chr(10), ""), Chr(13), "") & """"
+                If phM_FN21 <> "" Then args = args & " """ & phM_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 13).Value), Chr(10), ""), Chr(13), "") & """"
