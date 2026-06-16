@@ -1,36 +1,41 @@
-ElseIf sheetName = "FN19" Then
-                Dim phD_FN19 As String
-                phD_FN19 = Trim(wsConfig.Cells(i, 3).Value)
+ElseIf sheetName = "FN20" Then
+                Dim phB_FN20 As String, phC_FN20 As String, phD_FN20 As String
 
-                ' Read occurrence from col 4 of config — blank defaults to 1
-                Dim occur19 As Long
-                occur19 = 1
-                If Trim(CStr(wsConfig.Cells(i, 4).Value)) <> "" Then
-                    occur19 = CLng(wsConfig.Cells(i, 4).Value)
+                phB_FN20 = Trim(wsConfig.Cells(i, 3).Value)
+                phC_FN20 = Trim(wsConfig.Cells(i, 4).Value)
+                phD_FN20 = Trim(wsConfig.Cells(i, 5).Value)
+
+                ' Read occurrence from col 6 of config — blank defaults to 1
+                Dim occur20 As Long
+                occur20 = 1
+                If Trim(CStr(wsConfig.Cells(i, 6).Value)) <> "" Then
+                    occur20 = CLng(wsConfig.Cells(i, 6).Value)
                 End If
 
-                ' No section — search entire col C with occurrence counting
-                Dim subtitleRow19 As Long
-                Dim matchCount19 As Long
-                Dim sk19 As Long
-                subtitleRow19 = 0
-                matchCount19 = 0
+                ' No section — search entire col A with occurrence counting
+                Dim subtitleRow20 As Long
+                Dim matchCount20 As Long
+                Dim sk20 As Long
+                subtitleRow20 = 0
+                matchCount20 = 0
 
-                For sk19 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk19, 3).Value)) = Trim(subtitle) Then
-                        matchCount19 = matchCount19 + 1
-                        If matchCount19 = occur19 Then
-                            subtitleRow19 = sk19
+                For sk20 = 1 To wsData.Cells(wsData.Rows.Count, 1).End(xlUp).Row
+                    If Trim(CStr(wsData.Cells(sk20, 1).Value)) = Trim(subtitle) Then
+                        matchCount20 = matchCount20 + 1
+                        If matchCount20 = occur20 Then
+                            subtitleRow20 = sk20
                             Exit For
                         End If
                     End If
-                Next sk19
+                Next sk20
 
-                If subtitleRow19 = 0 Then
-                    Debug.Print "  FN19 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur19
+                If subtitleRow20 = 0 Then
+                    Debug.Print "  FN20 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur20
                     GoTo NextRow
                 End If
 
-                Debug.Print "FN19 row " & i & ": subtitle='" & subtitle & "' occur=" & occur19 & " foundRow=" & subtitleRow19
+                Debug.Print "FN20 row " & i & ": subtitle='" & subtitle & "' occur=" & occur20 & " foundRow=" & subtitleRow20
 
-                If phD_FN19 <> "" Then args = args & " """ & phD_FN19 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow19, 4).Value), Chr(10), ""), Chr(13), "") & """"
+                If phB_FN20 <> "" Then args = args & " """ & phB_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 2).Value), Chr(10), ""), Chr(13), "") & """"
+                If phC_FN20 <> "" Then args = args & " """ & phC_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 3).Value), Chr(10), ""), Chr(13), "") & """"
+                If phD_FN20 <> "" Then args = args & " """ & phD_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 4).Value), Chr(10), ""), Chr(13), "") & """"
