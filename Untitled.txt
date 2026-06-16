@@ -1,1 +1,62 @@
+ElseIf sheetName = "FN17" Then
+                Dim phE_FN17 As String, phF_FN17 As String
+                Dim phG_FN17 As String, subCol_FN17 As Long
+                
+                phE_FN17 = Trim(wsConfig.Cells(i, 3).value)
+                phF_FN17 = Trim(wsConfig.Cells(i, 4).value)
+                phG_FN17 = Trim(wsConfig.Cells(i, 5).value)
+               
+                
+                subCol_FN17 = 3  ' col C default for subtitle
+                
+                ' Find subtitle in the appropriate column
+                Dim subtitleRow17 As Long
+                subtitleRow17 = 0
+                Dim sk17 As Long
+                ' Step 3: find subtitle in col C within the bounded range
+                
+                occurrence = 1
+                If Trim(wsConfig.Cells(i, 8).value) <> "" Then
+                    occurrence = CLng(wsConfig.Cells(i, 8).value)
+                End If
+    
+                subtitleRow = 0
+                matchCount = 0
+                For j = sectionRow To lastRow
+                    If StripSpaces(Trim(wsData.Cells(j, 3).value)) = StripSpaces(subtitle) Then
+                        matchCount = matchCount + 1
+                        If matchCount = occurrence Then
+                            subtitleRow17 = j
+                            Exit For
+                        End If
+                    End If
+                Next j
 
+                If sheetName = "FN17" And section = "" Then
+                    ' No section — search entire column
+                    For sk17 = 1 To wsData.Cells(wsData.Rows.Count, subCol_FN17).End(xlUp).Row
+                        If Trim(wsData.Cells(sk17, subCol_FN17).value) = subtitle Then
+                            subtitleRow17 = sk17
+                            Exit For
+                        End If
+                    Next sk17
+                Else
+                    ' Has section — search within bounded range
+                    For sk17 = sectionRow To nextSectionRow
+                        If Trim(wsData.Cells(sk17, subCol_FN17).value) = subtitle Then
+                            subtitleRow17 = sk17
+                            Exit For
+                        End If
+                    Next sk17
+                End If
+
+                If subtitleRow17 = 0 Then
+                    Debug.Print "  fn17 NOT FOUND subtitle: '" & subtitle & "' in col " & subCol_FN17
+                    GoTo NextRow
+                End If
+
+                If phE_FN17 <> "" Then args = args & " """ & phE_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 4).value), Chr(10), ""), Chr(13), "") & """"
+                If phF_FN17 <> "" Then args = args & " """ & phF_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 5).value), Chr(10), ""), Chr(13), "") & """"
+                If phG_FN17 <> "" Then args = args & " """ & phG_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 6).value), Chr(10), ""), Chr(13), "") & """"
+                If phH_FN17 <> "" Then args = args & " """ & phH_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 7).value), Chr(10), ""), Chr(13), "") & """"
+            Else
