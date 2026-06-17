@@ -1,7 +1,4 @@
-Sub WriteLog(msg As String, logPath As String)
-    Dim fileNum As Integer
-    fileNum = FreeFile
-    Open logPath For Append As #fileNum
-    Print #fileNum, Now() & " | " & msg
-    Close #fileNum
-End Sub
+dataRow = CLng(valueRowOverride)
+                    WriteLog "  dataRow set to " & dataRow & " for row " & i & " sheet='" & sheetName & "'"
+
+WriteLog "  Reached placeholder collection: dataRow=" & dataRow & " valCols='" & valCols & "' phCount=" & phCount
