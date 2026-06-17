@@ -1,8 +1,18 @@
-Sub AddSuffix()
-    Dim cell As Range
-    For Each cell In Selection
-        If cell.Value <> "" Then
-            cell.Value = cell.Value & "@@"
-        End If
-    Next cell
-End Sub
+' Read value column from col F of Sums config — blank defaults to col D (4)
+            Dim valCol As Long
+            valCol = 4  ' default col D
+            Dim valColStr As String
+            valColStr = Trim(CStr(wsSums.Cells(sRow, 6).Value))
+            If valColStr <> "" Then
+                valCol = Range(valColStr & "1").Column
+            End If
+
+            ' Add value to running total for this placeholder
+            Dim sumCellVal As Double
+            sumCellVal = Val(Replace(CStr(sumDataSheet.Cells(sumSubRow, valCol).Value), ",", ""))
+
+            If sumPlaceholders.Exists(sumPh) Then
+                sumPlaceholders(sumPh) = sumPlaceholders(sumPh) + sumCellVal
+            Else
+                sumPlaceholders.Add sumPh, sumCellVal
+            End If
