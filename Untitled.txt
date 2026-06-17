@@ -1,21 +1,3 @@
-If subtitle <> "" Then
-                subtitleRow = FindSubtitleRow(wsData, sectionRow, nextSectionRow, _
-                                              subtitle, subtitleColNum, occurrence)
-                If subtitleRow = 0 Then
-                    Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-                dataRow = subtitleRow
-            Else
-                ' No subtitle — check col N for explicit row number
-                Dim valueRowOverride As String
-                valueRowOverride = Trim(CStr(wsConfig.Cells(i, 14).Value))
-                If valueRowOverride <> "" Then
-                    dataRow = CLng(valueRowOverride)
-                    Debug.Print "  Using Value_Row override: " & dataRow
-                Else
-                    ' No subtitle and no Value_Row — skip
-                    Debug.Print "  Skipping: blank subtitle and no Value_Row for row " & i
-                    GoTo NextRow
-                End If
-            End If
+Debug.Print "  dataRow=" & dataRow & " section='" & section & "' subtitle='" & subtitle & "' valueRowOverride='" & valueRowOverride & "'"
+Debug.Print "  valCols='" & valCols & "' phCount before collection=" & phCount
+Debug.Print "  phCount after collection=" & phCount & " valColArr count=" & UBound(valColArr) + 1
