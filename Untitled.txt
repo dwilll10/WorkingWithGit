@@ -1,3 +1,109 @@
+'----------------------------------------------------------------------------------
+' ExportAllSheets — Refactored
+'
+' Config tab column layout (standard for ALL sheets):
+'   A: Section
+'   B: Subtitle
+'   C-G: Placeholders 1-5
+'   H: Occurrence (reserved)
+'   I: Subtitle column letter (blank = C)
+'   J: Value columns comma-separated (e.g. "D,E,F")
+'   K+: Placeholders 6+ (for sheets with more than 5 value columns)
+'
+' Sums tab column layout:
+'   A: Placeholder
+'   B: Sheet name
+'   C: Section
+'   D: Subtitle
+'   E: Occurrence (blank = 1)
+'   F: Value column letter (blank = D)
+'----------------------------------------------------------------------------------
+
+Option Explicit
+
+'----------------------------------------------------------------------------------
+' Helper: strip all whitespace variants for comparison
+'----------------------------------------------------------------------------------
+Function StripSpaces(s As String) As String
+    Dim result As String
+    result = s
+    result = Replace(result, Chr(160), " ")  ' non-breaking space
+    result = Replace(result, Chr(9), " ")    ' tab
+    Do While InStr(result, "  ") > 0
+        result = Replace(result, "  ", " ")
+    Loop
+    StripSpaces = Trim(result)
+End Function
+
+'----------------------------------------------------------------------------------
+' Helper: clean a cell value — strip newlines and leading/trailing spaces
+'----------------------------------------------------------------------------------
+Function CleanVal(v As Variant) As String
+    Dim s As String
+    s = Trim(CStr(v))
+    s = Replace(s, Chr(10), "")
+    s = Replace(s, Chr(13), "")
+    CleanVal = s
+End Function
+
+'----------------------------------------------------------------------------------
+' Helper: convert column letter(s) to column number
+'----------------------------------------------------------------------------------
+Function ColLetterToNum(colLetter As String) As Long
+    ColLetterToNum = Range(Trim(colLetter) & "1").Column
+End Function
+
+'----------------------------------------------------------------------------------
+' Helper: find section row in a sheet's column A
+'----------------------------------------------------------------------------------
+Function FindSectionRow(wsData As Worksheet, section As String) As Long
+    Dim k As Long
+    For k = 1 To wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
+        If StripSpaces(Trim(wsData.Cells(k, 1).Value)) = StripSpaces(section) Then
+            FindSectionRow = k
+            Exit Function
+        End If
+    Next k
+    FindSectionRow = 0
+End Function
+
+'----------------------------------------------------------------------------------
+' Helper: find next section row after a given row
+'----------------------------------------------------------------------------------
+Function FindNextSectionRow(wsData As Worksheet, afterRow As Long, defaultLastRow As Long) As Long
+    Dim k As Long
+    For k = afterRow + 1 To wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
+        If Trim(CStr(wsData.Cells(k, 1).Value)) <> "" Then
+            FindNextSectionRow = k - 1
+            Exit Function
+        End If
+    Next k
+    FindNextSectionRow = defaultLastRow
+End Function
+
+'----------------------------------------------------------------------------------
+' Helper: find subtitle row within a range, with occurrence support
+'----------------------------------------------------------------------------------
+Function FindSubtitleRow(wsData As Worksheet, fromRow As Long, toRow As Long, _
+                         subtitle As String, subtitleCol As Long, occurrence As Long) As Long
+    Dim j As Long
+    Dim matchCount As Long
+    matchCount = 0
+    For j = fromRow To toRow
+        If StripSpaces(Trim(CStr(wsData.Cells(j, subtitleCol).Value))) = StripSpaces(subtitle) Then
+            matchCount = matchCount + 1
+            If matchCount = occurrence Then
+                FindSubtitleRow = j
+                Exit Function
+            End If
+        End If
+    Next j
+    FindSubtitleRow = 0
+End Function
+
+'----------------------------------------------------------------------------------
+' Main macro
+'----------------------------------------------------------------------------------
 Sub ExportAllSheets()
     Debug.Print "Macro started"
 
@@ -5,38 +111,37 @@ Sub ExportAllSheets()
     ' Paths
     '--------------------------------------------------------------------------
     Dim oneDrivePath As String:  oneDrivePath = Environ("OneDrive")
-    Dim pythonPath   As String:  pythonPath = "C:\ProgramData\Anaconda3\python.exe"
-    Dim scriptPath   As String:  scriptPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
-    Dim logPath      As String:  logPath = oneDrivePath & "\Documents\error_log_AFRwordexport.txt"
-    Dim configPath   As String:  configPath = oneDrivePath & "\Documents\config.xlsx"
+    Dim pythonPath   As String:  pythonPath   = "C:\ProgramData\Anaconda3\python.exe"
+    Dim scriptPath   As String:  scriptPath   = oneDrivePath & "\Documents\z. Python Program\GK_new_format\WordExportOISOS.py"
+    Dim logPath      As String:  logPath      = oneDrivePath & "\Documents\error_log_AFRwordexport.txt"
+    Dim configPath   As String:  configPath   = oneDrivePath & "\Documents\config.xlsx"
     Dim wordTemplate As String:  wordTemplate = oneDrivePath & "\Documents\FY 2026 DHS AFR -Template.docx"
-    Dim outputPath   As String:  outputPath = oneDrivePath & "\Documents\filled_AFRoutput.docx"
+    Dim outputPath   As String:  outputPath   = oneDrivePath & "\Documents\filled_AFRoutput.docx"
 
     '--------------------------------------------------------------------------
     ' Objects / variables
     '--------------------------------------------------------------------------
-    Dim wbConfig        As Workbook
-    Dim wsConfig        As Worksheet
-    Dim wsData          As Worksheet
-    Dim wsBs            As Worksheet
-    Dim wsh             As Object
-    Dim foundCell       As Range
-    Dim nextCell        As Range
+    Dim wbConfig    As Workbook
+    Dim wsConfig    As Worksheet
+    Dim wsData      As Worksheet
+    Dim wsh         As Object
 
-    Dim args            As String
-    Dim command         As String
-    Dim sheetName       As String
-    Dim section         As String
-    Dim subtitle        As String
-    Dim placeholder     As String
-    Dim value           As String
+    Dim args        As String
+    Dim command     As String
+    Dim sheetName   As String
+    Dim section     As String
+    Dim subtitle    As String
+    Dim placeholder As String
 
     Dim lastRow         As Long
     Dim sectionRow      As Long
     Dim nextSectionRow  As Long
     Dim subtitleRow     As Long
+    Dim dataRow         As Long
+    Dim occurrence      As Long
+    Dim subtitleColNum  As Long
     Dim exitCode        As Long
-    Dim i As Long, j As Long
+    Dim i As Long, c As Long
 
     '--------------------------------------------------------------------------
     ' Open config workbook silently
@@ -50,15 +155,15 @@ Sub ExportAllSheets()
 
     '--------------------------------------------------------------------------
     ' Loop every tab in config.xlsx
-    ' Convention: config tab name must exactly match a sheet in ThisWorkbook
     '--------------------------------------------------------------------------
     Dim ws As Worksheet
     For Each ws In wbConfig.Worksheets
 
         sheetName = ws.Name
 
-        ' Skip the OI-SOS config tab — handled by a separate macro
+        ' Skip sheets handled by separate macros or the Sums block
         If sheetName = "OI-SOS" Then GoTo NextSheet
+        If sheetName = "Sums"   Then GoTo NextSheet
 
         ' Skip if ThisWorkbook doesn't have a matching data sheet
         Dim dataExists As Boolean
@@ -77,620 +182,151 @@ Sub ExportAllSheets()
         End If
 
         Set wsConfig = ws
-        Debug.Print "Config tab: '" & wsConfig.Name & "' lastRow=" & wsConfig.Cells(wsConfig.Rows.Count, "C").End(xlUp).Row
-        Set wsData = ThisWorkbook.Sheets(sheetName)
+        Set wsData   = ThisWorkbook.Sheets(sheetName)
 
+        ' Use col C (first placeholder col) to find last row — always populated
         lastRow = wsConfig.Cells(wsConfig.Rows.Count, "C").End(xlUp).Row
-
         Debug.Print "Processing sheet: " & sheetName & " (" & lastRow - 1 & " config rows)"
 
         '----------------------------------------------------------------------
-        ' Loop config rows for this sheet (row 1 = header, skip it)
+        ' Loop config rows (row 1 = header)
         '----------------------------------------------------------------------
         For i = 2 To lastRow
-            
-            section = Trim(wsConfig.Cells(i, 1).value)       ' Col A
-            subtitle = Trim(wsConfig.Cells(i, 2).value)      ' Col B
-            placeholder = Trim(wsConfig.Cells(i, 3).value)   ' Col C
 
-            If sheetName = "FN10" Or sheetName = "FN15" Or sheetName = "FN17" Or sheetName = "FN18" Or sheetName = "FN19" Or sheetName = "FN20" Or sheetName = "FN26" Then
-                If subtitle = "" Or placeholder = "" Then
-                    GoTo NextRow
-                End If
-            ElseIf sheetName = "FN11" Then
-                If placeholder = "" Then
-                    GoTo NextRow
-                End If
-            Else
-                If section = "" Or subtitle = "" Or placeholder = "" Then
-                    GoTo NextRow
-                End If
+            section  = Trim(CStr(wsConfig.Cells(i, 1).Value))  ' Col A
+            subtitle = Trim(CStr(wsConfig.Cells(i, 2).Value))  ' Col B
+
+            ' Read occurrence from col H (8) — blank defaults to 1
+            occurrence = 1
+            If Trim(CStr(wsConfig.Cells(i, 8).Value)) <> "" Then
+                occurrence = CLng(wsConfig.Cells(i, 8).Value)
             End If
-            
-            If sheetName <> "FN10" And sheetName <> "FN15" And sheetName <> "FN17" And sheetName <> "FN18" And sheetName <> "FN19" And sheetName <> "FN20" And sheetName <> "FN26" Then
 
-                ' Step 1: find section header in col A of the data sheet
-                Dim k As Long
-                Set foundCell = Nothing
-                For k = 1 To wsData.Cells(wsData.Rows.Count, "A").End(xlUp).Row
-                    If StripSpaces(Trim(wsData.Cells(k, 1).value)) = StripSpaces(section) Then
-                        Set foundCell = wsData.Cells(k, 1)
-                        Exit For
-                    End If
-                Next k
-    
-                If foundCell Is Nothing Then
+            ' Read subtitle column from col I (9) — blank defaults to C (3)
+            subtitleColNum = 3
+            If Trim(CStr(wsConfig.Cells(i, 9).Value)) <> "" Then
+                subtitleColNum = ColLetterToNum(Trim(wsConfig.Cells(i, 9).Value))
+            End If
+
+            ' Read value columns from col J (10) — blank defaults to "D"
+            Dim valCols As String
+            valCols = Trim(CStr(wsConfig.Cells(i, 10).Value))
+            If valCols = "" Then valCols = "D"
+
+            ' Skip rows with no placeholder in col C
+            If Trim(CStr(wsConfig.Cells(i, 3).Value)) = "" Then GoTo NextRow
+
+            ' Skip blank subtitles unless section is also blank (no-section sheets)
+            If subtitle = "" And section <> "" Then GoTo NextRow
+
+            '------------------------------------------------------------------
+            ' Steps 1-3: section and subtitle lookup
+            ' Only run when section is present
+            '------------------------------------------------------------------
+            sectionRow     = 0
+            nextSectionRow = 0
+            subtitleRow    = 0
+            dataRow        = 0
+
+            If section <> "" Then
+                ' Step 1: find section in col A
+                sectionRow = FindSectionRow(wsData, section)
+                If sectionRow = 0 Then
                     Debug.Print "  NOT FOUND section: '" & section & "'"
                     GoTo NextRow
                 End If
-    
-                sectionRow = foundCell.Row
-    
-                ' Step 2: bound the search — find the NEXT section header in col A
-                Set nextCell = wsData.Columns("A").FindNext(foundCell)
-                If nextCell Is Nothing Then
-                    nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-                ElseIf nextCell.Row <= sectionRow Then
-                    nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+
+                ' Step 2: find next section to bound the search
+                Dim defaultLast As Long
+                defaultLast = wsData.Cells(wsData.Rows.Count, subtitleColNum).End(xlUp).Row
+                nextSectionRow = FindNextSectionRow(wsData, sectionRow, defaultLast)
+
+                ' Step 3: find subtitle within bounded range (if subtitle provided)
+                If subtitle <> "" Then
+                    subtitleRow = FindSubtitleRow(wsData, sectionRow, nextSectionRow, _
+                                                  subtitle, subtitleColNum, occurrence)
+                    If subtitleRow = 0 Then
+                        Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
+                        GoTo NextRow
+                    End If
+                    dataRow = subtitleRow
                 Else
-                    nextSectionRow = nextCell.Row - 1
-                End If
-    
-                ' Step 3: find subtitle in col C within the bounded range
-                Dim occurrence As Long
-                occurrence = 1
-                If Trim(wsConfig.Cells(i, 8).value) <> "" Then
-                    occurrence = CLng(wsConfig.Cells(i, 8).value)
-                End If
-    
-                Dim matchCount As Long
-                subtitleRow = 0
-                matchCount = 0
-                For j = sectionRow To nextSectionRow
-                    If StripSpaces(Trim(wsData.Cells(j, 3).value)) = StripSpaces(subtitle) Then
-                        matchCount = matchCount + 1
-                        If matchCount = occurrence Then
-                            subtitleRow = j
-                            Exit For
-                        End If
-                    End If
-                Next j
-    
-                If subtitle = "" And sheetName <> "FN11" Then
-                    Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-            End If
-            Debug.Print "Reached step 4: sheet name: " & sheetName
-
-            ' Step 4: read value(s) based on which sheet we're processing
-            If sheetName = "SCNP" Then
-                Dim phD_SCNP As String, phE_SCNP As String, phF_SCNP As String, phG_SCNP As String
-                phD_SCNP = Trim(wsConfig.Cells(i, 3).value)
-                phE_SCNP = Trim(wsConfig.Cells(i, 4).value)
-                phF_SCNP = Trim(wsConfig.Cells(i, 5).value)
-                phG_SCNP = Trim(wsConfig.Cells(i, 6).value)
-                If phD_SCNP <> "" Then args = args & " """ & phD_SCNP & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_SCNP <> "" Then args = args & " """ & phE_SCNP & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_SCNP <> "" Then args = args & " """ & phF_SCNP & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                If phG_SCNP <> "" Then args = args & " """ & phG_SCNP & "=" & wsData.Cells(subtitleRow, 7).value & """"
-
-            ElseIf sheetName = "SBR" Then
-                Dim phD_SBR As String, phE_SBR As String
-                phD_SBR = Trim(wsConfig.Cells(i, 3).value)
-                phE_SBR = Trim(wsConfig.Cells(i, 4).value)
-                If phD_SBR <> "" Then args = args & " """ & phD_SBR & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_SBR <> "" Then args = args & " """ & phE_SBR & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                
-            ElseIf sheetName = "FN5" Then
-                Dim phD_FN5 As String, phE_FN5 As String, phF_FN5 As String, phG_FN5 As String, phH_FN5 As String
-                phD_FN5 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN5 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN5 = Trim(wsConfig.Cells(i, 5).value)
-                phG_FN5 = Trim(wsConfig.Cells(i, 6).value)
-                phH_FN5 = Trim(wsConfig.Cells(i, 7).value)
-                If phD_FN5 <> "" Then args = args & " """ & phD_FN5 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN5 <> "" Then args = args & " """ & phE_FN5 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN5 <> "" Then args = args & " """ & phF_FN5 & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                If phG_FN5 <> "" Then args = args & " """ & phG_FN5 & "=" & wsData.Cells(subtitleRow, 7).value & """"
-                If phH_FN5 <> "" Then args = args & " """ & phH_FN5 & "=" & wsData.Cells(subtitleRow, 8).value & """"
-                
-            ElseIf sheetName = "FN7" Then
-                Dim phD_FN7 As String, phE_FN7 As String, phF_FN7 As String
-                phD_FN7 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN7 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN7 = Trim(wsConfig.Cells(i, 5).value)
-                If phD_FN7 <> "" Then args = args & " """ & phD_FN7 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN7 <> "" Then args = args & " """ & phE_FN7 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN7 <> "" Then args = args & " """ & phF_FN7 & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                
-            ElseIf sheetName = "FN10" Then
-                Dim phE_FN10 As String, phF_FN10 As String
-                Dim phG_FN10 As String, phH_FN10 As String
-                Dim subCol_FN10 As Long, phI_FN10 As String
-                
-                phE_FN10 = Trim(wsConfig.Cells(i, 3).value)
-                phF_FN10 = Trim(wsConfig.Cells(i, 4).value)
-                phG_FN10 = Trim(wsConfig.Cells(i, 5).value)
-                phH_FN10 = Trim(wsConfig.Cells(i, 6).value)
-                phI_FN10 = Trim(wsConfig.Cells(i, 7).value)
-                
-                ' Col I of config: subtitle column override — blank defaults to C (3)
-                If UCase(Trim(wsConfig.Cells(i, 9).value)) = "D" Then
-                    subCol_FN10 = 4  ' col D
-                Else
-                    subCol_FN10 = 3  ' col C default
+                    ' No subtitle — use row after section header
+                    dataRow = sectionRow + 1
                 End If
 
-                ' Find subtitle in the appropriate column
-                Dim subtitleRow10 As Long
-                subtitleRow10 = 0
-                Dim sk10 As Long
-
-                If sheetName = "FN10" And section = "" Then
-                    ' No section — search entire column
-                    For sk10 = 1 To wsData.Cells(wsData.Rows.Count, subCol_FN10).End(xlUp).Row
-                        If Trim(wsData.Cells(sk10, subCol_FN10).value) = subtitle Then
-                            subtitleRow10 = sk10
-                            Exit For
-                        End If
-                    Next sk10
-                Else
-                    ' Has section — search within bounded range
-                    For sk10 = sectionRow To nextSectionRow
-                        If Trim(wsData.Cells(sk10, subCol_FN10).value) = subtitle Then
-                            subtitleRow10 = sk10
-                            Exit For
-                        End If
-                    Next sk10
-                End If
-
-                If subtitleRow10 = 0 Then
-                    Debug.Print "  fn10 NOT FOUND subtitle: '" & subtitle & "' in col " & subCol_FN10
-                    GoTo NextRow
-                End If
-
-                If phE_FN10 <> "" Then args = args & " """ & phE_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN10 <> "" Then args = args & " """ & phF_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN10 <> "" Then args = args & " """ & phG_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 7).value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN10 <> "" Then args = args & " """ & phH_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 8).value), Chr(10), ""), Chr(13), "") & """"
-                If phI_FN10 <> "" Then args = args & " """ & phI_FN10 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow10, 9).value), Chr(10), ""), Chr(13), "") & """"
-
-                
-            ElseIf sheetName = "FN11" Then
-                Dim phD_FN11 As String, phE_FN11 As String, phF_FN11 As String, phG_FN11 As String
-                phD_FN11 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN11 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN11 = Trim(wsConfig.Cells(i, 5).value)
-                phG_FN11 = Trim(wsConfig.Cells(i, 6).value)
-                
-                Dim dataRow11 As Long
-                If subtitle = "" Then
-                    'No subtitle - grab value from row immediately after section header
-                    dataRow11 = sectionRow + 1
-                    Debug.Print "FN11 no subtitle: sectionRow=" & sectionRow & " dataRow11=" & dataRow11 & " col D value='" & wsData.Cells(dataRow11, 4).value & "'"
-                Else
-                    dataRow11 = subtitleRow
-                End If
-                If phD_FN11 <> "" Then args = args & " """ & phD_FN11 & "=" & Replace(Replace(Trim(wsData.Cells(dataRow11, 4).value), Chr(10), ""), Chr(13), "") & """"
-                If phE_FN11 <> "" Then args = args & " """ & phE_FN11 & "=" & Replace(Replace(Trim(wsData.Cells(dataRow11, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN11 <> "" Then args = args & " """ & phF_FN11 & "=" & Replace(Replace(Trim(wsData.Cells(dataRow11, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN11 <> "" Then args = args & " """ & phG_FN11 & "=" & Replace(Replace(Trim(wsData.Cells(dataRow11, 7).value), Chr(10), ""), Chr(13), "") & """"
-            
-            ElseIf sheetName = "FN15" Then
-                Dim phE_FN15 As String, phF_FN15 As String
-                Dim phG_FN15 As String, phH_FN15 As String
-                Dim subCol_FN15 As Long
-                
-                phE_FN15 = Trim(wsConfig.Cells(i, 3).value)
-                phF_FN15 = Trim(wsConfig.Cells(i, 4).value)
-                phG_FN15 = Trim(wsConfig.Cells(i, 5).value)
-                phH_FN15 = Trim(wsConfig.Cells(i, 6).value)
-                
-                subCol_FN15 = 3  ' col C default for subtitle
-                
-                ' Find subtitle in the appropriate column
-                Dim subtitleRow15 As Long
-                subtitleRow15 = 0
-                Dim sk15 As Long
-
-                If sheetName = "FN15" And section = "" Then
-                    ' No section — search entire column
-                    For sk15 = 1 To wsData.Cells(wsData.Rows.Count, subCol_FN15).End(xlUp).Row
-                        If Trim(wsData.Cells(sk15, subCol_FN15).value) = subtitle Then
-                            subtitleRow15 = sk15
-                            Exit For
-                        End If
-                    Next sk15
-                Else
-                    ' Has section — search within bounded range
-                    For sk15 = sectionRow To nextSectionRow
-                        If Trim(wsData.Cells(sk15, subCol_FN15).value) = subtitle Then
-                            subtitleRow15 = sk15
-                            Exit For
-                        End If
-                    Next sk15
-                End If
-
-                If subtitleRow15 = 0 Then
-                    Debug.Print "  fn15 NOT FOUND subtitle: '" & subtitle & "' in col " & subCol_FN15
-                    GoTo NextRow
-                End If
-
-                If phE_FN15 <> "" Then args = args & " """ & phE_FN15 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow15, 4).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN15 <> "" Then args = args & " """ & phF_FN15 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow15, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN15 <> "" Then args = args & " """ & phG_FN15 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow15, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN15 <> "" Then args = args & " """ & phH_FN15 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow15, 7).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN17" Then
-                Dim phE_FN17 As String, phF_FN17 As String
-                Dim phG_FN17 As String, phH_FN17 As String
-                
-                phE_FN17 = Trim(wsConfig.Cells(i, 3).value)
-                phF_FN17 = Trim(wsConfig.Cells(i, 4).value)
-                phG_FN17 = Trim(wsConfig.Cells(i, 5).value)
-                phH_FN17 = Trim(wsConfig.Cells(i, 6).value)
-
-                ' Read occurrence from col 8 of config — blank defaults to 1
-                Dim occur17 As Long
-                occur17 = 1
-                If Trim(CStr(wsConfig.Cells(i, 8).value)) <> "" Then
-                    occur17 = CLng(wsConfig.Cells(i, 8).value)
-                End If
-
-                ' No section — search entire col C with occurrence counting
-                Dim subtitleRow17 As Long
-                Dim matchCount17 As Long
-                Dim sk17 As Long
-                subtitleRow17 = 0
-                matchCount17 = 0
-
-                For sk17 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk17, 3).value)) = Trim(subtitle) Then
-                        matchCount17 = matchCount17 + 1
-                        If matchCount17 = occur17 Then
-                            subtitleRow17 = sk17
-                            Exit For
-                        End If
-                    End If
-                Next sk17
-
-                If subtitleRow17 = 0 Then
-                    Debug.Print "  FN17 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur17
-                    GoTo NextRow
-                End If
-
-                ' Debug.Print "FN17 row " & i & ": subtitle='" & subtitle & "' occur=" & occur17 & " foundRow=" & subtitleRow17
-
-                If phE_FN17 <> "" Then args = args & " """ & phE_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 4).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN17 <> "" Then args = args & " """ & phF_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN17 <> "" Then args = args & " """ & phG_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN17 <> "" Then args = args & " """ & phH_FN17 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow17, 7).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN18" Then
-                Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' section='" & section & "'"
-                Dim phB_FN18 As String, phC_FN18 As String, phSum_FN18 As String
-                phB_FN18 = Trim(wsConfig.Cells(i, 3).value)
-                phC_FN18 = Trim(wsConfig.Cells(i, 4).value)
-                phSum_FN18 = Trim(wsConfig.Cells(i, 5).value)
-
-                ' No section — search entire col A for subtitle
-                Dim subtitleRow18 As Long
-                Dim sk18 As Long
-                subtitleRow18 = 0
-
-                For sk18 = 1 To wsData.Cells(wsData.Rows.Count, 1).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk18, 1).value)) = Trim(subtitle) Then
-                        subtitleRow18 = sk18
-                        Exit For
-                    End If
-                Next sk18
-
-                If subtitleRow18 = 0 Then
-                    Debug.Print "  FN18 NOT FOUND subtitle: '" & subtitle & "'"
-                    GoTo NextRow
-                End If
-
-                Dim valB_FN18 As Double, valC_FN18 As Double
-                valB_FN18 = Val(Replace(Trim(CStr(wsData.Cells(subtitleRow18, 2).value)), ",", ""))
-                valC_FN18 = Val(Replace(Trim(CStr(wsData.Cells(subtitleRow18, 3).value)), ",", ""))
-
-                ' Debug.Print "FN18 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow18 & " B=" & valB_FN18 & " C=" & valC_FN18 & " Sum=" & valB_FN18 + valC_FN18
-
-                If phB_FN18 <> "" Then args = args & " """ & phB_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 2).value), Chr(10), ""), Chr(13), "") & """"
-                If phC_FN18 <> "" Then args = args & " """ & phC_FN18 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow18, 3).value), Chr(10), ""), Chr(13), "") & """"
-                If phSum_FN18 <> "" Then args = args & " """ & phSum_FN18 & "=" & (valB_FN18 + valC_FN18) & """"
-                
-            ElseIf sheetName = "FN19" Then
-                Dim phD_FN19 As String
-                phD_FN19 = Trim(wsConfig.Cells(i, 3).value)
-
-                ' Read occurrence from col 4 of config — blank defaults to 1
-                Dim occur19 As Long
-                occur19 = 1
-                If Trim(CStr(wsConfig.Cells(i, 8).value)) <> "" Then
-                    occur19 = CLng(wsConfig.Cells(i, 8).value)
-                End If
-
-                ' No section — search entire col C with occurrence counting
-                Dim subtitleRow19 As Long
-                Dim matchCount19 As Long
-                Dim sk19 As Long
-                subtitleRow19 = 0
-                matchCount19 = 0
-
-                For sk19 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk19, 3).value)) = Trim(subtitle) Then
-                        matchCount19 = matchCount19 + 1
-                        If matchCount19 = occur19 Then
-                            subtitleRow19 = sk19
-                            Exit For
-                        End If
-                    End If
-                Next sk19
-
-                If subtitleRow19 = 0 Then
-                    Debug.Print "  FN19 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur19
-                    GoTo NextRow
-                End If
-
-                'Debug.Print "FN19 row " & i & ": subtitle='" & subtitle & "' occur=" & occur19 & " foundRow=" & subtitleRow19
-
-                If phD_FN19 <> "" Then args = args & " """ & phD_FN19 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow19, 4).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN20" Then
-                Dim phB_FN20 As String, phC_FN20 As String, phD_FN20 As String
-
-                phB_FN20 = Trim(wsConfig.Cells(i, 3).value)
-                phC_FN20 = Trim(wsConfig.Cells(i, 4).value)
-                phD_FN20 = Trim(wsConfig.Cells(i, 5).value)
-
-                ' Read occurrence from col 6 of config — blank defaults to 1
-                Dim occur20 As Long
-                occur20 = 1
-                If Trim(CStr(wsConfig.Cells(i, 8).value)) <> "" Then
-                    occur20 = CLng(wsConfig.Cells(i, 8).value)
-                End If
-
-                ' No section — search entire col A with occurrence counting
-                Dim subtitleRow20 As Long
-                Dim matchCount20 As Long
-                Dim sk20 As Long
-                subtitleRow20 = 0
-                matchCount20 = 0
-
-                For sk20 = 1 To wsData.Cells(wsData.Rows.Count, 1).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk20, 1).value)) = Trim(subtitle) Then
-                        matchCount20 = matchCount20 + 1
-                        If matchCount20 = occur20 Then
-                            subtitleRow20 = sk20
-                            Exit For
-                        End If
-                    End If
-                Next sk20
-
-                If subtitleRow20 = 0 Then
-                    Debug.Print "  FN20 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur20
-                    GoTo NextRow
-                End If
-
-                Debug.Print "FN20 row " & i & ": subtitle='" & subtitle & "' occur=" & occur20 & " foundRow=" & subtitleRow20
-
-                If phB_FN20 <> "" Then args = args & " """ & phB_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 2).value), Chr(10), ""), Chr(13), "") & """"
-                If phC_FN20 <> "" Then args = args & " """ & phC_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 3).value), Chr(10), ""), Chr(13), "") & """"
-                If phD_FN20 <> "" Then args = args & " """ & phD_FN20 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow20, 4).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN21" Then
-                Dim phD_FN21 As String, phE_FN21 As String, phF_FN21 As String
-                Dim phG_FN21 As String, phH_FN21 As String, phI_FN21 As String
-                Dim phJ_FN21 As String, phK_FN21 As String, phL_FN21 As String
-                Dim phM_FN21 As String
-
-                phD_FN21 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN21 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN21 = Trim(wsConfig.Cells(i, 5).value)
-                phG_FN21 = Trim(wsConfig.Cells(i, 6).value)
-                phH_FN21 = Trim(wsConfig.Cells(i, 7).value)
-                phI_FN21 = Trim(wsConfig.Cells(i, 9).value)   ' skip col 8 — reserved for occurrence
-                phJ_FN21 = Trim(wsConfig.Cells(i, 10).value)
-                phK_FN21 = Trim(wsConfig.Cells(i, 11).value)
-                phL_FN21 = Trim(wsConfig.Cells(i, 12).value)
-                phM_FN21 = Trim(wsConfig.Cells(i, 13).value)
-
-                ' subtitleRow already set by Steps 1-3 since FN21 has sections
-                If subtitleRow = 0 Then
-                    Debug.Print "  FN21 NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                Debug.Print "FN21 row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow
-
-                If phD_FN21 <> "" Then args = args & " """ & phD_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 4).value), Chr(10), ""), Chr(13), "") & """"
-                If phE_FN21 <> "" Then args = args & " """ & phE_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_FN21 <> "" Then args = args & " """ & phF_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_FN21 <> "" Then args = args & " """ & phG_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 7).value), Chr(10), ""), Chr(13), "") & """"
-                If phH_FN21 <> "" Then args = args & " """ & phH_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 8).value), Chr(10), ""), Chr(13), "") & """"
-                If phI_FN21 <> "" Then args = args & " """ & phI_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 9).value), Chr(10), ""), Chr(13), "") & """"
-                If phJ_FN21 <> "" Then args = args & " """ & phJ_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 10).value), Chr(10), ""), Chr(13), "") & """"
-                If phK_FN21 <> "" Then args = args & " """ & phK_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 11).value), Chr(10), ""), Chr(13), "") & """"
-                If phL_FN21 <> "" Then args = args & " """ & phL_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 12).value), Chr(10), ""), Chr(13), "") & """"
-                If phM_FN21 <> "" Then args = args & " """ & phM_FN21 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 13).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN25" Then
-                Dim phD_FN25 As String, phE_FN25 As String, phF_FN25 As String
-                phD_FN25 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN25 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN25 = Trim(wsConfig.Cells(i, 5).value)
-                If phD_FN25 <> "" Then args = args & " """ & phD_FN25 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN25 <> "" Then args = args & " """ & phE_FN25 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN25 <> "" Then args = args & " """ & phF_FN25 & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                
-            ElseIf sheetName = "FN26" Then
-                Dim phD_FN26 As String
-                phD_FN26 = Trim(wsConfig.Cells(i, 3).value)
-
-                ' Read occurrence from col 4 of config — blank defaults to 1
-                Dim occur26 As Long
-                occur26 = 1
-                If Trim(CStr(wsConfig.Cells(i, 8).value)) <> "" Then
-                    occur19 = CLng(wsConfig.Cells(i, 8).value)
-                End If
-
-                ' No section — search entire col C with occurrence counting
-                Dim subtitleRow26 As Long
-                Dim matchCount26 As Long
-                Dim sk26 As Long
-                subtitleRow26 = 0
-                matchCount26 = 0
-
-                For sk26 = 1 To wsData.Cells(wsData.Rows.Count, 3).End(xlUp).Row
-                    If Trim(CStr(wsData.Cells(sk26, 3).value)) = Trim(subtitle) Then
-                        matchCount26 = matchCount26 + 1
-                        If matchCount26 = occur26 Then
-                            subtitleRow26 = sk26
-                            Exit For
-                        End If
-                    End If
-                Next sk26
-
-                If subtitleRow26 = 0 Then
-                    Debug.Print "  FN26 NOT FOUND subtitle: '" & subtitle & "' occurrence=" & occur26
-                    GoTo NextRow
-                End If
-
-                'Debug.Print "FN19 row " & i & ": subtitle='" & subtitle & "' occur=" & occur19 & " foundRow=" & subtitleRow19
-
-                If phD_FN26 <> "" Then args = args & " """ & phD_FN26 & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow26, 4).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "FN27" Then
-                Dim phD_FN27 As String, phE_FN27 As String, phF_FN27 As String, phG_FN27 As String, phH_FN27 As String
-                phD_FN27 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN27 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN27 = Trim(wsConfig.Cells(i, 5).value)
-                phG_FN27 = Trim(wsConfig.Cells(i, 6).value)
-                phH_FN27 = Trim(wsConfig.Cells(i, 7).value)
-                If phD_FN27 <> "" Then args = args & " """ & phD_FN27 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN27 <> "" Then args = args & " """ & phE_FN27 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN27 <> "" Then args = args & " """ & phF_FN27 & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                If phG_FN27 <> "" Then args = args & " """ & phG_FN27 & "=" & wsData.Cells(subtitleRow, 7).value & """"
-                If phH_FN27 <> "" Then args = args & " """ & phH_FN27 & "=" & wsData.Cells(subtitleRow, 8).value & """"
-                
-            ElseIf sheetName = "FN28" Then
-                Dim phD_FN28 As String, phE_FN28 As String, phF_FN28 As String
-                phD_FN28 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN28 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN28 = Trim(wsConfig.Cells(i, 5).value)
-                If phD_FN28 <> "" Then args = args & " """ & phD_FN28 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN28 <> "" Then args = args & " """ & phE_FN28 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN28 <> "" Then args = args & " """ & phF_FN28 & "=" & wsData.Cells(subtitleRow, 6).value & """"
-                
-            ElseIf sheetName = "FN30" Then
-                Dim phD_FN30 As String, phE_FN30 As String, phF_FN30 As String
-                phD_FN30 = Trim(wsConfig.Cells(i, 3).value)
-                phE_FN30 = Trim(wsConfig.Cells(i, 4).value)
-                phF_FN30 = Trim(wsConfig.Cells(i, 5).value)
-                If phD_FN30 <> "" Then args = args & " """ & phD_FN30 & "=" & wsData.Cells(subtitleRow, 4).value & """"
-                If phE_FN30 <> "" Then args = args & " """ & phE_FN30 & "=" & wsData.Cells(subtitleRow, 5).value & """"
-                If phF_FN30 <> "" Then args = args & " """ & phF_FN30 & "=" & wsData.Cells(subtitleRow, 8).value & """"
-                
-            ElseIf sheetName = "RSI-SBR" Then
-                Dim phD_RSISBR As String, phE_RSISBR As String, phF_RSISBR As String
-                Dim phG_RSISBR As String, phH_RSISBR As String, phI_RSISBR As String
-                Dim phJ_RSISBR As String, phK_RSISBR As String, phL_RSISBR As String
-                Dim phM_RSISBR As String
-
-                phD_RSISBR = Trim(wsConfig.Cells(i, 3).value)
-                phE_RSISBR = Trim(wsConfig.Cells(i, 4).value)
-                phF_RSISBR = Trim(wsConfig.Cells(i, 5).value)
-                phG_RSISBR = Trim(wsConfig.Cells(i, 6).value)
-                phH_RSISBR = Trim(wsConfig.Cells(i, 7).value)
-                phI_RSISBR = Trim(wsConfig.Cells(i, 9).value)   ' skip col 8 — reserved for occurrence
-                phJ_RSISBR = Trim(wsConfig.Cells(i, 10).value)
-                phK_RSISBR = Trim(wsConfig.Cells(i, 11).value)
-                phL_RSISBR = Trim(wsConfig.Cells(i, 12).value)
-                phM_RSISBR = Trim(wsConfig.Cells(i, 13).value)
-
-                ' subtitleRow already set by Steps 1-3 since RSISBR has sections
-                If subtitleRow = 0 Then
-                    Debug.Print "  RSISBR NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                Debug.Print "RSISBR row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRow
-
-                If phD_RSISBR <> "" Then args = args & " """ & phD_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 4).value), Chr(10), ""), Chr(13), "") & """"
-                If phE_RSISBR <> "" Then args = args & " """ & phE_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 5).value), Chr(10), ""), Chr(13), "") & """"
-                If phF_RSISBR <> "" Then args = args & " """ & phF_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 6).value), Chr(10), ""), Chr(13), "") & """"
-                If phG_RSISBR <> "" Then args = args & " """ & phG_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 7).value), Chr(10), ""), Chr(13), "") & """"
-                If phH_RSISBR <> "" Then args = args & " """ & phH_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 8).value), Chr(10), ""), Chr(13), "") & """"
-                If phI_RSISBR <> "" Then args = args & " """ & phI_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 9).value), Chr(10), ""), Chr(13), "") & """"
-                If phJ_RSISBR <> "" Then args = args & " """ & phJ_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 10).value), Chr(10), ""), Chr(13), "") & """"
-                If phK_RSISBR <> "" Then args = args & " """ & phK_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 11).value), Chr(10), ""), Chr(13), "") & """"
-                If phL_RSISBR <> "" Then args = args & " """ & phL_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 12).value), Chr(10), ""), Chr(13), "") & """"
-                If phM_RSISBR <> "" Then args = args & " """ & phM_RSISBR & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRow, 13).value), Chr(10), ""), Chr(13), "") & """"
-                
-            ElseIf sheetName = "RSI-SCA" Then
-                Dim phF_RSISCA As String
-                phF_RSISCA = Trim(wsConfig.Cells(i, 3).value)
-
-                ' Find section in col A
-                Dim foundCellRSISCA As Range
-                Set foundCellRSISCA = wsData.Columns("A").Find( _
-                    What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
-
-                If foundCellRSISCA Is Nothing Then
-                    Debug.Print "  RSISCA NOT FOUND section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                Dim sectionRowRSISCA As Long
-                Dim nextSectionRowRSISCA As Long
-                Dim nextCellRSISCA As Range
-                sectionRowRSISCA = foundCellRSISCA.Row
-
-                Set nextCellRSISCA = wsData.Columns("A").FindNext(foundCellRSISCA)
-                If nextCellRSISCA Is Nothing Or nextCellRSISCA.Row <= sectionRowRSISCA Then
-                    nextSectionRowRSISCA = wsData.Cells(wsData.Rows.Count, "D").End(xlUp).Row
-                Else
-                    nextSectionRowRSISCA = nextCellRSISCA.Row - 1
-                End If
-
-                ' Find subtitle in col D within bounded range
-                Dim subtitleRowRSISCA As Long
-                Dim skRSISCA As Long
-                subtitleRowRSISCA = 0
-
-                For skRSISCA = sectionRowRSISCA To nextSectionRowRSISCA
-                    If Trim(CStr(wsData.Cells(skRSISCA, 4).value)) = Trim(subtitle) Then
-                        subtitleRowRSISCA = skRSISCA
-                        Exit For
-                    End If
-                Next skRSISCA
-
-                If subtitleRowRSISCA = 0 Then
-                    Debug.Print "  RSISCA NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                Debug.Print "RSISCA row " & i & ": subtitle='" & subtitle & "' foundRow=" & subtitleRowRSISCA
-                If phF_RSISCA <> "" Then args = args & " """ & phF_RSISCA & "=" & Replace(Replace(Trim(wsData.Cells(subtitleRowRSISCA, 6).value), Chr(10), ""), Chr(13), "") & """"
-            
             Else
-                ' Default: single value from col D
-                placeholder = Trim(wsConfig.Cells(i, 3).value)
-                value = wsData.Cells(subtitleRow, 4).value
-                args = args & " """ & placeholder & "=" & value & """"
+                ' No section — search entire subtitle column with occurrence
+                Dim lastDataRow As Long
+                lastDataRow = wsData.Cells(wsData.Rows.Count, subtitleColNum).End(xlUp).Row
+                subtitleRow = FindSubtitleRow(wsData, 1, lastDataRow, subtitle, subtitleColNum, occurrence)
+                If subtitleRow = 0 Then
+                    Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' (no section)"
+                    GoTo NextRow
+                End If
+                dataRow = subtitleRow
             End If
-            Debug.Print "  " & placeholder & " = " & value
+
+            '------------------------------------------------------------------
+            ' Step 4: collect placeholders and build args
+            '
+            ' Placeholders in config: cols C-G (indices 3-7) then K+ (index 11+)
+            ' Value columns: comma-separated list from col J
+            '------------------------------------------------------------------
+            Dim allPH() As String
+            Dim phCount As Long
+            phCount = 0
+
+            ' First 5 placeholders: cols C-G (3-7)
+            Dim pc As Long
+            For pc = 3 To 7
+                Dim phVal As String
+                phVal = Trim(CStr(wsConfig.Cells(i, pc).Value))
+                If phVal <> "" Then
+                    ReDim Preserve allPH(phCount)
+                    allPH(phCount) = phVal
+                    phCount = phCount + 1
+                End If
+            Next pc
+
+            ' Additional placeholders: cols K+ (11+)
+            Dim extraCol As Long
+            extraCol = 11
+            Do While Trim(CStr(wsConfig.Cells(i, extraCol).Value)) <> ""
+                ReDim Preserve allPH(phCount)
+                allPH(phCount) = Trim(CStr(wsConfig.Cells(i, extraCol).Value))
+                phCount = phCount + 1
+                extraCol = extraCol + 1
+            Loop
+
+            If phCount = 0 Then GoTo NextRow
+
+            ' Match each placeholder to its value column
+            Dim valColArr() As String
+            valColArr = Split(valCols, ",")
+
+            For c = 0 To UBound(valColArr)
+                If c <= UBound(allPH) Then
+                    If allPH(c) <> "" Then
+                        Dim colNum As Long
+                        colNum = ColLetterToNum(Trim(valColArr(c)))
+                        Dim cellVal As String
+                        cellVal = CleanVal(wsData.Cells(dataRow, colNum).Value)
+                        args = args & " """ & allPH(c) & "=" & cellVal & """"
+                        Debug.Print "  " & allPH(c) & " = " & cellVal
+                    End If
+                End If
+            Next c
 
 NextRow:
         Next i
 
 NextSheet:
     Next ws
-    
+
+
     '--------------------------------------------------------------------------
-    ' Sum placeholders from Sums tab in config
+    ' Sums tab — config-driven sums
     '--------------------------------------------------------------------------
     Dim wsSums As Worksheet
     Dim sumsExists As Boolean
@@ -711,22 +347,19 @@ NextSheet:
         Dim sumPlaceholders As Object
         Set sumPlaceholders = CreateObject("Scripting.Dictionary")
 
-        ' First pass — collect all unique placeholders and their running totals
         Dim sRow As Long
         For sRow = 2 To sumsLastRow
-            Dim sumPh As String
-            Dim sumSheet As String
+            Dim sumPh      As String
+            Dim sumSheet   As String
             Dim sumSection As String
             Dim sumSubtitle As String
 
-            sumPh = Trim(wsSums.Cells(sRow, 1).value)       ' Col A: placeholder
-            sumSheet = Trim(wsSums.Cells(sRow, 2).value)    ' Col B: sheet name
-            sumSection = Trim(wsSums.Cells(sRow, 3).value)  ' Col C: section
-            sumSubtitle = Trim(wsSums.Cells(sRow, 4).value) ' Col D: subtitle
+            sumPh       = Trim(CStr(wsSums.Cells(sRow, 1).Value))
+            sumSheet    = Trim(CStr(wsSums.Cells(sRow, 2).Value))
+            sumSection  = Trim(CStr(wsSums.Cells(sRow, 3).Value))
+            sumSubtitle = Trim(CStr(wsSums.Cells(sRow, 4).Value))
 
-            If sumPh = "" Or sumSheet = "" Or sumSection = "" Or sumSubtitle = "" Then
-                GoTo NextSumRow
-            End If
+            If sumPh = "" Or sumSheet = "" Or sumSubtitle = "" Then GoTo NextSumRow
 
             ' Check data sheet exists
             Dim sumDataSheet As Worksheet
@@ -744,66 +377,54 @@ NextSheet:
                 GoTo NextSumRow
             End If
 
-            ' Look up the value
-            Dim sumFoundCell As Range
-            Set sumFoundCell = sumDataSheet.Columns("A").Find( _
-                What:=sumSection, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=True)
-
-            If sumFoundCell Is Nothing Then
-                Debug.Print "Sums: section '" & sumSection & "' not found in " & sumSheet
-                GoTo NextSumRow
-            End If
-
-            Dim sumSectionRow As Long
-            Dim sumNextSectionRow As Long
-            Dim sumNextCell As Range
-            sumSectionRow = sumFoundCell.Row
-
-            Set sumNextCell = sumDataSheet.Columns("A").FindNext(sumFoundCell)
-            If sumNextCell Is Nothing Or sumNextCell.Row <= sumSectionRow Then
-                sumNextSectionRow = sumDataSheet.Cells(sumDataSheet.Rows.Count, "C").End(xlUp).Row
-            Else
-                sumNextSectionRow = sumNextCell.Row - 1
-            End If
-
+            ' Read occurrence from col E — blank defaults to 1
             Dim sumOccurrence As Long
             sumOccurrence = 1
-            If Trim(wsSums.Cells(sRow, 5).value) <> "" Then
-                sumOccurrence = CLng(wsSums.Cells(sRow, 5).value)
+            If Trim(CStr(wsSums.Cells(sRow, 5).Value)) <> "" Then
+                sumOccurrence = CLng(wsSums.Cells(sRow, 5).Value)
             End If
 
-            Dim sumSubRow As Long
-            Dim sumMatchCount As Long
-            sumSubRow = 0
-            sumMatchCount = 0
-            Dim sk As Long
-            For sk = sumSectionRow To sumNextSectionRow
-                If Trim(sumDataSheet.Cells(sk, 3).value) = sumSubtitle Then
-                    sumMatchCount = sumMatchCount + 1
-                    If sumMatchCount = sumOccurrence Then
-                        sumSubRow = sk
-                        Exit For
-                    End If
-                End If
-            Next sk
+            ' Read value column from col F — blank defaults to D (4)
+            Dim sumValCol As Long
+            sumValCol = 4
+            Dim sumValColStr As String
+            sumValColStr = Trim(CStr(wsSums.Cells(sRow, 6).Value))
+            If sumValColStr <> "" Then
+                sumValCol = ColLetterToNum(sumValColStr)
+            End If
 
-            If sumSubRow = 0 Then
-                Debug.Print "Sums: subtitle '" & sumSubtitle & "' not found under '" & sumSection & "'"
+            ' Find the data row
+            Dim sumDataRow As Long
+            sumDataRow = 0
+
+            If sumSection <> "" Then
+                ' Has section — find section then subtitle within it
+                Dim sumSectionRow As Long
+                sumSectionRow = FindSectionRow(sumDataSheet, sumSection)
+                If sumSectionRow = 0 Then
+                    Debug.Print "Sums: section '" & sumSection & "' not found in " & sumSheet
+                    GoTo NextSumRow
+                End If
+                Dim sumNextSectionRow As Long
+                sumNextSectionRow = FindNextSectionRow(sumDataSheet, sumSectionRow, _
+                    sumDataSheet.Cells(sumDataSheet.Rows.Count, "C").End(xlUp).Row)
+                sumDataRow = FindSubtitleRow(sumDataSheet, sumSectionRow, sumNextSectionRow, _
+                                             sumSubtitle, 3, sumOccurrence)
+            Else
+                ' No section — search entire col C
+                sumDataRow = FindSubtitleRow(sumDataSheet, 1, _
+                    sumDataSheet.Cells(sumDataSheet.Rows.Count, 3).End(xlUp).Row, _
+                    sumSubtitle, 3, sumOccurrence)
+            End If
+
+            If sumDataRow = 0 Then
+                Debug.Print "Sums: subtitle '" & sumSubtitle & "' not found"
                 GoTo NextSumRow
             End If
 
-            ' Read value column from col F of Sums config — blank defaults to col D (4)
-            Dim valCol As Long
-            valCol = 4  ' default col D
-            Dim valColStr As String
-            valColStr = Trim(CStr(wsSums.Cells(sRow, 6).value))
-            If valColStr <> "" Then
-                valCol = Range(valColStr & "1").Column
-            End If
-
-            ' Add value to running total for this placeholder
+            ' Add to running total
             Dim sumCellVal As Double
-            sumCellVal = Val(Replace(CStr(sumDataSheet.Cells(sumSubRow, valCol).value), ",", ""))
+            sumCellVal = Val(Replace(CStr(sumDataSheet.Cells(sumDataRow, sumValCol).Value), ",", ""))
 
             If sumPlaceholders.Exists(sumPh) Then
                 sumPlaceholders(sumPh) = sumPlaceholders(sumPh) + sumCellVal
@@ -815,7 +436,7 @@ NextSheet:
 NextSumRow:
         Next sRow
 
-        ' Second pass — add all sum placeholders to args
+        ' Add all sum placeholders to args
         Dim sumKey As Variant
         For Each sumKey In sumPlaceholders.Keys
             args = args & " """ & sumKey & "=" & sumPlaceholders(sumKey) & """"
@@ -836,19 +457,17 @@ NextSumRow:
     End If
 
     '--------------------------------------------------------------------------
-    ' Call Python: pass word template, output path, then all placeholder=value pairs
+    ' Write args to file and call Python
     '--------------------------------------------------------------------------
-    ' Write args to a separate file
     Dim argsPath As String
     argsPath = Environ("USERPROFILE") & "\Documents\export_args.txt"
-    
+
     Dim fileNum As Integer
     fileNum = FreeFile
     Open argsPath For Output As #fileNum
     Print #fileNum, args
     Close #fileNum
 
-    ' Command now just passes the args file path
     command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """ """ & argsPath & """"
 
     Dim batPath As String
@@ -858,11 +477,12 @@ NextSumRow:
     Open batPath For Output As #batFile
     Print #batFile, "@echo off"
     Print #batFile, command & " > """ & logPath & """ 2>&1"
-    ' Print #batFile, "pause"
     Close #batFile
-    
-    Set wsh = CreateObject("WScript.Shell")
+
+    Debug.Print "Args length: " & Len(args)
     Debug.Print "Command: " & command
+
+    Set wsh = CreateObject("WScript.Shell")
     exitCode = wsh.Run("cmd /c """ & batPath & """", 0, True)
 
     If exitCode = 0 Then
@@ -873,10 +493,6 @@ NextSumRow:
 
     Set wsh = Nothing
     Exit Sub
-    
-    
-    
-    
 
 ConfigError:
     Application.ScreenUpdating = True
@@ -884,3 +500,5 @@ ConfigError:
     Exit Sub
 
 End Sub
+
+
