@@ -1,2 +1,7 @@
-For i = 2 To lastRow
-            Debug.Print "Row " & i & " sheet='" & sheetName & "' section='" & Trim(CStr(wsConfig.Cells(i, 1).Value)) & "' subtitle='" & Trim(CStr(wsConfig.Cells(i, 2).Value)) & "' ph='" & Trim(CStr(wsConfig.Cells(i, 3).Value)) & "' N='" & Trim(CStr(wsConfig.Cells(i, 14).Value)) & "'"
+Sub WriteLog(msg As String, logPath As String)
+    Dim fileNum As Integer
+    fileNum = FreeFile
+    Open logPath For Append As #fileNum
+    Print #fileNum, Now() & " | " & msg
+    Close #fileNum
+End Sub
