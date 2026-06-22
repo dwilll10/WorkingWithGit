@@ -1,8 +1,6 @@
-let
-    Source = #"Your Table Name",
-    HTMLRows = Text.Combine(
+HTMLRows = Text.Combine(
         List.Transform(
-            Table.ToRows(Source),
+            Table.ToRows(#"Your Last Step Name"),
             each "<tr>" &
                 "<td>" & Text.From(_{0}) & "</td>" &
                 "<td>" & Text.From(_{21}) & "</td>" &
@@ -48,5 +46,3 @@ let
         "<th>Responsible</th>" &
     "</tr>",
     FullTable = "<table style='width:100%; border-collapse:collapse; font-family:Arial; font-size:12px;'>" & HTMLHeader & HTMLRows & "</table>"
-in
-    FullTable
