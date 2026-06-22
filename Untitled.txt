@@ -1,4 +1,52 @@
-dataRow = CLng(valueRowOverride)
-                    WriteLog "  dataRow set to " & dataRow & " for row " & i & " sheet='" & sheetName & "'"
-
-WriteLog "  Reached placeholder collection: dataRow=" & dataRow & " valCols='" & valCols & "' phCount=" & phCount
+let
+    Source = #"Your Table Name",
+    HTMLRows = Text.Combine(
+        List.Transform(
+            Table.ToRows(Source),
+            each "<tr>" &
+                "<td>" & Text.From(_{0}) & "</td>" &
+                "<td>" & Text.From(_{21}) & "</td>" &
+                "<td>" & Text.From(_{2}) & "</td>" &
+                "<td>" & Text.From(_{3}) & "</td>" &
+                "<td>" & Text.From(_{4}) & "</td>" &
+                "<td>" & Text.From(_{5}) & "</td>" &
+                "<td>" & Text.From(_{6}) & "</td>" &
+                "<td>" & Text.From(_{7}) & "</td>" &
+                "<td>" & Text.From(_{8}) & "</td>" &
+                "<td>" & Text.From(_{9}) & "</td>" &
+                "<td>" & Text.From(_{10}) & "</td>" &
+                "<td>" & Text.From(_{11}) & "</td>" &
+                "<td>" & Text.From(_{12}) & "</td>" &
+                "<td>" & Text.From(_{13}) & "</td>" &
+                "<td>" & Text.From(_{16}) & "</td>" &
+                "<td>" & Text.From(_{17}) & "</td>" &
+                "<td>" & Text.From(_{18}) & "</td>" &
+                "<td>" & Text.From(_{19}) & "</td>" &
+                "<td>" & Text.From(_{20}) & "</td>" &
+            "</tr>"
+        )
+    ),
+    HTMLHeader = "<tr>" &
+        "<th>Id</th>" &
+        "<th>Title</th>" &
+        "<th>Activity Type</th>" &
+        "<th>Reference ID</th>" &
+        "<th>Fiscal Year</th>" &
+        "<th>Functional Area</th>" &
+        "<th>Task Due Date</th>" &
+        "<th>Date Delivered</th>" &
+        "<th>AD Status</th>" &
+        "<th>Initiate Workflow</th>" &
+        "<th>System Name</th>" &
+        "<th>Scope</th>" &
+        "<th>% Complete</th>" &
+        "<th>Created</th>" &
+        "<th>UID</th>" &
+        "<th>Component</th>" &
+        "<th>Created By</th>" &
+        "<th>Assigned</th>" &
+        "<th>Responsible</th>" &
+    "</tr>",
+    FullTable = "<table style='width:100%; border-collapse:collapse; font-family:Arial; font-size:12px;'>" & HTMLHeader & HTMLRows & "</table>"
+in
+    FullTable
