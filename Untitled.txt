@@ -1,5 +1,3 @@
-If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-            inUnreplacedSection = True
-            WriteLog "inUnreplacedSection set to True"
-        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            WriteLog "Matched @@ line: '" & logLine & "'"
+Close #logFile
+    WriteLog "unreplacedCount after loop: " & unreplacedCount
+    WriteLog "tabCounts keys: " & tabCounts.Count
