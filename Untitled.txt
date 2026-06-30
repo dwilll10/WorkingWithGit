@@ -2,20 +2,13 @@ logFile = FreeFile
     Open logPath For Input As #logFile
     Do While Not EOF(logFile)
         Line Input #logFile, logLine
-        If InStr(logLine, "UNREPLACED") > 0 Then
-            WriteLog "Found UNREPLACED line: '" & logLine & "'"
-        End If
         ' Detect start of unreplaced section
         If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
             inUnreplacedSection = True
-            WriteLog "inUnreplacedSection set to True"
-        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            WriteLog "Matched @@ line: '" & logLine & "'"
         ' Detect end of unreplaced section
         ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
             inUnreplacedSection = False
-            
-        ' Only collect lines within the unreplaced section
+        ' Collect lines within the unreplaced section
         ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
             foundPh = Trim(logLine)
             If phTabMap.Exists(foundPh) Then
