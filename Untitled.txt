@@ -1,90 +1,17 @@
-def find_unreplaced(output_path, prefix="@@"):
-    """Find any placeholders still in the output doc that weren't replaced."""
-    import re
-    unreplaced = set()
-    with zipfile.ZipFile(output_path, "r") as z:
-        for part in XML_PARTS:
-            try:
-                data = z.read(part).decode("utf-8")
-                matches = re.findall(rf'{re.escape(prefix)}[^@]+{re.escape(prefix)}', data)
-                unreplaced.update(matches)
-            except:
-                pass
-    return sorted(unreplaced)
-
-# Find unreplaced placeholders
-    unreplaced = find_unreplaced(output_path)
-    if unreplaced:
-        print(f"\nUNREPLACED PLACEHOLDERS ({len(unreplaced)}):")
-        for ph in unreplaced:
-            print(f"  {ph}")
-    else:
-        print("\nAll placeholders were replaced successfully.")
-
-
-Dim phTabMap As Object
-    Set phTabMap = CreateObject("Scripting.Dictionary")
-
-
-' Map each placeholder to its config tab
-            Dim mapIdx As Long
-            For mapIdx = 0 To phCount - 1
-                If Not phTabMap.Exists(allPH(mapIdx)) Then
-                    phTabMap.Add allPH(mapIdx), sheetName
-                End If
-            Next mapIdx
-
-' Read log file and find unreplaced placeholders
-    Dim unreplacedMsg As String
-    unreplacedMsg = ""
-    Dim logFile As Integer
-    Dim logLine As String
-    Dim unreplacedCount As Long
-    unreplacedCount = 0
-    
-    logFile = FreeFile
+logFile = FreeFile
     Open logPath For Input As #logFile
     Do While Not EOF(logFile)
         Line Input #logFile, logLine
-        If InStr(logLine, "@@") > 0 And InStr(logLine, "UNREPLACED") = 0 Then
-            ' Extract placeholder from log line
-            Dim startPos As Long
-            Dim endPos As Long
-            startPos = InStr(logLine, "@@")
-            endPos = InStr(startPos + 2, logLine, "@@")
-            If startPos > 0 And endPos > 0 Then
-                Dim foundPh As String
-                foundPh = Mid(logLine, startPos, endPos - startPos + 2)
-                Dim tabSource As String
-                If phTabMap.Exists(foundPh) Then
-                    tabSource = phTabMap(foundPh)
-                Else
-                    tabSource = "Unknown"
-                End If
-                unreplacedMsg = unreplacedMsg & vbNewLine & foundPh & " (" & tabSource & ")"
-                unreplacedCount = unreplacedCount + 1
+        ' Only pick up lines from the UNREPLACED PLACEHOLDERS section
+        If Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
+            Else
+                tabSource = "Unknown"
             End If
+            unreplacedMsg = unreplacedMsg & vbNewLine & foundPh & " (" & tabSource & ")"
+            unreplacedCount = unreplacedCount + 1
         End If
     Loop
     Close #logFile
-
-    ' Build final message
-    Dim skippedMsg As String
-    If skippedSheets <> "" Then
-        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
-    Else
-        skippedMsg = ""
-    End If
-
-    Dim unreplacedSummary As String
-    If unreplacedCount > 0 Then
-        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & "):" & unreplacedMsg
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-    End If
-
-    If exitCode = 0 Then
-        MsgBox "Word document generated successfully!" & vbNewLine & outputPath & skippedMsg & unreplacedSummary, vbInformation, "Done"
-    Else
-        MsgBox "Script failed. Check log: " & logPath & skippedMsg & unreplacedSummary, vbCritical, "Error"
-    End If
