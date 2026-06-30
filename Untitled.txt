@@ -1,19 +1,48 @@
-' Wait a moment to ensure Python has finished writing
-    Application.Wait Now + TimeValue("0:00:02")
+Dim inUnreplacedSection As Boolean
+    inUnreplacedSection = False
     
-    ' Check log file size
-    WriteLog "Log file size after Python: " & FileLen(logPath) & " bytes"
-    
-    ' Print first 20 lines of log
-    Dim checkFile As Integer
-    Dim checkLine As String
-    Dim lineCount As Long
-    lineCount = 0
-    checkFile = FreeFile
-    Open logPath For Input As #checkFile
-    Do While Not EOF(checkFile) And lineCount < 20
-        Line Input #checkFile, checkLine
-        WriteLog "LOG: " & checkLine
-        lineCount = lineCount + 1
+    Dim tabCounts As Object
+    Set tabCounts = CreateObject("Scripting.Dictionary")
+
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        ' Detect start of unreplaced section
+        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+            inUnreplacedSection = True
+        ' Detect end of unreplaced section
+        ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
+            inUnreplacedSection = False
+        ' Only collect lines within the unreplaced section
+        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
+            Else
+                tabSource = "Unknown"
+            End If
+            ' Count by tab
+            If tabCounts.Exists(tabSource) Then
+                tabCounts(tabSource) = tabCounts(tabSource) + 1
+            Else
+                tabCounts.Add tabSource, 1
+            End If
+            unreplacedCount = unreplacedCount + 1
+        End If
     Loop
-    Close #checkFile
+    Close #logFile
+
+    ' Build breakdown by tab
+    Dim unreplacedSummary As String
+    If unreplacedCount > 0 Then
+        Dim tabBreakdown As String
+        tabBreakdown = ""
+        Dim tabKey As Variant
+        For Each tabKey In tabCounts.Keys
+            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
+        Next tabKey
+        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+    End If
