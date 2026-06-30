@@ -1,32 +1,15 @@
-def find_unreplaced(output_path, prefix="@@"):
-    """Find any placeholders still in the output doc that weren't replaced."""
-    import re
-    from lxml import etree
-    W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-    unreplaced = set()
-    
-    with zipfile.ZipFile(output_path, "r") as z:
-        for part in XML_PARTS:
-            try:
-                data = z.read(part).decode("utf-8")
-                
-                # Strip XML tags to get clean text
-                clean_text = re.sub(r'<[^>]+>', '', data)
-                
-                # Find all placeholders in clean text
-                matches = re.findall(rf'{re.escape(prefix)}[^@]+{re.escape(prefix)}', clean_text)
-                unreplaced.update(matches)
-                
-                # Also check paragraph-level reconstructed text for split runs
-                tree = etree.fromstring(data.encode("utf-8"))
-                for para in tree.iter(f"{{{W}}}p"):
-                    runs = para.findall(f".//{{{W}}}r")
-                    text_runs = [r for r in runs if r.find(f"{{{W}}}t") is not None]
-                    full_text = "".join((r.find(f"{{{W}}}t").text or "") for r in text_runs)
-                    split_matches = re.findall(rf'{re.escape(prefix)}[^@]+{re.escape(prefix)}', full_text)
-                    unreplaced.update(split_matches)
-                    
-            except Exception as e:
-                print(f"  Warning: could not check {part}: {e}")
-                
-    return sorted(unreplaced)
+WriteLog "phTabMap sample entries:"
+    Dim sampleKey As Variant
+    Dim sampleCount As Long
+    sampleCount = 0
+    For Each sampleKey In phTabMap.Keys
+        If sampleCount < 10 Then
+            WriteLog "  '" & sampleKey & "' = " & phTabMap(sampleKey)
+            sampleCount = sampleCount + 1
+        End If
+    Next sampleKey
+
+
+ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            WriteLog "Looking up: '" & foundPh & "' exists=" & CStr(phTabMap.Exists(foundPh))
