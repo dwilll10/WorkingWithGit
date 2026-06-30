@@ -1,17 +1,10 @@
-logFile = FreeFile
-    Open logPath For Input As #logFile
-    Do While Not EOF(logFile)
-        Line Input #logFile, logLine
-        ' Only pick up lines from the UNREPLACED PLACEHOLDERS section
-        If Left(Trim(logLine), 2) = "@@" Then
+WriteLog "phTabMap keys:"
+    Dim mapKey As Variant
+    For Each mapKey In phTabMap.Keys
+        WriteLog "  '" & mapKey & "' = " & phTabMap(mapKey)
+    Next mapKey
+
+
+If Left(Trim(logLine), 2) = "@@" Then
             foundPh = Trim(logLine)
-            If phTabMap.Exists(foundPh) Then
-                tabSource = phTabMap(foundPh)
-            Else
-                tabSource = "Unknown"
-            End If
-            unreplacedMsg = unreplacedMsg & vbNewLine & foundPh & " (" & tabSource & ")"
-            unreplacedCount = unreplacedCount + 1
-        End If
-    Loop
-    Close #logFile
+            WriteLog "Found unreplaced in log: '" & foundPh & "' exists in map: " & CStr(phTabMap.Exists(foundPh))
