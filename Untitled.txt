@@ -1,15 +1,38 @@
-WriteLog "phTabMap sample entries:"
-    Dim sampleKey As Variant
-    Dim sampleCount As Long
-    sampleCount = 0
-    For Each sampleKey In phTabMap.Keys
-        If sampleCount < 10 Then
-            WriteLog "  '" & sampleKey & "' = " & phTabMap(sampleKey)
-            sampleCount = sampleCount + 1
+' Map placeholders to config tab regardless of whether data sheet exists
+        Dim mapWsConfig As Worksheet
+        Set mapWsConfig = ws
+        Dim mapLastRow As Long
+        mapLastRow = mapWsConfig.Cells(mapWsConfig.Rows.Count, "C").End(xlUp).Row
+        Dim mapRow As Long
+        For mapRow = 2 To mapLastRow
+            Dim mapPh As Long
+            For mapPh = 3 To 7
+                Dim mapPhVal As String
+                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapPh).Value))
+                If mapPhVal <> "" Then
+                    If Not phTabMap.Exists(mapPhVal) Then
+                        phTabMap.Add mapPhVal, sheetName
+                    End If
+                End If
+            Next mapPh
+            ' Also check K+ columns
+            Dim mapExtra As Long
+            mapExtra = 11
+            Do While Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value)) <> ""
+                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value))
+                If Not phTabMap.Exists(mapPhVal) Then
+                    phTabMap.Add mapPhVal, sheetName
+                End If
+                mapExtra = mapExtra + 1
+            Loop
+        Next mapRow
+
+        If Not dataExists Then
+            WriteLog "SKIPPED: Config tab '" & sheetName & "' has no matching data sheet"
+            If skippedSheets = "" Then
+                skippedSheets = sheetName
+            Else
+                skippedSheets = skippedSheets & ", " & sheetName
+            End If
+            GoTo NextSheet
         End If
-    Next sampleKey
-
-
-ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            foundPh = Trim(logLine)
-            WriteLog "Looking up: '" & foundPh & "' exists=" & CStr(phTabMap.Exists(foundPh))
