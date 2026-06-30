@@ -8,3 +8,5 @@ WriteLog "phTabMap keys:"
 If Left(Trim(logLine), 2) = "@@" Then
             foundPh = Trim(logLine)
             WriteLog "Found unreplaced in log: '" & foundPh & "' exists in map: " & CStr(phTabMap.Exists(foundPh))
+
+@@FN29ApprUsed2</w:t></w:r><w:r><w:rPr><w:spacing w:val="0"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>2</w:t></w:r><w:r w:rsidRPr="00867089"><w:rPr><w:spacing w:val="0"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>@@
