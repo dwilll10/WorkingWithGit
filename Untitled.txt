@@ -1,48 +1,6 @@
-Dim inUnreplacedSection As Boolean
-    inUnreplacedSection = False
-    
-    Dim tabCounts As Object
-    Set tabCounts = CreateObject("Scripting.Dictionary")
-
-    logFile = FreeFile
-    Open logPath For Input As #logFile
+Open logPath For Input As #logFile
     Do While Not EOF(logFile)
         Line Input #logFile, logLine
-        ' Detect start of unreplaced section
-        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-            inUnreplacedSection = True
-        ' Detect end of unreplaced section
-        ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
-            inUnreplacedSection = False
-        ' Only collect lines within the unreplaced section
-        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            foundPh = Trim(logLine)
-            If phTabMap.Exists(foundPh) Then
-                tabSource = phTabMap(foundPh)
-            Else
-                tabSource = "Unknown"
-            End If
-            ' Count by tab
-            If tabCounts.Exists(tabSource) Then
-                tabCounts(tabSource) = tabCounts(tabSource) + 1
-            Else
-                tabCounts.Add tabSource, 1
-            End If
-            unreplacedCount = unreplacedCount + 1
+        If InStr(logLine, "UNREPLACED") > 0 Then
+            WriteLog "Found UNREPLACED line: '" & logLine & "'"
         End If
-    Loop
-    Close #logFile
-
-    ' Build breakdown by tab
-    Dim unreplacedSummary As String
-    If unreplacedCount > 0 Then
-        Dim tabBreakdown As String
-        tabBreakdown = ""
-        Dim tabKey As Variant
-        For Each tabKey In tabCounts.Keys
-            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
-        Next tabKey
-        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-    End If
