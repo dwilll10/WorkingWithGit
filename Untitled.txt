@@ -1,48 +1,90 @@
-HTMLRows = Text.Combine(
-        List.Transform(
-            Table.ToRows(#"Your Last Step Name"),
-            each "<tr>" &
-                "<td>" & Text.From(_{0}) & "</td>" &
-                "<td>" & Text.From(_{21}) & "</td>" &
-                "<td>" & Text.From(_{2}) & "</td>" &
-                "<td>" & Text.From(_{3}) & "</td>" &
-                "<td>" & Text.From(_{4}) & "</td>" &
-                "<td>" & Text.From(_{5}) & "</td>" &
-                "<td>" & Text.From(_{6}) & "</td>" &
-                "<td>" & Text.From(_{7}) & "</td>" &
-                "<td>" & Text.From(_{8}) & "</td>" &
-                "<td>" & Text.From(_{9}) & "</td>" &
-                "<td>" & Text.From(_{10}) & "</td>" &
-                "<td>" & Text.From(_{11}) & "</td>" &
-                "<td>" & Text.From(_{12}) & "</td>" &
-                "<td>" & Text.From(_{13}) & "</td>" &
-                "<td>" & Text.From(_{16}) & "</td>" &
-                "<td>" & Text.From(_{17}) & "</td>" &
-                "<td>" & Text.From(_{18}) & "</td>" &
-                "<td>" & Text.From(_{19}) & "</td>" &
-                "<td>" & Text.From(_{20}) & "</td>" &
-            "</tr>"
-        )
-    ),
-    HTMLHeader = "<tr>" &
-        "<th>Id</th>" &
-        "<th>Title</th>" &
-        "<th>Activity Type</th>" &
-        "<th>Reference ID</th>" &
-        "<th>Fiscal Year</th>" &
-        "<th>Functional Area</th>" &
-        "<th>Task Due Date</th>" &
-        "<th>Date Delivered</th>" &
-        "<th>AD Status</th>" &
-        "<th>Initiate Workflow</th>" &
-        "<th>System Name</th>" &
-        "<th>Scope</th>" &
-        "<th>% Complete</th>" &
-        "<th>Created</th>" &
-        "<th>UID</th>" &
-        "<th>Component</th>" &
-        "<th>Created By</th>" &
-        "<th>Assigned</th>" &
-        "<th>Responsible</th>" &
-    "</tr>",
-    FullTable = "<table style='width:100%; border-collapse:collapse; font-family:Arial; font-size:12px;'>" & HTMLHeader & HTMLRows & "</table>"
+def find_unreplaced(output_path, prefix="@@"):
+    """Find any placeholders still in the output doc that weren't replaced."""
+    import re
+    unreplaced = set()
+    with zipfile.ZipFile(output_path, "r") as z:
+        for part in XML_PARTS:
+            try:
+                data = z.read(part).decode("utf-8")
+                matches = re.findall(rf'{re.escape(prefix)}[^@]+{re.escape(prefix)}', data)
+                unreplaced.update(matches)
+            except:
+                pass
+    return sorted(unreplaced)
+
+# Find unreplaced placeholders
+    unreplaced = find_unreplaced(output_path)
+    if unreplaced:
+        print(f"\nUNREPLACED PLACEHOLDERS ({len(unreplaced)}):")
+        for ph in unreplaced:
+            print(f"  {ph}")
+    else:
+        print("\nAll placeholders were replaced successfully.")
+
+
+Dim phTabMap As Object
+    Set phTabMap = CreateObject("Scripting.Dictionary")
+
+
+' Map each placeholder to its config tab
+            Dim mapIdx As Long
+            For mapIdx = 0 To phCount - 1
+                If Not phTabMap.Exists(allPH(mapIdx)) Then
+                    phTabMap.Add allPH(mapIdx), sheetName
+                End If
+            Next mapIdx
+
+' Read log file and find unreplaced placeholders
+    Dim unreplacedMsg As String
+    unreplacedMsg = ""
+    Dim logFile As Integer
+    Dim logLine As String
+    Dim unreplacedCount As Long
+    unreplacedCount = 0
+    
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        If InStr(logLine, "@@") > 0 And InStr(logLine, "UNREPLACED") = 0 Then
+            ' Extract placeholder from log line
+            Dim startPos As Long
+            Dim endPos As Long
+            startPos = InStr(logLine, "@@")
+            endPos = InStr(startPos + 2, logLine, "@@")
+            If startPos > 0 And endPos > 0 Then
+                Dim foundPh As String
+                foundPh = Mid(logLine, startPos, endPos - startPos + 2)
+                Dim tabSource As String
+                If phTabMap.Exists(foundPh) Then
+                    tabSource = phTabMap(foundPh)
+                Else
+                    tabSource = "Unknown"
+                End If
+                unreplacedMsg = unreplacedMsg & vbNewLine & foundPh & " (" & tabSource & ")"
+                unreplacedCount = unreplacedCount + 1
+            End If
+        End If
+    Loop
+    Close #logFile
+
+    ' Build final message
+    Dim skippedMsg As String
+    If skippedSheets <> "" Then
+        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
+    Else
+        skippedMsg = ""
+    End If
+
+    Dim unreplacedSummary As String
+    If unreplacedCount > 0 Then
+        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & "):" & unreplacedMsg
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+    End If
+
+    If exitCode = 0 Then
+        MsgBox "Word document generated successfully!" & vbNewLine & outputPath & skippedMsg & unreplacedSummary, vbInformation, "Done"
+    Else
+        MsgBox "Script failed. Check log: " & logPath & skippedMsg & unreplacedSummary, vbCritical, "Error"
+    End If
