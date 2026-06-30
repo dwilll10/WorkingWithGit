@@ -1,6 +1,19 @@
-logFile = FreeFile
-    Open logPath For Input As #logFile
-    Do While Not EOF(logFile)
-        Line Input #logFile, logLine
-        WriteLog "LOG LINE: '" & logLine & "'"
-        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+if __name__ == "__main__":
+    word_path, output_path, replacements = parse_args(sys.argv)
+
+    print(f"Template: {word_path}")
+    print(f"Output:   {output_path}")
+    print(f"Replacements ({len(replacements)}):")
+    for p, v in replacements.items():
+        print(f"  {p} = {v}")
+
+    fill_word(word_path, replacements, output_path)
+
+    # Find unreplaced placeholders — must be after fill_word completes
+    unreplaced = find_unreplaced(output_path)
+    if unreplaced:
+        print(f"\nUNREPLACED PLACEHOLDERS ({len(unreplaced)}):")
+        for ph in unreplaced:
+            print(f"  {ph}")
+    else:
+        print("\nAll placeholders were replaced successfully.")
