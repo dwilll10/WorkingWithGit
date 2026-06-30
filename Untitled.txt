@@ -1,8 +1,13 @@
-If exitCode = 0 Then
-        MsgBox "Word document generated successfully!" & vbNewLine & outputPath & skippedMsg & unreplacedSummary, vbInformation, "Done"
-    Else
-        MsgBox "Script failed. Check log: " & logPath & skippedMsg & unreplacedSummary, vbCritical, "Error"
-    End If
+Hello,
 
-WriteLog "Final unreplacedSummary: '" & unreplacedSummary & "'"
-    WriteLog "Final skippedMsg: '" & skippedMsg & "'"
+You are invited to an initial requirements gathering meeting for the Quarterly Obligation Analysis automation effort.
+
+The objective of this meeting is to review the current process, identify business requirements, discuss any challenges or pain points, and answer any questions as we begin planning the automation.
+
+Your participation and input are appreciated and will help ensure we have a clear understanding of the existing process and business needs.
+
+I look forward to meeting with you.
+
+Thank you,
+
+[Your Name]
