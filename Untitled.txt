@@ -1,11 +1,5 @@
-If unreplacedCount > 0 Then
-        Dim tabBreakdown As String
-        tabBreakdown = ""
-        Dim tabKey As Variant
-        For Each tabKey In tabCounts.Keys
+For Each tabKey In tabCounts.Keys
+            WriteLog "tabKey: '" & CStr(tabKey) & "' count=" & tabCounts(tabKey)
             tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
         Next tabKey
-        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-    End If
+        WriteLog "tabBreakdown: '" & tabBreakdown & "'"
