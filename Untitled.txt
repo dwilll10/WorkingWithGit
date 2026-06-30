@@ -1,19 +1,41 @@
-if __name__ == "__main__":
-    word_path, output_path, replacements = parse_args(sys.argv)
+' Count unreplaced placeholders by tab
+    Dim tabCounts As Object
+    Set tabCounts = CreateObject("Scripting.Dictionary")
+    unreplacedCount = 0
 
-    print(f"Template: {word_path}")
-    print(f"Output:   {output_path}")
-    print(f"Replacements ({len(replacements)}):")
-    for p, v in replacements.items():
-        print(f"  {p} = {v}")
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+            inUnreplacedSection = True
+        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
+            Else
+                tabSource = "Unknown"
+            End If
+            If tabCounts.Exists(tabSource) Then
+                tabCounts(tabSource) = tabCounts(tabSource) + 1
+            Else
+                tabCounts.Add tabSource, 1
+            End If
+            unreplacedCount = unreplacedCount + 1
+        End If
+    Loop
+    Close #logFile
 
-    fill_word(word_path, replacements, output_path)
-
-    # Find unreplaced placeholders — must be after fill_word completes
-    unreplaced = find_unreplaced(output_path)
-    if unreplaced:
-        print(f"\nUNREPLACED PLACEHOLDERS ({len(unreplaced)}):")
-        for ph in unreplaced:
-            print(f"  {ph}")
-    else:
-        print("\nAll placeholders were replaced successfully.")
+    ' Build breakdown by tab
+    Dim unreplacedSummary As String
+    If unreplacedCount > 0 Then
+        Dim tabBreakdown As String
+        tabBreakdown = ""
+        Dim tabKey As Variant
+        For Each tabKey In tabCounts.Keys
+            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
+        Next tabKey
+        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+    End If
