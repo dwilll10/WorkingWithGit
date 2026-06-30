@@ -1,38 +1,41 @@
-' Map placeholders to config tab regardless of whether data sheet exists
-        Dim mapWsConfig As Worksheet
-        Set mapWsConfig = ws
-        Dim mapLastRow As Long
-        mapLastRow = mapWsConfig.Cells(mapWsConfig.Rows.Count, "C").End(xlUp).Row
-        Dim mapRow As Long
-        For mapRow = 2 To mapLastRow
-            Dim mapPh As Long
-            For mapPh = 3 To 7
-                Dim mapPhVal As String
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapPh).Value))
-                If mapPhVal <> "" Then
-                    If Not phTabMap.Exists(mapPhVal) Then
-                        phTabMap.Add mapPhVal, sheetName
-                    End If
-                End If
-            Next mapPh
-            ' Also check K+ columns
-            Dim mapExtra As Long
-            mapExtra = 11
-            Do While Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value)) <> ""
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value))
-                If Not phTabMap.Exists(mapPhVal) Then
-                    phTabMap.Add mapPhVal, sheetName
-                End If
-                mapExtra = mapExtra + 1
-            Loop
-        Next mapRow
+Dim tabCounts As Object
+    Set tabCounts = CreateObject("Scripting.Dictionary")
 
-        If Not dataExists Then
-            WriteLog "SKIPPED: Config tab '" & sheetName & "' has no matching data sheet"
-            If skippedSheets = "" Then
-                skippedSheets = sheetName
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+            inUnreplacedSection = True
+        ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
+            inUnreplacedSection = False
+        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
             Else
-                skippedSheets = skippedSheets & ", " & sheetName
+                tabSource = "Unknown"
             End If
-            GoTo NextSheet
+            If tabCounts.Exists(tabSource) Then
+                tabCounts(tabSource) = tabCounts(tabSource) + 1
+            Else
+                tabCounts.Add tabSource, 1
+            End If
+            unreplacedCount = unreplacedCount + 1
         End If
+    Loop
+    Close #logFile
+
+    ' Build unreplaced summary by tab
+    Dim unreplacedSummary As String
+    If unreplacedCount > 0 Then
+        Dim tabBreakdown As String
+        tabBreakdown = ""
+        Dim tabKey As Variant
+        For Each tabKey In tabCounts.Keys
+            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
+        Next tabKey
+        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+    End If
