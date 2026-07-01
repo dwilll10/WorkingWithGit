@@ -23,14 +23,16 @@ Sub ExportOI_SOS()
     Dim foundCell As Range
     Dim nextCell As Range
     Dim j As Long
-    
+    Dim startTime As Date
+
+    ' Record start time
+    startTime = Now()
 
     oneDrivePath = Environ("OneDrive")
     pythonPath = "C:\ProgramData\Anaconda3\python.exe"
     scriptPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\WordExportOISOS.py"
     logPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\OutputLog_OISOSexport.txt"
     configPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\config.xlsx"
-    
 
     ' Reference data sheet in the already open workbook
     Set wsData = ThisWorkbook.Sheets("OI-SOS")
@@ -44,21 +46,27 @@ Sub ExportOI_SOS()
 
     Set wsConfig = wbConfig.Sheets(1)
 
-
-
     ' Find last row of config table
     lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
 
-    ' Build args by iterating config rows (skip header in row 1)
+    ' Build args and placeholder map by iterating config rows (skip header in row 1)
     args = ""
-    For i = 2 To lastRow
-        section = Trim(wsConfig.Cells(i, 1).value)
-        subtitle = Trim(wsConfig.Cells(i, 2).value)
-        placeholder = Trim(wsConfig.Cells(i, 3).value)
+    Dim phTabMap As Object
+    Set phTabMap = CreateObject("Scripting.Dictionary")
 
-        
+    For i = 2 To lastRow
+        section = Trim(wsConfig.Cells(i, 1).Value)
+        subtitle = Trim(wsConfig.Cells(i, 2).Value)
+        placeholder = Trim(wsConfig.Cells(i, 3).Value)
+
+        ' Map placeholder to tab regardless of whether value is found
+        If placeholder <> "" Then
+            If Not phTabMap.Exists(placeholder) Then
+                phTabMap.Add placeholder, "OI-SOS"
+            End If
+        End If
+
         If section = "" Or subtitle = "" Or placeholder = "" Then
-            
             GoTo NextRow
         End If
 
@@ -67,12 +75,11 @@ Sub ExportOI_SOS()
             What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
 
         If foundCell Is Nothing Then
-            
             GoTo NextRow
         End If
 
         sectionRow = foundCell.Row
-        
+
         ' Step 2: find next section to bound the search
         Set nextCell = wsData.Columns("A").FindNext(foundCell)
         If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
@@ -81,29 +88,26 @@ Sub ExportOI_SOS()
             nextSectionRow = nextCell.Row - 1
         End If
 
-        
-
         ' Step 3: find subtitle in col C within the bounded range
         subtitleRow = 0
         For j = sectionRow To nextSectionRow
-            If Trim(wsData.Cells(j, 3).value) = subtitle Then
+            If Trim(wsData.Cells(j, 3).Value) = subtitle Then
                 subtitleRow = j
                 Exit For
             End If
         Next j
 
         If subtitleRow = 0 Then
-           
             GoTo NextRow
         End If
 
-        
-
         ' Step 4: read value from col D of that row
-        value = wsData.Cells(subtitleRow, 4).value
-       
-        args = args & " """ & placeholder & "=" & value & """"
-        
+        value = Trim(CStr(wsData.Cells(subtitleRow, 4).Value))
+        value = Replace(Replace(value, Chr(10), ""), Chr(13), "")
+
+        If value <> "" Then
+            args = args & " """ & placeholder & "=" & value & """"
+        End If
 
 NextRow:
     Next i
@@ -112,8 +116,6 @@ NextRow:
     wbConfig.Close SaveChanges:=False
     Application.ScreenUpdating = True
 
-   
-
     Dim wordTemplate As String
     Dim outputPath As String
     wordTemplate = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\FY 2026 DHS AFR - Q2 - OI-SOS-Template.docx"
@@ -121,16 +123,88 @@ NextRow:
 
     command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" & args & " > """ & logPath & """ 2>&1"
 
-    
-    
     Set wsh = CreateObject("WScript.Shell")
-    Debug.Print "Command: " & command
     exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
 
-    If exitCode = 0 Then
-        MsgBox "Word document generated successfully!", vbInformation, "Done"
+    '--------------------------------------------------------------------------
+    ' Read log and find unreplaced placeholders
+    '--------------------------------------------------------------------------
+    Dim logFile As Integer
+    Dim logLine As String
+    Dim inUnreplacedSection As Boolean
+    Dim foundPh As String
+    Dim tabSource As String
+    Dim unreplacedCount As Long
+    Dim unreplacedList As String
+    inUnreplacedSection = False
+    unreplacedCount = 0
+    unreplacedList = ""
+
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+            inUnreplacedSection = True
+        ElseIf InStr(logLine, "All placeholders were replaced") > 0 Then
+            inUnreplacedSection = False
+        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
+            Else
+                tabSource = "Unknown"
+            End If
+            unreplacedList = unreplacedList & vbNewLine & foundPh & " (" & tabSource & ")"
+            unreplacedCount = unreplacedCount + 1
+        End If
+    Loop
+    Close #logFile
+
+    '--------------------------------------------------------------------------
+    ' Build summary message
+    '--------------------------------------------------------------------------
+    Dim endTime As Date
+    endTime = Now()
+
+    Dim statusMsg As String
+    Dim unreplacedMsg As String
+    Dim noteMsg As String
+
+    If exitCode <> 0 Then
+        statusMsg = "Script failed. Check log: " & logPath
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation failed — please check the log file for errors."
+        unreplacedMsg = ""
+    ElseIf unreplacedCount > 0 Then
+        statusMsg = "Word document generated successfully!" & vbNewLine & outputPath
+        unreplacedMsg = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & "):" & unreplacedList
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed but " & unreplacedCount & " placeholder(s) were not replaced. " & _
+                  "Please review the unreplaced placeholders above and check the source data."
     Else
-        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
+        statusMsg = "Word document generated successfully!" & vbNewLine & outputPath
+        unreplacedMsg = ""
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully — all placeholders were replaced."
+    End If
+
+    Dim fullMsg As String
+    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & vbNewLine & _
+              statusMsg & unreplacedMsg & noteMsg
+
+    ' Save summary to txt file
+    Dim summaryPath As String
+    summaryPath = Environ("USERPROFILE") & "\Documents\OISOS_summary_" & Format(startTime, "yyyymmdd_hhmmss") & ".txt"
+    Dim summaryFile As Integer
+    summaryFile = FreeFile
+    Open summaryPath For Output As #summaryFile
+    Print #summaryFile, fullMsg
+    Close #summaryFile
+
+    ' Show MsgBox
+    If exitCode = 0 Then
+        MsgBox fullMsg, vbInformation, "Done"
+    Else
+        MsgBox fullMsg, vbCritical, "Error"
     End If
 
     Set wsh = Nothing
