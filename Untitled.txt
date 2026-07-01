@@ -1,9 +1,157 @@
-Dim msgContent As String
+' Read log file and find unreplaced placeholders
+    Dim unreplacedMsg As String
+    unreplacedMsg = ""
+    Dim logFile As Integer
+    Dim logLine As String
+    Dim unreplacedCount As Long
+    unreplacedCount = 0
+    Dim inUnreplacedSection As Boolean
+    inUnreplacedSection = False
+    Dim tabCounts As Object
+    Set tabCounts = CreateObject("Scripting.Dictionary")
+    Dim tabBreakdown As String
+    Dim tabKey As Variant
+
+    logFile = FreeFile
+    Open logPath For Input As #logFile
+    Do While Not EOF(logFile)
+        Line Input #logFile, logLine
+        ' Detect start of unreplaced section
+        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+            inUnreplacedSection = True
+        ' Detect end of unreplaced section
+        ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
+            inUnreplacedSection = False
+        ' Collect lines within the unreplaced section
+        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
+            foundPh = Trim(logLine)
+            If phTabMap.Exists(foundPh) Then
+                tabSource = phTabMap(foundPh)
+            Else
+                tabSource = "Unknown"
+            End If
+            If tabCounts.Exists(tabSource) Then
+                tabCounts(tabSource) = tabCounts(tabSource) + 1
+            Else
+                tabCounts.Add tabSource, 1
+            End If
+            unreplacedCount = unreplacedCount + 1
+        End If
+    Loop
+    Close #logFile
+    WriteLog "unreplacedCount after loop: " & unreplacedCount
+    WriteLog "tabCounts keys: " & tabCounts.Count
+
+    ' Build breakdown by tab
+    Dim unreplacedSummary As String
+    If unreplacedCount > 0 Then
+        
+        tabBreakdown = ""
+        
+        For Each tabKey In tabCounts.Keys
+            WriteLog "tabKey: '" & CStr(tabKey) & "' count=" & tabCounts(tabKey)
+            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
+        Next tabKey
+        
+        ' Build list of Unknown placeholders
+        Dim unknownList As String
+        unknownList = ""
+        Dim unknownCount As Long
+        unknownCount = 0
+        
+        logFile = FreeFile
+        Open logPath For Input As #logFile
+        Dim inSection2 As Boolean
+        inSection2 = False
+        Do While Not EOF(logFile)
+            Line Input #logFile, logLine
+            If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+                inSection2 = True
+            ElseIf inSection2 And Left(Trim(logLine), 2) = "@@" Then
+                foundPh = Trim(logLine)
+                If Not phTabMap.Exists(foundPh) Then
+                    unknownList = unknownList & vbNewLine & foundPh
+                    unknownCount = unknownCount + 1
+                End If
+            End If
+        Loop
+        Close #logFile
+        
+        If unknownCount > 0 Then
+            tabBreakdown = tabBreakdown & vbNewLine & vbNewLine & "Unknown tab placeholders (" & unknownCount & "):" & unknownList
+        End If
+        
+        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+    End If
+    
+    WriteLog "unreplacedSummary: '" & unreplacedSummary & "'"
+
+
+
+' Build final message
+    Dim successMsg As String
+    Dim partialMsg As String
+    successMsg = ""
+    partialMsg = ""
+
+    If unreplacedCount > 0 Then
+        ' Split success sheets into fully complete and partially complete
+        Dim partialSheets As String
+        Dim fullSuccessSheets As String
+        partialSheets = ""
+        fullSuccessSheets = ""
+
+        Dim sheetArr() As String
+        sheetArr = Split(successSheets, ", ")
+        Dim s As Long
+        For s = 0 To UBound(sheetArr)
+            Dim sheetItem As String
+            sheetItem = Trim(sheetArr(s))
+            If tabCounts.Exists(sheetItem) Then
+                If partialSheets = "" Then
+                    partialSheets = sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
+                Else
+                    partialSheets = partialSheets & vbNewLine & sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
+                End If
+            Else
+                If fullSuccessSheets = "" Then
+                    fullSuccessSheets = sheetItem
+                Else
+                    fullSuccessSheets = fullSuccessSheets & ", " & sheetItem
+                End If
+            End If
+        Next s
+
+        If fullSuccessSheets <> "" Then
+            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & fullSuccessSheets
+        End If
+
+        If partialSheets <> "" Then
+            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders (check for blanks in data tab):" & vbNewLine & partialSheets
+        End If
+
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+        If successSheets <> "" Then
+            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & successSheets
+        End If
+    End If
+
+    Dim skippedMsg As String
+    If skippedSheets <> "" Then
+        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
+    Else
+        skippedMsg = ""
+    End If
+
+    Dim msgContent As String
     Dim endTime As Date
     endTime = Now()
 
     If exitCode = 0 Then
-        msgContent = "Word document generated successfully!" & vbNewLine & outputPath
+        msgContent = "Word document generated successfully!" & vbNewLine & vbNewLine & "Automation runs all footnotes and financial statesments" & vbNewLine & vbNewLine & "Log path: " & outputPath & vbNewLine & "Summary path: " & summaryPath
     Else
         msgContent = "Script failed. Check log: " & logPath
     End If
@@ -17,8 +165,6 @@ Dim msgContent As String
               msgContent
 
     ' Save to txt file
-    Dim summaryPath As String
-    summaryPath = Environ("USERPROFILE") & "\Documents\automation_summary_" & Format(startTime, "yyyymmdd_hhmmss") & ".txt"
     Dim summaryFile As Integer
     summaryFile = FreeFile
     Open summaryPath For Output As #summaryFile
