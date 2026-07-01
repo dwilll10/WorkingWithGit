@@ -1,27 +1,40 @@
-' Build list of Unknown placeholders
-        Dim unknownList As String
-        unknownList = ""
-        Dim unknownCount As Long
-        unknownCount = 0
+' Build list of completed tabs that still have unreplaced placeholders
+        Dim partialSheets As String
+        partialSheets = ""
+        Dim fullSuccessSheets As String
+        fullSuccessSheets = ""
         
-        logFile = FreeFile
-        Open logPath For Input As #logFile
-        Dim inSection2 As Boolean
-        inSection2 = False
-        Do While Not EOF(logFile)
-            Line Input #logFile, logLine
-            If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-                inSection2 = True
-            ElseIf inSection2 And Left(Trim(logLine), 2) = "@@" Then
-                foundPh = Trim(logLine)
-                If Not phTabMap.Exists(foundPh) Then
-                    unknownList = unknownList & vbNewLine & foundPh
-                    unknownCount = unknownCount + 1
+        Dim sheetArr() As String
+        sheetArr = Split(successSheets, ", ")
+        Dim s As Long
+        For s = 0 To UBound(sheetArr)
+            Dim sheetItem As String
+            sheetItem = Trim(sheetArr(s))
+            If tabCounts.Exists(sheetItem) Then
+                If partialSheets = "" Then
+                    partialSheets = sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
+                Else
+                    partialSheets = partialSheets & vbNewLine & sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
+                End If
+            Else
+                If fullSuccessSheets = "" Then
+                    fullSuccessSheets = sheetItem
+                Else
+                    fullSuccessSheets = fullSuccessSheets & ", " & sheetItem
                 End If
             End If
-        Loop
-        Close #logFile
+        Next s
+
+        ' Update success and partial messages
+        Dim partialMsg As String
+        If partialSheets <> "" Then
+            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders:" & vbNewLine & partialSheets
+        Else
+            partialMsg = ""
+        End If
         
-        If unknownCount > 0 Then
-            tabBreakdown = tabBreakdown & vbNewLine & vbNewLine & "Unknown tab placeholders (" & unknownCount & "):" & unknownList
+        If fullSuccessSheets <> "" Then
+            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & fullSuccessSheets
+        Else
+            successMsg = ""
         End If
