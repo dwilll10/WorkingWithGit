@@ -1,179 +1,144 @@
-' Read log file and find unreplaced placeholders
-    Dim unreplacedMsg As String
-    unreplacedMsg = ""
-    Dim logFile As Integer
-    Dim logLine As String
-    Dim unreplacedCount As Long
-    unreplacedCount = 0
-    Dim inUnreplacedSection As Boolean
-    inUnreplacedSection = False
-    Dim tabCounts As Object
-    Set tabCounts = CreateObject("Scripting.Dictionary")
-    Dim tabBreakdown As String
-    Dim tabKey As Variant
-
-    logFile = FreeFile
-    Open logPath For Input As #logFile
-    Do While Not EOF(logFile)
-        Line Input #logFile, logLine
-        ' Detect start of unreplaced section
-        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-            inUnreplacedSection = True
-        ' Detect end of unreplaced section
-        ElseIf InStr(logLine, "End VBA Log") > 0 Or InStr(logLine, "All placeholders were replaced") > 0 Then
-            inUnreplacedSection = False
-        ' Collect lines within the unreplaced section
-        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            foundPh = Trim(logLine)
-            If phTabMap.Exists(foundPh) Then
-                tabSource = phTabMap(foundPh)
-            Else
-                tabSource = "Unknown"
-            End If
-            If tabCounts.Exists(tabSource) Then
-                tabCounts(tabSource) = tabCounts(tabSource) + 1
-            Else
-                tabCounts.Add tabSource, 1
-            End If
-            unreplacedCount = unreplacedCount + 1
-        End If
-    Loop
-    Close #logFile
-    WriteLog "unreplacedCount after loop: " & unreplacedCount
-    WriteLog "tabCounts keys: " & tabCounts.Count
-
-    ' Build breakdown by tab
-    Dim unreplacedSummary As String
-    If unreplacedCount > 0 Then
-        
-        tabBreakdown = ""
-        
-        For Each tabKey In tabCounts.Keys
-            WriteLog "tabKey: '" & CStr(tabKey) & "' count=" & tabCounts(tabKey)
-            tabBreakdown = tabBreakdown & vbNewLine & tabKey & " - " & tabCounts(tabKey)
-        Next tabKey
-        
-        ' Build list of Unknown placeholders
-        Dim unknownList As String
-        unknownList = ""
-        Dim unknownCount As Long
-        unknownCount = 0
-        
-        logFile = FreeFile
-        Open logPath For Input As #logFile
-        Dim inSection2 As Boolean
-        inSection2 = False
-        Do While Not EOF(logFile)
-            Line Input #logFile, logLine
-            If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-                inSection2 = True
-            ElseIf inSection2 And Left(Trim(logLine), 2) = "@@" Then
-                foundPh = Trim(logLine)
-                If Not phTabMap.Exists(foundPh) Then
-                    unknownList = unknownList & vbNewLine & foundPh
-                    unknownCount = unknownCount + 1
-                End If
-            End If
-        Loop
-        Close #logFile
-        
-        If unknownCount > 0 Then
-            tabBreakdown = tabBreakdown & vbNewLine & vbNewLine & "Unknown tab placeholders (" & unknownCount & "):" & unknownList
-        End If
-        
-        unreplacedSummary = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & " total):" & tabBreakdown
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-    End If
+Sub ExportOI_SOS()
+    Dim pythonPath As String
+    Dim scriptPath As String
+    Dim logPath As String
+    Dim configPath As String
+    Dim command As String
+    Dim wsh As Object
+    Dim oneDrivePath As String
+    Dim wsData As Worksheet
+    Dim wsConfig As Worksheet
+    Dim wbConfig As Workbook
+    Dim exitCode As Long
+    Dim args As String
+    Dim placeholder As String
+    Dim section As String
+    Dim subtitle As String
+    Dim value As String
+    Dim lastRow As Long
+    Dim i As Long
+    Dim sectionRow As Long
+    Dim subtitleRow As Long
+    Dim nextSectionRow As Long
+    Dim foundCell As Range
+    Dim nextCell As Range
+    Dim j As Long
     
-    WriteLog "unreplacedSummary: '" & unreplacedSummary & "'"
+
+    oneDrivePath = Environ("OneDrive")
+    pythonPath = "C:\ProgramData\Anaconda3\python.exe"
+    scriptPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\WordExportOISOS.py"
+    logPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\OutputLog_OISOSexport.txt"
+    configPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\config.xlsx"
+    
+
+    ' Reference data sheet in the already open workbook
+    Set wsData = ThisWorkbook.Sheets("OI-SOS")
+
+    ' Open config workbook silently, read, then close
+    Application.ScreenUpdating = False
+
+    On Error GoTo ConfigError
+    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
+    On Error GoTo 0
+
+    Set wsConfig = wbConfig.Sheets(1)
 
 
 
-' Build final message
-    Dim successMsg As String
-    Dim partialMsg As String
-    successMsg = ""
-    partialMsg = ""
+    ' Find last row of config table
+    lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
 
-    If unreplacedCount > 0 Then
-        ' Split success sheets into fully complete and partially complete
-        Dim partialSheets As String
-        Dim fullSuccessSheets As String
-        partialSheets = ""
-        fullSuccessSheets = ""
+    ' Build args by iterating config rows (skip header in row 1)
+    args = ""
+    For i = 2 To lastRow
+        section = Trim(wsConfig.Cells(i, 1).value)
+        subtitle = Trim(wsConfig.Cells(i, 2).value)
+        placeholder = Trim(wsConfig.Cells(i, 3).value)
 
-        Dim sheetArr() As String
-        sheetArr = Split(successSheets, ", ")
-        Dim s As Long
-        For s = 0 To UBound(sheetArr)
-            Dim sheetItem As String
-            sheetItem = Trim(sheetArr(s))
-            If tabCounts.Exists(sheetItem) Then
-                If partialSheets = "" Then
-                    partialSheets = sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
-                Else
-                    partialSheets = partialSheets & vbNewLine & sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
-                End If
-            Else
-                If fullSuccessSheets = "" Then
-                    fullSuccessSheets = sheetItem
-                Else
-                    fullSuccessSheets = fullSuccessSheets & ", " & sheetItem
-                End If
+        
+        If section = "" Or subtitle = "" Or placeholder = "" Then
+            
+            GoTo NextRow
+        End If
+
+        ' Step 1: find section in col A of OI-SOS
+        Set foundCell = wsData.Columns("A").Find( _
+            What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+
+        If foundCell Is Nothing Then
+            
+            GoTo NextRow
+        End If
+
+        sectionRow = foundCell.Row
+        
+        ' Step 2: find next section to bound the search
+        Set nextCell = wsData.Columns("A").FindNext(foundCell)
+        If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
+            nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
+        Else
+            nextSectionRow = nextCell.Row - 1
+        End If
+
+        
+
+        ' Step 3: find subtitle in col C within the bounded range
+        subtitleRow = 0
+        For j = sectionRow To nextSectionRow
+            If Trim(wsData.Cells(j, 3).value) = subtitle Then
+                subtitleRow = j
+                Exit For
             End If
-        Next s
+        Next j
 
-        If fullSuccessSheets <> "" Then
-            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & fullSuccessSheets
+        If subtitleRow = 0 Then
+           
+            GoTo NextRow
         End If
 
-        If partialSheets <> "" Then
-            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders (check for blanks in data tab):" & vbNewLine & partialSheets
-        End If
+        
 
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-        If successSheets <> "" Then
-            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & successSheets
-        End If
-    End If
+        ' Step 4: read value from col D of that row
+        value = wsData.Cells(subtitleRow, 4).value
+       
+        args = args & " """ & placeholder & "=" & value & """"
+        
 
-    Dim skippedMsg As String
-    If skippedSheets <> "" Then
-        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
-    Else
-        skippedMsg = ""
-    End If
+NextRow:
+    Next i
 
-    Dim msgContent As String
-    Dim endTime As Date
-    endTime = Now()
+    ' Close config workbook without saving
+    wbConfig.Close SaveChanges:=False
+    Application.ScreenUpdating = True
+
+   
+
+    Dim wordTemplate As String
+    Dim outputPath As String
+    wordTemplate = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\FY 2026 DHS AFR - Q2 - OI-SOS-Template.docx"
+    outputPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\filled_OISOSoutput.docx"
+
+    command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" & args & " > """ & logPath & """ 2>&1"
+
+    
+    
+    Set wsh = CreateObject("WScript.Shell")
+    Debug.Print "Command: " & command
+    exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
 
     If exitCode = 0 Then
-        msgContent = "Word document generated successfully!" & vbNewLine & vbNewLine & "Automation runs all footnotes and financial statesments" & vbNewLine & vbNewLine & "Log path: " & outputPath & vbNewLine & "Summary path: " & summaryPath
+        MsgBox "Word document generated successfully!", vbInformation, "Done"
     Else
-        msgContent = "Script failed. Check log: " & logPath
+        MsgBox "Script failed. Check log: " & logPath, vbCritical, "Error"
     End If
 
-    msgContent = msgContent & successMsg & partialMsg & skippedMsg & unreplacedSummary
+    Set wsh = Nothing
+    Exit Sub
 
-    ' Add timestamps
-    Dim fullMsg As String
-    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & vbNewLine & _
-              msgContent
+ConfigError:
+    Application.ScreenUpdating = True
+    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
+    Exit Sub
 
-    ' Save to txt file
-    Dim summaryFile As Integer
-    summaryFile = FreeFile
-    Open summaryPath For Output As #summaryFile
-    Print #summaryFile, fullMsg
-    Close #summaryFile
-
-    ' Show MsgBox
-    If exitCode = 0 Then
-        MsgBox fullMsg, vbInformation, "Done"
-    Else
-        MsgBox fullMsg, vbCritical, "Error"
-    End If
+End Sub
