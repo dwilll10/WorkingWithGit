@@ -1,61 +1,33 @@
-' Build final message
-    Dim successMsg As String
-    Dim partialMsg As String
-    successMsg = ""
-    partialMsg = ""
-
-    If unreplacedCount > 0 Then
-        ' Split success sheets into fully complete and partially complete
-        Dim partialSheets As String
-        Dim fullSuccessSheets As String
-        partialSheets = ""
-        fullSuccessSheets = ""
-
-        Dim sheetArr() As String
-        sheetArr = Split(successSheets, ", ")
-        Dim s As Long
-        For s = 0 To UBound(sheetArr)
-            Dim sheetItem As String
-            sheetItem = Trim(sheetArr(s))
-            If tabCounts.Exists(sheetItem) Then
-                If partialSheets = "" Then
-                    partialSheets = sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
-                Else
-                    partialSheets = partialSheets & vbNewLine & sheetItem & " (" & tabCounts(sheetItem) & " unreplaced)"
-                End If
-            Else
-                If fullSuccessSheets = "" Then
-                    fullSuccessSheets = sheetItem
-                Else
-                    fullSuccessSheets = fullSuccessSheets & ", " & fullSuccessSheets
-                End If
-            End If
-        Next s
-
-        If fullSuccessSheets <> "" Then
-            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & fullSuccessSheets
-        End If
-
-        If partialSheets <> "" Then
-            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders:" & vbNewLine & partialSheets
-        End If
-
-    Else
-        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
-        If successSheets <> "" Then
-            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & successSheets
-        End If
-    End If
-
-    Dim skippedMsg As String
-    If skippedSheets <> "" Then
-        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
-    Else
-        skippedMsg = ""
-    End If
+Dim msgContent As String
+    Dim endTime As Date
+    endTime = Now()
 
     If exitCode = 0 Then
-        MsgBox "Word document generated successfully!" & vbNewLine & outputPath & successMsg & partialMsg & skippedMsg & unreplacedSummary, vbInformation, "Done"
+        msgContent = "Word document generated successfully!" & vbNewLine & outputPath
     Else
-        MsgBox "Script failed. Check log: " & logPath & successMsg & partialMsg & skippedMsg & unreplacedSummary, vbCritical, "Error"
+        msgContent = "Script failed. Check log: " & logPath
+    End If
+
+    msgContent = msgContent & successMsg & partialMsg & skippedMsg & unreplacedSummary
+
+    ' Add timestamps
+    Dim fullMsg As String
+    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & vbNewLine & _
+              msgContent
+
+    ' Save to txt file
+    Dim summaryPath As String
+    summaryPath = Environ("USERPROFILE") & "\Documents\automation_summary_" & Format(startTime, "yyyymmdd_hhmmss") & ".txt"
+    Dim summaryFile As Integer
+    summaryFile = FreeFile
+    Open summaryPath For Output As #summaryFile
+    Print #summaryFile, fullMsg
+    Close #summaryFile
+
+    ' Show MsgBox
+    If exitCode = 0 Then
+        MsgBox fullMsg, vbInformation, "Done"
+    Else
+        MsgBox fullMsg, vbCritical, "Error"
     End If
