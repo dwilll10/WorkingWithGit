@@ -1,9 +1,16 @@
-' Build list of completed tabs that still have unreplaced placeholders
+' Build final message
+    Dim successMsg As String
+    Dim partialMsg As String
+    successMsg = ""
+    partialMsg = ""
+
+    If unreplacedCount > 0 Then
+        ' Split success sheets into fully complete and partially complete
         Dim partialSheets As String
-        partialSheets = ""
         Dim fullSuccessSheets As String
+        partialSheets = ""
         fullSuccessSheets = ""
-        
+
         Dim sheetArr() As String
         sheetArr = Split(successSheets, ", ")
         Dim s As Long
@@ -20,21 +27,35 @@
                 If fullSuccessSheets = "" Then
                     fullSuccessSheets = sheetItem
                 Else
-                    fullSuccessSheets = fullSuccessSheets & ", " & sheetItem
+                    fullSuccessSheets = fullSuccessSheets & ", " & fullSuccessSheets
                 End If
             End If
         Next s
 
-        ' Update success and partial messages
-        Dim partialMsg As String
-        If partialSheets <> "" Then
-            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders:" & vbNewLine & partialSheets
-        Else
-            partialMsg = ""
-        End If
-        
         If fullSuccessSheets <> "" Then
             successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & fullSuccessSheets
-        Else
-            successMsg = ""
         End If
+
+        If partialSheets <> "" Then
+            partialMsg = vbNewLine & vbNewLine & "Completed but with unreplaced placeholders:" & vbNewLine & partialSheets
+        End If
+
+    Else
+        unreplacedSummary = vbNewLine & vbNewLine & "All placeholders replaced successfully."
+        If successSheets <> "" Then
+            successMsg = vbNewLine & vbNewLine & "Successfully completed tabs:" & vbNewLine & successSheets
+        End If
+    End If
+
+    Dim skippedMsg As String
+    If skippedSheets <> "" Then
+        skippedMsg = vbNewLine & vbNewLine & "Skipped tabs (no matching data sheet):" & vbNewLine & skippedSheets
+    Else
+        skippedMsg = ""
+    End If
+
+    If exitCode = 0 Then
+        MsgBox "Word document generated successfully!" & vbNewLine & outputPath & successMsg & partialMsg & skippedMsg & unreplacedSummary, vbInformation, "Done"
+    Else
+        MsgBox "Script failed. Check log: " & logPath & successMsg & partialMsg & skippedMsg & unreplacedSummary, vbCritical, "Error"
+    End If
