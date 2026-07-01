@@ -1,13 +1,27 @@
-Hello,
-
-You are invited to an initial requirements gathering meeting for the Quarterly Obligation Analysis automation effort.
-
-The objective of this meeting is to review the current process, identify business requirements, discuss any challenges or pain points, and answer any questions as we begin planning the automation.
-
-Your participation and input are appreciated and will help ensure we have a clear understanding of the existing process and business needs.
-
-I look forward to meeting with you.
-
-Thank you,
-
-[Your Name]
+' Build list of Unknown placeholders
+        Dim unknownList As String
+        unknownList = ""
+        Dim unknownCount As Long
+        unknownCount = 0
+        
+        logFile = FreeFile
+        Open logPath For Input As #logFile
+        Dim inSection2 As Boolean
+        inSection2 = False
+        Do While Not EOF(logFile)
+            Line Input #logFile, logLine
+            If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
+                inSection2 = True
+            ElseIf inSection2 And Left(Trim(logLine), 2) = "@@" Then
+                foundPh = Trim(logLine)
+                If Not phTabMap.Exists(foundPh) Then
+                    unknownList = unknownList & vbNewLine & foundPh
+                    unknownCount = unknownCount + 1
+                End If
+            End If
+        Loop
+        Close #logFile
+        
+        If unknownCount > 0 Then
+            tabBreakdown = tabBreakdown & vbNewLine & vbNewLine & "Unknown tab placeholders (" & unknownCount & "):" & unknownList
+        End If
