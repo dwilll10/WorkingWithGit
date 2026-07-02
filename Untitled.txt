@@ -1,218 +1,245 @@
-Sub ExportOI_SOS()
-    Dim pythonPath As String
-    Dim scriptPath As String
-    Dim logPath As String
-    Dim configPath As String
+Sub RunPythonScript()
+    Dim pythonExePath As String
+    Dim pythonScriptPath As String
+    Dim workingDirectory As String
+    Dim oneDrivePath As String
+    Dim errorLogPath As String
     Dim command As String
     Dim wsh As Object
-    Dim oneDrivePath As String
-    Dim wsData As Worksheet
-    Dim wsConfig As Worksheet
-    Dim wbConfig As Workbook
-    Dim exitCode As Long
-    Dim args As String
-    Dim placeholder As String
-    Dim section As String
-    Dim subtitle As String
-    Dim value As String
-    Dim lastRow As Long
-    Dim i As Long
-    Dim sectionRow As Long
-    Dim subtitleRow As Long
-    Dim nextSectionRow As Long
-    Dim foundCell As Range
-    Dim nextCell As Range
-    Dim j As Long
-    Dim startTime As Date
+    Dim result As Integer
+    Dim fileNum As Integer
+    Dim hasErrors As Boolean
 
-    ' Record start time
-    startTime = Now()
-
+    ' Get OneDrive folder path automatically
     oneDrivePath = Environ("OneDrive")
-    pythonPath = "C:\ProgramData\Anaconda3\python.exe"
-    scriptPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\WordExportOISOS.py"
-    logPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\OutputLog_OISOSexport.txt"
-    configPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\config.xlsx"
 
-    ' Reference data sheet in the already open workbook
-    Set wsData = ThisWorkbook.Sheets("OI-SOS")
+    ' Define paths
+    pythonExePath = """C:\ProgramData\Anaconda3\python.exe"""
+    pythonScriptPath = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\mainScript.py" & """"
+    workingDirectory = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format" & """"
+    errorLogPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\OutputLog_GatekeepingTool.txt"
 
-    ' Open config workbook silently, read, then close
-    Application.ScreenUpdating = False
+    ' Pre-clear error log (optional)
+    fileNum = FreeFile
+    Open errorLogPath For Output As #fileNum
+    Close fileNum
 
-    On Error GoTo ConfigError
-    Set wbConfig = Workbooks.Open(configPath, ReadOnly:=True)
-    On Error GoTo 0
+    ' Build command: run Python and redirect errors to log
+    command = "cmd /c cd /d " & workingDirectory & " && " & pythonExePath & " " & pythonScriptPath & " 2> """ & errorLogPath & """"
 
-    Set wsConfig = wbConfig.Sheets(1)
-
-    ' Find last row of config table
-    lastRow = wsConfig.Cells(wsConfig.Rows.Count, "A").End(xlUp).Row
-
-    ' Build args and placeholder map by iterating config rows (skip header in row 1)
-    args = ""
-    Dim phTabMap As Object
-    Set phTabMap = CreateObject("Scripting.Dictionary")
-
-    For i = 2 To lastRow
-        section = Trim(wsConfig.Cells(i, 1).Value)
-        subtitle = Trim(wsConfig.Cells(i, 2).Value)
-        placeholder = Trim(wsConfig.Cells(i, 3).Value)
-
-        ' Map placeholder to tab regardless of whether value is found
-        If placeholder <> "" Then
-            If Not phTabMap.Exists(placeholder) Then
-                phTabMap.Add placeholder, "OI-SOS"
-            End If
-        End If
-
-        If section = "" Or subtitle = "" Or placeholder = "" Then
-            GoTo NextRow
-        End If
-
-        ' Step 1: find section in col A of OI-SOS
-        Set foundCell = wsData.Columns("A").Find( _
-            What:=section, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
-
-        If foundCell Is Nothing Then
-            GoTo NextRow
-        End If
-
-        sectionRow = foundCell.Row
-
-        ' Step 2: find next section to bound the search
-        Set nextCell = wsData.Columns("A").FindNext(foundCell)
-        If nextCell Is Nothing Or nextCell.Row <= sectionRow Then
-            nextSectionRow = wsData.Cells(wsData.Rows.Count, "C").End(xlUp).Row
-        Else
-            nextSectionRow = nextCell.Row - 1
-        End If
-
-        ' Step 3: find subtitle in col C within the bounded range
-        subtitleRow = 0
-        For j = sectionRow To nextSectionRow
-            If Trim(wsData.Cells(j, 3).Value) = subtitle Then
-                subtitleRow = j
-                Exit For
-            End If
-        Next j
-
-        If subtitleRow = 0 Then
-            GoTo NextRow
-        End If
-
-        ' Step 4: read value from col D of that row
-        value = Trim(CStr(wsData.Cells(subtitleRow, 4).Value))
-        value = Replace(Replace(value, Chr(10), ""), Chr(13), "")
-
-        If value <> "" Then
-            args = args & " """ & placeholder & "=" & value & """"
-        End If
-
-NextRow:
-    Next i
-
-    ' Close config workbook without saving
-    wbConfig.Close SaveChanges:=False
-    Application.ScreenUpdating = True
-
-    Dim wordTemplate As String
-    Dim outputPath As String
-    wordTemplate = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\a. Source Files\FY 2026 DHS AFR - Q2 - OI-SOS-Template.docx"
-    outputPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\filled_OISOSoutput.docx"
-
-    command = """" & pythonPath & """ """ & scriptPath & """ """ & wordTemplate & """ """ & outputPath & """" & args & " > """ & logPath & """ 2>&1"
-
+    ' Execute command synchronously
     Set wsh = CreateObject("WScript.Shell")
-    exitCode = wsh.Run("cmd /c """ & command & """", 0, True)
+    result = wsh.Run(command, 0, True) ' 0 = hidden window, True = wait
 
-    '--------------------------------------------------------------------------
-    ' Read log and find unreplaced placeholders
-    '--------------------------------------------------------------------------
-    Dim logFile As Integer
-    Dim logLine As String
-    Dim inUnreplacedSection As Boolean
-    Dim foundPh As String
-    Dim tabSource As String
-    Dim unreplacedCount As Long
-    Dim unreplacedList As String
-    inUnreplacedSection = False
-    unreplacedCount = 0
-    unreplacedList = ""
-
-    logFile = FreeFile
-    Open logPath For Input As #logFile
-    Do While Not EOF(logFile)
-        Line Input #logFile, logLine
-        If InStr(logLine, "UNREPLACED PLACEHOLDERS") > 0 Then
-            inUnreplacedSection = True
-        ElseIf InStr(logLine, "All placeholders were replaced") > 0 Then
-            inUnreplacedSection = False
-        ElseIf inUnreplacedSection And Left(Trim(logLine), 2) = "@@" Then
-            foundPh = Trim(logLine)
-            If phTabMap.Exists(foundPh) Then
-                tabSource = phTabMap(foundPh)
-            Else
-                tabSource = "Unknown"
-            End If
-            unreplacedList = unreplacedList & vbNewLine & foundPh & " (" & tabSource & ")"
-            unreplacedCount = unreplacedCount + 1
+    ' Check for errors in the log file
+    hasErrors = False
+    If Dir(errorLogPath) <> "" Then
+        fileNum = FreeFile
+        Open errorLogPath For Input As #fileNum
+        If LOF(fileNum) > 0 Then
+            hasErrors = True
         End If
-    Loop
-    Close #logFile
-
-    '--------------------------------------------------------------------------
-    ' Build summary message
-    '--------------------------------------------------------------------------
-    Dim endTime As Date
-    endTime = Now()
-
-    Dim statusMsg As String
-    Dim unreplacedMsg As String
-    Dim noteMsg As String
-
-    If exitCode <> 0 Then
-        statusMsg = "Script failed. Check log: " & logPath
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation failed — please check the log file for errors."
-        unreplacedMsg = ""
-    ElseIf unreplacedCount > 0 Then
-        statusMsg = "Word document generated successfully!" & vbNewLine & outputPath
-        unreplacedMsg = vbNewLine & vbNewLine & "Unreplaced placeholders (" & unreplacedCount & "):" & unreplacedList
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed but " & unreplacedCount & " placeholder(s) were not replaced. " & _
-                  "Please review the unreplaced placeholders above and check the source data."
-    Else
-        statusMsg = "Word document generated successfully!" & vbNewLine & outputPath
-        unreplacedMsg = ""
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully — all placeholders were replaced."
+        Close fileNum
     End If
 
-    Dim fullMsg As String
-    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & vbNewLine & _
-              statusMsg & unreplacedMsg & noteMsg
-
-    ' Save summary to txt file
-    Dim summaryPath As String
-    summaryPath = Environ("USERPROFILE") & "\Documents\OISOS_summary_" & Format(startTime, "yyyymmdd_hhmmss") & ".txt"
-    Dim summaryFile As Integer
-    summaryFile = FreeFile
-    Open summaryPath For Output As #summaryFile
-    Print #summaryFile, fullMsg
-    Close #summaryFile
-
-    ' Show MsgBox
-    If exitCode = 0 Then
-        MsgBox fullMsg, vbInformation, "Done"
+    ' Show appropriate message
+    If hasErrors Then
+        MsgBox "Python script completed, but some errors were logged. Please check the output log file:" & vbCrLf & errorLogPath, vbExclamation, "Script Completed with Errors"
     Else
-        MsgBox fullMsg, vbCritical, "Error"
+        MsgBox "Python script ran successfully! No errors were logged.", vbInformation, "Execution Completed"
     End If
-
-    Set wsh = Nothing
-    Exit Sub
-
-ConfigError:
-    Application.ScreenUpdating = True
-    MsgBox "Could not open config file: " & configPath, vbCritical, "Config Error"
-    Exit Sub
-
 End Sub
+
+08:23:25 [INFO] gk_footing - Using active workbook: GK Footing Template and word print.xlsm
+08:23:25 [INFO] gk_footing - Workbook fullname: C:\Users\DIEDRICH.WILLERS\OneDrive - Department of Homeland Security\DHS AFR Automation - Gatekeeper Tool\a. Source Files\GK Footing Template and word print.xlsm
+08:23:25 [INFO] gk_footing - Pending FN: ['fn2', 'fn3', 'fn4', 'fn5', 'fn5_t', 'fn6', 'fn6_t', 'fn7', 'fn8', 'fn9', 'fn10', 'fn11', 'fn12', 'fn13', 'fn14', 'fn15', 'fn16', 'fn17', 'fn18', 'fn19', 'fn20', 'fn20_t', 'fn21', 'fn22', 'fn23', 'fn24', 'fn25', 'fn26', 'fn27', 'fn28', 'fn29snc', 'fn29scnp', 'fn30', 'oi-sos', 'rsi-deferred', 'rsi-land', 'rsi-land_t', 'rsi-sca', 'rsi-sbr']
+08:23:25 [INFO] gk_footing - Pending FS: ['bs', 'snc', 'sca_breakout', 'scnp', 'sca', 'sbr']
+08:23:25 [WARNING] gk_footing - import_fn('rsi-deferred') returned an empty DataFrame. Check file paths and sheet names.
+08:23:25 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+08:23:25 [ERROR] gk_footing - Error in rsiDeferred: single positional indexer is out-of-bounds
+08:23:25 [INFO] gk_footing - OK: RSI-DEFERRED
+08:23:25 [INFO] gk_footing - TIMING: RSI-DEFERRED = 0.03s
+08:23:26 [INFO] gk_footing - OK: RSI-SBR
+08:23:26 [INFO] gk_footing - TIMING: RSI-SBR = 1.29s
+08:23:26 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:23:27 [INFO] gk_footing - OK: OI-SOS
+08:23:27 [INFO] gk_footing - TIMING: OI-SOS = 0.37s
+08:23:27 [WARNING] gk_footing - import_fn('rsi-land') returned an empty DataFrame. Check file paths and sheet names.
+08:23:27 [WARNING] gk_footing - import_fn('rsi-land_t') returned an empty DataFrame. Check file paths and sheet names.
+08:23:27 [WARNING] gk_footing - find_row fallback for 'Commercial ': find_row_flex: 'Commercial ' not found in any cell. DataFrame shape: (0, 0)
+08:23:27 [ERROR] gk_footing - Error in rsiLand: single positional indexer is out-of-bounds
+08:23:27 [INFO] gk_footing - OK: RSI-LAND
+08:23:27 [INFO] gk_footing - TIMING: RSI-LAND = 0.05s
+08:23:27 [INFO] gk_footing - OK: RSI-SCA
+08:23:27 [INFO] gk_footing - TIMING: RSI-SCA = 0.39s
+08:23:28 [INFO] gk_footing - OK: FN30
+08:23:28 [INFO] gk_footing - TIMING: FN30 = 0.69s
+08:23:28 [WARNING] gk_footing - import_fn('fn29scnp') returned an empty DataFrame. Check file paths and sheet names.
+08:23:28 [WARNING] gk_footing - find_row fallback for 'Unexpended Appropriations, Beginning Balance': find_row_flex: 'Unexpended Appropriations, Beginning Balance' not found in any cell. DataFrame shape: (0, 0)
+08:23:28 [ERROR] gk_footing - Error in fn29Sncp: single positional indexer is out-of-bounds
+08:23:28 [INFO] gk_footing - OK: FN29SCNP
+08:23:28 [INFO] gk_footing - TIMING: FN29SCNP = 0.02s
+08:23:28 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:23:28 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:23:28 [ERROR] gk_footing - Error in fn29Snc: single positional indexer is out-of-bounds
+08:23:28 [INFO] gk_footing - OK: FN29SNC
+08:23:28 [INFO] gk_footing - TIMING: FN29SNC = 0.02s
+08:23:28 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:23:29 [INFO] gk_footing - OK: FN28
+08:23:29 [INFO] gk_footing - TIMING: FN28 = 0.74s
+08:23:29 [INFO] gk_footing - OK: FN27
+08:23:29 [INFO] gk_footing - TIMING: FN27 = 0.82s
+08:23:30 [INFO] gk_footing - OK: FN26
+08:23:30 [INFO] gk_footing - TIMING: FN26 = 0.65s
+08:23:31 [INFO] gk_footing - OK: FN25
+08:23:31 [INFO] gk_footing - TIMING: FN25 = 0.74s
+08:23:31 [ERROR] gk_footing - FAILED: FN23   module 'RR_updateFn' has no attribute 'fn23'
+08:23:31 [INFO] gk_footing - TIMING: FN23 = 0.00s
+08:23:32 [INFO] gk_footing - OK: FN22
+08:23:32 [INFO] gk_footing - TIMING: FN22 = 0.62s
+08:23:32 [INFO] gk_footing - OK: FN21
+08:23:32 [INFO] gk_footing - TIMING: FN21 = 0.99s
+08:23:35 [INFO] gk_footing - OK: FN20
+08:23:35 [INFO] gk_footing - TIMING: FN20 = 2.07s
+08:23:38 [INFO] gk_footing - OK: FN19
+08:23:38 [INFO] gk_footing - TIMING: FN19 = 3.78s
+08:23:41 [INFO] gk_footing - OK: FN18
+08:23:41 [INFO] gk_footing - TIMING: FN18 = 2.66s
+08:23:42 [INFO] gk_footing - OK: FN17
+08:23:42 [INFO] gk_footing - TIMING: FN17 = 0.55s
+08:23:42 [WARNING] gk_footing - import_fn('fn16') returned an empty DataFrame. Check file paths and sheet names.
+08:23:42 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+08:23:42 [ERROR] gk_footing - Error in fn16: single positional indexer is out-of-bounds
+08:23:42 [INFO] gk_footing - OK: FN16
+08:23:42 [INFO] gk_footing - TIMING: FN16 = 0.03s
+08:23:45 [INFO] gk_footing - OK: FN15
+08:23:45 [INFO] gk_footing - TIMING: FN15 = 3.12s
+08:23:45 [INFO] gk_footing - OK: FN14
+08:23:45 [INFO] gk_footing - TIMING: FN14 = 0.49s
+08:23:46 [INFO] gk_footing - OK: FN13
+08:23:46 [INFO] gk_footing - TIMING: FN13 = 0.52s
+08:23:46 [INFO] gk_footing - OK: FN12
+08:23:46 [INFO] gk_footing - TIMING: FN12 = 0.36s
+08:23:48 [INFO] gk_footing - OK: FN11
+08:23:48 [INFO] gk_footing - TIMING: FN11 = 1.67s
+08:23:49 [INFO] gk_footing - OK: FN10
+08:23:49 [INFO] gk_footing - TIMING: FN10 = 1.07s
+08:23:49 [WARNING] gk_footing - import_fn('fn9') returned an empty DataFrame. Check file paths and sheet names.
+08:23:49 [WARNING] gk_footing - find_row fallback for 'A. Seized Property:': find_row_flex: 'A. Seized Property:' not found in any cell. DataFrame shape: (0, 0)
+08:23:49 [ERROR] gk_footing - Error in fn9: single positional indexer is out-of-bounds
+08:23:49 [INFO] gk_footing - OK: FN9
+08:23:49 [INFO] gk_footing - TIMING: FN9 = 0.03s
+08:23:49 [INFO] gk_footing - OK: FN8
+08:23:49 [INFO] gk_footing - TIMING: FN8 = 0.44s
+08:23:50 [INFO] gk_footing - OK: FN7
+08:23:50 [INFO] gk_footing - TIMING: FN7 = 0.68s
+08:23:51 [INFO] gk_footing - OK: FN6
+08:23:51 [INFO] gk_footing - TIMING: FN6 = 0.58s
+08:23:51 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:23:51 [INFO] gk_footing - OK: FN5
+08:23:51 [INFO] gk_footing - TIMING: FN5 = 0.93s
+08:23:52 [INFO] gk_footing - OK: FN4
+08:23:52 [INFO] gk_footing - TIMING: FN4 = 0.55s
+08:23:52 [INFO] gk_footing - OK: FN3
+08:23:52 [INFO] gk_footing - TIMING: FN3 = 0.49s
+08:23:53 [INFO] gk_footing - OK: FN2
+08:23:53 [INFO] gk_footing - TIMING: FN2 = 0.55s
+08:23:54 [INFO] gk_footing - OK: SCA
+08:23:54 [INFO] gk_footing - TIMING: SCA = 0.78s
+08:23:56 [INFO] gk_footing - OK: SBR
+08:23:56 [INFO] gk_footing - TIMING: SBR = 1.75s
+08:23:58 [INFO] gk_footing - OK: SCNP
+08:23:58 [INFO] gk_footing - TIMING: SCNP = 2.73s
+08:23:59 [INFO] gk_footing - OK: SNC
+08:23:59 [INFO] gk_footing - TIMING: SNC = 1.06s
+08:24:00 [INFO] gk_footing - OK: BS
+08:24:00 [INFO] gk_footing - TIMING: BS = 0.96s
+08:24:00 [WARNING] gk_footing - Pipeline finished: 38/39 succeeded, 1 FAILED:
+08:24:00 [WARNING] gk_footing -   - FN23: module 'RR_updateFn' has no attribute 'fn23'
+08:24:00 [INFO] gk_footing - TIMING: full pipeline = 35.25s
+08:24:00 [INFO] gk_footing - Loaded mapping table sheet 'FS_FN' with 66 rows
+08:24:08 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:08 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:09 [WARNING] gk_footing - Unknown fn_report_name: fn8
+08:24:09 [INFO] gk_footing - total property, plant, and equipment, net - updated 17 to 16
+08:24:09 [WARNING] gk_footing - Unknown fn_report_name: fn12
+08:24:09 [WARNING] gk_footing - Unknown fn_report_name: fn12
+08:24:14 [WARNING] gk_footing - import_fn('fn16') returned an empty DataFrame. Check file paths and sheet names.
+08:24:14 [WARNING] gk_footing - find_row fallback for 'AFR Rounding': find_row_flex: 'AFR Rounding' not found in any cell. DataFrame shape: (0, 0)
+08:24:14 [ERROR] gk_footing - Error processing row 18: FS_Report_Name = Bal_Sheet, FN_Report_Name = fn16, Error = single positional indexer is out-of-bounds
+08:24:19 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:19 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:24:19 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:24:19 [ERROR] gk_footing - Error processing row 30: FS_Report_Name = Statement_Net_Cost, FN_Report_Name = fn29snc, Error = single positional indexer is out-of-bounds
+08:24:22 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:23 [INFO] gk_footing - net current year borrowing authority realized - updated 5 to 7
+08:24:23 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:24:23 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:24:23 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:24:23 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:24:23 [INFO] gk_footing - Sheet name normalised: 'TIER AFR SOS Rollforward' -> 'TIER AFR SOS Rollforward ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 OI-SOS.xlsx
+08:24:28 [INFO] gk_footing - TIMING: Tie_bs_fn.tie_through = 28.01s
+08:24:30 [INFO] gk_footing - TIMING: Write tie through sheet = 1.24s
+08:24:30 [INFO] gk_footing - Loaded mapping table sheet 'FN_FN' with 30 rows
+08:24:31 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:32 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:32 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:33 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:33 [WARNING] gk_footing - [cleanFn5] 5 non-numeric value(s) coerced to NaN in column 'AFR Rounding ($ in millions)'.
+08:24:43 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:24:43 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:24:43 [ERROR] gk_footing - Error processing row 15: Review_Checks = FN21-FFDC to FN29SNC, Error = single positional indexer is out-of-bounds
+08:24:44 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:24:44 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:24:44 [ERROR] gk_footing - Error processing row 16: Review_Checks = FN21-DC-I to FN29SNC, Error = single positional indexer is out-of-bounds
+08:24:44 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:44 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:24:44 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:24:44 [ERROR] gk_footing - Error processing row 17: Review_Checks = FN28 to FN29SNC, Error = single positional indexer is out-of-bounds
+08:24:44 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:44 [WARNING] gk_footing - import_fn('fn29snc') returned an empty DataFrame. Check file paths and sheet names.
+08:24:44 [WARNING] gk_footing - find_row fallback for 'Financial Statement Line': find_row_flex: 'Financial Statement Line' not found in any cell. DataFrame shape: (0, 0)
+08:24:44 [ERROR] gk_footing - Error processing row 18: Review_Checks = FN28 to FN29SNC, Error = single positional indexer is out-of-bounds
+08:24:44 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:45 [INFO] gk_footing - depreciation expense - updated 25 to 26
+08:24:45 [INFO] gk_footing - amortization of right-to-use lease assets - updated 21 to 22
+08:24:45 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:45 [INFO] gk_footing - capitalized acquisitions - updated 19 to 20
+08:24:45 [INFO] gk_footing - Sheet name normalised: 'AFR Presentation' -> 'AFR Presentation ' in C:/Users/DIEDRICH.WILLERS/OneDrive - Department of Homeland Security/DHS AFR Automation - Gatekeeper Tool/a. Source Files/Footnotes   Upload Files\FY26 PD06 FN28 BAR.xlsx
+08:24:45 [INFO] gk_footing - capitalized acquisitions - updated 19 to 20
+08:24:45 [INFO] gk_footing - amortization of right-to-use lease assets - updated 21 to 22
+08:24:45 [INFO] gk_footing - transfers in/out without reimbursement - updated 23 to 24
+08:24:45 [INFO] gk_footing - revaluations - updated 24 to 25
+08:24:45 [INFO] gk_footing - depreciation expense - updated 25 to 26
+08:24:45 [INFO] gk_footing - donations - updated 26 to 27
+08:24:45 [INFO] gk_footing - other - updated 27 to 28
+08:24:48 [WARNING] gk_footing - import_fn('fn29scnp') returned an empty DataFrame. Check file paths and sheet names.
+08:24:48 [WARNING] gk_footing - find_row fallback for 'Unexpended Appropriations, Beginning Balance': find_row_flex: 'Unexpended Appropriations, Beginning Balance' not found in any cell. DataFrame shape: (0, 0)
+08:24:48 [ERROR] gk_footing - Error processing row 27: Review_Checks = FN29SCNP to FN30, Error = single positional indexer is out-of-bounds
+08:24:48 [WARNING] gk_footing - import_fn('fn29scnp') returned an empty DataFrame. Check file paths and sheet names.
+08:24:48 [WARNING] gk_footing - find_row fallback for 'Unexpended Appropriations, Beginning Balance': find_row_flex: 'Unexpended Appropriations, Beginning Balance' not found in any cell. DataFrame shape: (0, 0)
+08:24:48 [ERROR] gk_footing - Error processing row 28: Review_Checks = FN29SCNP to FN30, Error = single positional indexer is out-of-bounds
+08:24:48 [WARNING] gk_footing - import_fn('fn29scnp') returned an empty DataFrame. Check file paths and sheet names.
+08:24:48 [WARNING] gk_footing - find_row fallback for 'Unexpended Appropriations, Beginning Balance': find_row_flex: 'Unexpended Appropriations, Beginning Balance' not found in any cell. DataFrame shape: (0, 0)
+08:24:48 [ERROR] gk_footing - Error processing row 29: Review_Checks = FN29SCNP to FN30, Error = single positional indexer is out-of-bounds
+08:24:48 [WARNING] gk_footing - import_fn('fn29scnp') returned an empty DataFrame. Check file paths and sheet names.
+08:24:48 [WARNING] gk_footing - find_row fallback for 'Unexpended Appropriations, Beginning Balance': find_row_flex: 'Unexpended Appropriations, Beginning Balance' not found in any cell. DataFrame shape: (0, 0)
+08:24:48 [ERROR] gk_footing - Error processing row 30: Review_Checks = FN29SCNP to FN30, Error = single positional indexer is out-of-bounds
+08:24:48 [INFO] gk_footing - TIMING: Tie_fn_fn.tie_through = 18.07s
+08:24:50 [INFO] gk_footing - TIMING: Write fn-fn tie through = 1.84s
+08:24:50 [INFO] gk_footing - Loaded mapping table sheet 'FS_FS' with 6 rows
+08:24:58 [INFO] gk_footing - cumulative results of operations - ending - updated 26 to 28.0
+08:24:58 [INFO] gk_footing - TIMING: Tie_fs_fs.tie_through = 8.83s
+08:25:00 [INFO] gk_footing - TIMING: Write fs-fs tie through = 1.26s
+08:25:00 [INFO] gk_footing - Loaded mapping table sheet 'Report' with 31 rows
+08:25:04 [ERROR] gk_footing - Error occurred in clean.cleanScnp()[1]: "No column matching 'FFDC Consolidated' in DataFrame. Available columns: ['Line', 'LineNr', 'Line Title', 'Consolidated']"
+08:25:07 [INFO] gk_footing - total fund balance - section a - updated 10 to 11.0
+08:25:07 [INFO] gk_footing - total - section b - updated 32 to 31.0
+08:25:13 [INFO] gk_footing - TIMING: Tie_internal.tie_through = 13.05s
+08:25:14 [INFO] gk_footing - TIMING: Write internal tie through = 1.08s
+08:25:14 [INFO] gk_footing -   FN11 found in fsTofn.FN_Tab: 1 rows
+08:25:14 [INFO] gk_footing - main: 673 rows
+08:25:21 [INFO] gk_footing - TIMING: STMT TO STMT = 6.94s
+08:25:21 [INFO] gk_footing - Reordering. Before: ['Start', 'STMT to STMT', 'Tie-Through Internal', 'Tie-Through fs to fs', 'Tie-Through-fn to fn', 'Tie-Through', 'BS', 'SNC', 'SCNP', 'SBR', 'SCA', 'FN2', 'FN3', 'FN4', 'FN5', 'FN6', 'FN7', 'FN8', 'FN10', 'FN11', 'FN12', 'FN13', 'FN14', 'FN15', 'FN17', 'FN18', 'FN19', 'FN20', 'FN21', 'FN22', 'FN25', 'FN26', 'FN27', 'FN28', 'FN30', 'RSI-SCA', 'OI-SOS', 'RSI-SBR']
+08:25:21 [INFO] gk_footing - Reordering complete. After: ['Start', 'STMT to STMT', 'BS', 'SCA', 'SBR', 'SCNP', 'SNC', 'FN2', 'FN3', 'FN4', 'FN5', 'FN6', 'FN7', 'FN8', 'FN10', 'FN11', 'FN12', 'FN13', 'FN14', 'FN15', 'FN17', 'FN18', 'FN19', 'FN20', 'FN21', 'FN22', 'FN25', 'FN26', 'FN27', 'FN28', 'FN30', 'RSI-SBR', 'RSI-SCA', 'OI-SOS', 'Tie-Through', 'Tie-Through-fn to fn', 'Tie-Through fs to fs', 'Tie-Through Internal']
+08:25:21 [INFO] gk_footing - TIMING: overall = 116.21s
