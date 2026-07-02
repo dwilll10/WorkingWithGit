@@ -1,22 +1,4 @@
-' Remove duplicates from missingTabs
-    If missingTabs <> "" Then
-        Dim missingArr() As String
-        Dim cleanMissing As String
-        Dim m As Long
-        cleanMissing = ""
-        missingArr = Split(missingTabs, vbNewLine)
-        For m = 0 To UBound(missingArr)
-            Dim mTab As String
-            mTab = Trim(missingArr(m))
-            If mTab <> "" Then
-                If InStr(vbNewLine & cleanMissing & vbNewLine, vbNewLine & mTab & vbNewLine) = 0 Then
-                    If cleanMissing = "" Then
-                        cleanMissing = mTab
-                    Else
-                        cleanMissing = cleanMissing & vbNewLine & mTab
-                    End If
-                End If
+' Find the reorder complete line
+            If InStr(logLine, "Reordering complete. After:") > 0 Then
+                reorderLine = logLine
             End If
-        Next m
-        missingTabs = cleanMissing
-    End If
