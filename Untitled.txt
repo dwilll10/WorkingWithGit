@@ -1,99 +1,10 @@
-Sub RunPythonScript()
-    Dim pythonExePath    As String
-    Dim pythonScriptPath As String
-    Dim workingDirectory As String
-    Dim oneDrivePath     As String
-    Dim errorLogPath     As String
-    Dim command          As String
-    Dim wsh              As Object
-    Dim result           As Integer
-    Dim fileNum          As Integer
-    Dim startTime        As Date
-    Dim endTime          As Date
-
-    ' Log parsing variables
-    Dim logLine          As String
-    Dim hasErrors        As Boolean
-    Dim successTabs      As String
-    Dim missingTabs      As String
-    Dim warningCount     As Long
-    Dim errorCount       As Long
-    Dim reorderLine      As String
-
-    ' Message variables
-    Dim statusMsg        As String
-    Dim tabsMsg          As String
-    Dim missingMsg       As String
-    Dim statsMsg         As String
-    Dim noteMsg          As String
-    Dim fullMsg          As String
-
-    ' Record start time
-    startTime = Now()
-
-    ' Get OneDrive folder path automatically
-    oneDrivePath = Environ("OneDrive")
-
-    ' Define paths
-    pythonExePath    = """C:\ProgramData\Anaconda3\python.exe"""
-    pythonScriptPath = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format\mainScript.py" & """"
-    workingDirectory = """" & oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\z. Python Program\GK_new_format" & """"
-    errorLogPath     = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\OutputLog_GatekeepingTool.txt"
-
-    ' Pre-clear error log
-    fileNum = FreeFile
-    Open errorLogPath For Output As #fileNum
-    Close fileNum
-
-    ' Build command: run Python and redirect stderr to log
-    command = "cmd /c cd /d " & workingDirectory & " && " & pythonExePath & " " & pythonScriptPath & " 2> """ & errorLogPath & """"
-
-    ' Execute command synchronously
-    Set wsh = CreateObject("WScript.Shell")
-    result = wsh.Run(command, 0, True)
-
-    ' Record end time
-    endTime = Now()
-
-    '--------------------------------------------------------------------------
-    ' Parse log file
-    '--------------------------------------------------------------------------
-    hasErrors    = False
-    successTabs  = ""
-    missingTabs  = ""
-    warningCount = 0
-    errorCount   = 0
-    reorderLine  = ""
-
-    ' Tabs to omit from the popup
-    Dim omitTabs As String
-    omitTabs = "Start,STMT to STMT,Tie-Through,Tie-Through-fn to fn,Tie-Through fs to fs,Tie-Through Internal"
-
-    If Dir(errorLogPath) <> "" Then
-        fileNum = FreeFile
-        Open errorLogPath For Input As #fileNum
-        Do While Not EOF(fileNum)
-            Line Input #fileNum, logLine
-
-            ' Count warnings
-            If InStr(logLine, "[WARNING]") > 0 Then warningCount = warningCount + 1
-
-            ' Count errors
-            If InStr(logLine, "[ERROR]") > 0 Then
-                errorCount = errorCount + 1
-                hasErrors = True
-            End If
-
-            ' Find missing tabs from import_fn
+' Find missing tabs from import_fn
             If InStr(logLine, "import_fn(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
-                Dim fnStart As Long
-                Dim fnEnd As Long
                 fnStart = InStr(logLine, "import_fn('") + 11
                 fnEnd = InStr(fnStart, logLine, "')")
                 If fnStart > 11 And fnEnd > fnStart Then
-                    Dim missingTab As String
                     missingTab = Mid(logLine, fnStart, fnEnd - fnStart)
-                    If InStr("," & missingTabs & ",", "," & missingTab & ",") = 0 Then
+                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingTab & vbNewLine) = 0 Then
                         If missingTabs = "" Then
                             missingTabs = missingTab
                         Else
@@ -105,14 +16,11 @@ Sub RunPythonScript()
 
             ' Find missing tabs from import_fs
             If InStr(logLine, "import_fs(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
-                Dim fsStart As Long
-                Dim fsEnd As Long
                 fsStart = InStr(logLine, "import_fs('") + 11
                 fsEnd = InStr(fsStart, logLine, "')")
                 If fsStart > 11 And fsEnd > fsStart Then
-                    Dim missingFs As String
                     missingFs = Mid(logLine, fsStart, fsEnd - fsStart)
-                    If InStr("," & missingTabs & ",", "," & missingFs & ",") = 0 Then
+                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingFs & vbNewLine) = 0 Then
                         If missingTabs = "" Then
                             missingTabs = missingFs
                         Else
@@ -121,134 +29,3 @@ Sub RunPythonScript()
                     End If
                 End If
             End If
-
-            ' Find the reorder complete line
-            If InStr(logLine, "Reordering complete. After:") > 0 Then
-                reorderLine = logLine
-            End If
-
-        Loop
-        Close #fileNum
-    End If
-
-    '--------------------------------------------------------------------------
-    ' Parse the reorder line to get successful tabs
-    '--------------------------------------------------------------------------
-    If reorderLine <> "" Then
-        ' Find the LAST [ in the line — that's the tab list, not [INFO]
-        Dim lastBracket As Long
-        Dim searchPos   As Long
-        lastBracket = 0
-        searchPos = 1
-        Do While InStr(searchPos, reorderLine, "[") > 0
-            lastBracket = InStr(searchPos, reorderLine, "[")
-            searchPos = lastBracket + 1
-        Loop
-
-        Dim bracketStart As Long
-        Dim bracketEnd   As Long
-        bracketStart = lastBracket + 1
-        bracketEnd = InStr(lastBracket, reorderLine, "]") - 1
-
-        If lastBracket > 0 And bracketEnd > bracketStart Then
-            Dim tabList As String
-            tabList = Mid(reorderLine, bracketStart, bracketEnd - bracketStart + 1)
-
-            ' Split by comma and process each tab
-            Dim tabArr() As String
-            tabArr = Split(tabList, ",")
-            Dim t As Long
-            For t = 0 To UBound(tabArr)
-                Dim tabName As String
-                ' Clean up quotes and spaces
-                tabName = Trim(tabArr(t))
-                tabName = Replace(tabName, "'", "")
-                tabName = Trim(tabName)
-
-                ' Skip omitted tabs
-                If InStr("," & omitTabs & ",", "," & tabName & ",") = 0 And tabName <> "" Then
-                    If successTabs = "" Then
-                        successTabs = tabName
-                    Else
-                        successTabs = successTabs & ", " & tabName
-                    End If
-                End If
-            Next t
-        End If
-    End If
-
-    '--------------------------------------------------------------------------
-    ' Build message
-    '--------------------------------------------------------------------------
-
-    ' Status line
-    If result <> 0 Then
-        statusMsg = "Script failed with exit code " & result & "." & vbNewLine & _
-                    "Check log: " & errorLogPath
-    ElseIf hasErrors Then
-        statusMsg = "Python script completed with errors."
-    Else
-        statusMsg = "Python script completed successfully."
-    End If
-
-    ' Successfully created tabs
-    If successTabs <> "" Then
-        tabsMsg = vbNewLine & vbNewLine & "Tabs successfully created:" & vbNewLine & successTabs
-    Else
-        tabsMsg = vbNewLine & vbNewLine & "No completed tabs found in log."
-    End If
-
-    ' Missing tabs
-    If missingTabs <> "" Then
-        missingMsg = vbNewLine & vbNewLine & "Missing tabs (no source file found):" & vbNewLine & missingTabs
-    Else
-        missingMsg = ""
-    End If
-
-    ' Warning/error stats
-    statsMsg = vbNewLine & vbNewLine & _
-               "Warnings: " & warningCount & vbNewLine & _
-               "Errors:   " & errorCount
-
-    ' End note
-    If result <> 0 Then
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation failed — please check the log file for details."
-    ElseIf hasErrors Then
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed but errors were encountered. " & _
-                  "Please review the missing tabs and log file."
-    Else
-        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully with no errors."
-    End If
-
-    ' Assemble full message with timestamps
-    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
-              statusMsg & tabsMsg & missingMsg & statsMsg & noteMsg & vbNewLine & vbNewLine & _
-              "Log file: " & errorLogPath
-
-    '--------------------------------------------------------------------------
-    ' Save summary to txt file
-    '--------------------------------------------------------------------------
-    Dim summaryPath As String
-    summaryPath = oneDrivePath & "\DHS AFR Automation - Gatekeeper Tool\GK_summary_" & _
-                  Format(startTime, "yyyymmdd_hhmmss") & ".txt"
-    Dim summaryFile As Integer
-    summaryFile = FreeFile
-    Open summaryPath For Output As #summaryFile
-    Print #summaryFile, fullMsg
-    Close #summaryFile
-
-    fullMsg = fullMsg & vbNewLine & "Summary file: " & summaryPath
-
-    '--------------------------------------------------------------------------
-    ' Show MsgBox
-    '--------------------------------------------------------------------------
-    If result <> 0 Or hasErrors Then
-        MsgBox fullMsg, vbExclamation, "Script Completed with Errors"
-    Else
-        MsgBox fullMsg, vbInformation, "Execution Completed"
-    End If
-
-    Set wsh = Nothing
-End Sub
