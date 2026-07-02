@@ -1,45 +1,10 @@
-If diffCol > 0 Then
-            Dim lastStmtRow As Long
-            lastStmtRow = wsStmt.Cells(wsStmt.Rows.Count, 1).End(xlUp).Row
-            Dim r As Long
-            Dim missingValues As Long
-            missingValues = 0
-            
-            For r = hdrRow + 1 To lastStmtRow
-                Dim titleVal As Variant
-                Dim amountVal As Variant
-                titleVal = wsStmt.Cells(r, 1).Value   ' Column A - title
-                amountVal = wsStmt.Cells(r, 2).Value  ' Column B - amount
-
-                ' Count rows where title exists but amount is missing
-                If Not IsEmpty(titleVal) And Trim(CStr(titleVal)) <> "" Then
-                    If IsEmpty(amountVal) Or Trim(CStr(amountVal)) = "" Or Not IsNumeric(amountVal) Then
-                        missingValues = missingValues + 1
-                    End If
-                End If
-
-                ' Count non-zero differences in column C
-                Dim cellVal As Variant
-                cellVal = wsStmt.Cells(r, diffCol).Value
-                If Not IsEmpty(cellVal) And Not IsNull(cellVal) Then
-                    If IsNumeric(cellVal) Then
-                        If CDbl(cellVal) <> 0 Then
-                            stmtDiscrepancies = stmtDiscrepancies + 1
-                        End If
-                    End If
-                End If
-            Next r
-        Else
-            stmtDiscrepancies = -1
-        End If
-
-If stmtDiscrepancies = -1 Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
-    ElseIf Not stmtExists Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
+' End note
+    If result <> 0 Then
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation failed — please check the log file for details."
+    ElseIf hasErrors Then
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully. " & _
+                  errorCount & " error(s) and " & warningCount & " warning(s) were logged — " & _
+                  "please review the log file."
     Else
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
-                  vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
+        noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully with no errors."
     End If
-
-
