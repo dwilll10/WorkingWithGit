@@ -1,31 +1,22 @@
-' Find missing tabs from import_fn
-            If InStr(logLine, "import_fn(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
-                fnStart = InStr(logLine, "import_fn('") + 11
-                fnEnd = InStr(fnStart, logLine, "')")
-                If fnStart > 11 And fnEnd > fnStart Then
-                    missingTab = Mid(logLine, fnStart, fnEnd - fnStart)
-                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingTab & vbNewLine) = 0 Then
-                        If missingTabs = "" Then
-                            missingTabs = missingTab
-                        Else
-                            missingTabs = missingTabs & vbNewLine & missingTab
-                        End If
+' Remove duplicates from missingTabs
+    If missingTabs <> "" Then
+        Dim missingArr() As String
+        Dim cleanMissing As String
+        Dim m As Long
+        cleanMissing = ""
+        missingArr = Split(missingTabs, vbNewLine)
+        For m = 0 To UBound(missingArr)
+            Dim mTab As String
+            mTab = Trim(missingArr(m))
+            If mTab <> "" Then
+                If InStr(vbNewLine & cleanMissing & vbNewLine, vbNewLine & mTab & vbNewLine) = 0 Then
+                    If cleanMissing = "" Then
+                        cleanMissing = mTab
+                    Else
+                        cleanMissing = cleanMissing & vbNewLine & mTab
                     End If
                 End If
             End If
-
-            ' Find missing tabs from import_fs
-            If InStr(logLine, "import_fs(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
-                fsStart = InStr(logLine, "import_fs('") + 11
-                fsEnd = InStr(fsStart, logLine, "')")
-                If fsStart > 11 And fsEnd > fsStart Then
-                    missingFs = Mid(logLine, fsStart, fsEnd - fsStart)
-                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingFs & vbNewLine) = 0 Then
-                        If missingTabs = "" Then
-                            missingTabs = missingFs
-                        Else
-                            missingTabs = missingTabs & vbNewLine & missingFs
-                        End If
-                    End If
-                End If
-            End If
+        Next m
+        missingTabs = cleanMissing
+    End If
