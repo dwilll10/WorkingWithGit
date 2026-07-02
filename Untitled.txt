@@ -1,43 +1,24 @@
-'--------------------------------------------------------------------------
-    ' Count discrepancies in STMT to STMT tab
-    '--------------------------------------------------------------------------
-    Dim stmtDiscrepancies As Long
-    stmtDiscrepancies = 0
-    
-    Dim wsStmt As Worksheet
-    Dim stmtExists As Boolean
-    stmtExists = False
-    
-    Dim checkWs As Worksheet
-    For Each checkWs In ThisWorkbook.Worksheets
-        If checkWs.Name = "STMT to STMT" Then
-            stmtExists = True
-            Set wsStmt = checkWs
-            Exit For
-        End If
-    Next checkWs
-    
-    If stmtExists Then
-        ' Find the Difference column header
-        Dim diffCol As Long
-        diffCol = 0
-        Dim hdrRow As Long
-        Dim hdrCol As Long
-        For hdrRow = 1 To 10  ' search first 10 rows for header
-            For hdrCol = 1 To 50  ' search first 50 columns
-                If Trim(CStr(wsStmt.Cells(hdrRow, hdrCol).Value)) = "Difference" Then
-                    diffCol = hdrCol
-                    Exit For
-                End If
-            Next hdrCol
-            If diffCol > 0 Then Exit For
-        Next hdrRow
-        
-        If diffCol > 0 Then
+If diffCol > 0 Then
             Dim lastStmtRow As Long
-            lastStmtRow = wsStmt.Cells(wsStmt.Rows.Count, diffCol).End(xlUp).Row
+            lastStmtRow = wsStmt.Cells(wsStmt.Rows.Count, 1).End(xlUp).Row
             Dim r As Long
+            Dim missingValues As Long
+            missingValues = 0
+            
             For r = hdrRow + 1 To lastStmtRow
+                Dim titleVal As Variant
+                Dim amountVal As Variant
+                titleVal = wsStmt.Cells(r, 1).Value   ' Column A - title
+                amountVal = wsStmt.Cells(r, 2).Value  ' Column B - amount
+
+                ' Count rows where title exists but amount is missing
+                If Not IsEmpty(titleVal) And Trim(CStr(titleVal)) <> "" Then
+                    If IsEmpty(amountVal) Or Trim(CStr(amountVal)) = "" Or Not IsNumeric(amountVal) Then
+                        missingValues = missingValues + 1
+                    End If
+                End If
+
+                ' Count non-zero differences in column C
                 Dim cellVal As Variant
                 cellVal = wsStmt.Cells(r, diffCol).Value
                 If Not IsEmpty(cellVal) And Not IsNull(cellVal) Then
@@ -49,24 +30,16 @@
                 End If
             Next r
         Else
-            stmtDiscrepancies = -1  ' flag that column wasn't found
+            stmtDiscrepancies = -1
         End If
-    End If
 
-
-' Statement to Statement discrepancies
-    Dim stmtMsg As String
-    If stmtDiscrepancies = -1 Then
+If stmtDiscrepancies = -1 Then
         stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
     ElseIf Not stmtExists Then
         stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
     Else
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
+                  vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
     End If
 
-fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
-              statusMsg & tabsMsg & missingMsg & statsMsg & stmtMsg & noteMsg & vbNewLine & vbNewLine & _
-              "Log file: " & errorLogPath
 
