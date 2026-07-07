@@ -1,5 +1,11 @@
-MsgBox "combinedPending: '" & combinedPending & "'" & vbNewLine & vbNewLine & _
-           "successTabs lower: '" & LCase(Replace(successTabs, " ", "")) & "'", vbInformation, "Debug"
-
-MsgBox "pendingTab='" & pendingTab & "' alreadyExists=" & tabAlreadyExists & _
-                   " inSuccess=" & InStr("," & LCase(Replace(successTabs, " ", "")) & ",", "," & LCase(Replace(pendingTab, " ", "")) & ","), vbInformation, "Debug"
+' Capture existing sheets before Python runs
+    Dim existingSheets As String
+    existingSheets = ""
+    Dim preWs As Worksheet
+    For Each preWs In ThisWorkbook.Worksheets
+        If existingSheets = "" Then
+            existingSheets = LCase(preWs.Name)
+        Else
+            existingSheets = existingSheets & "," & LCase(preWs.Name)
+        End If
+    Next preWs
