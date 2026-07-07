@@ -1,10 +1,1 @@
-' Find pending FN list
-            If InStr(1, logLine, "Pending FN:", vbTextCompare) > 0 Then
-                Dim pfSearch As Long
-                pfSearch = InStr(1, logLine, "Pending FN:", vbTextCompare)
-                pfStart = InStr(pfSearch, logLine, "[") + 1
-                pfEnd = InStr(pfStart, logLine, "]") - 1
-                If pfStart > 1 And pfEnd > pfStart Then
-                    pendingFN = Mid(logLine, pfStart, pfEnd - pfStart + 1)
-                End If
-            End If
+MsgBox "pendingFN: '" & pendingFN & "'" & vbNewLine & vbNewLine & "successTabs: '" & successTabs & "'", vbInformation, "Debug"
