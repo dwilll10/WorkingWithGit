@@ -1,1 +1,4 @@
-MsgBox "pendingFN: '" & pendingFN & "'" & vbNewLine & vbNewLine & "successTabs: '" & successTabs & "'", vbInformation, "Debug"
+MsgBox "lastBracket=" & lastBracket & vbNewLine & _
+           "bracketStart=" & bracketStart & vbNewLine & _
+           "bracketEnd=" & bracketEnd & vbNewLine & _
+           "tabList='" & Mid(reorderLine, bracketStart, bracketEnd - bracketStart + 1) & "'", vbInformation, "Debug"
