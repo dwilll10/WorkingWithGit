@@ -1,4 +1,207 @@
-' End note
+If Dir(errorLogPath) <> "" Then
+        fileNum = FreeFile
+        Open errorLogPath For Input As #fileNum
+        Do While Not EOF(fileNum)
+            Line Input #fileNum, logLine
+
+            ' Count warnings
+            If InStr(logLine, "[WARNING]") > 0 Then warningCount = warningCount + 1
+
+            ' Count errors
+            If InStr(logLine, "[ERROR]") > 0 Then
+                errorCount = errorCount + 1
+                hasErrors = True
+            End If
+
+            ' Find missing tabs from import_fn
+            If InStr(logLine, "import_fn(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
+                fnStart = InStr(logLine, "import_fn('") + 11
+                fnEnd = InStr(fnStart, logLine, "')")
+                If fnStart > 11 And fnEnd > fnStart Then
+                    missingTab = Mid(logLine, fnStart, fnEnd - fnStart)
+                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingTab & vbNewLine) = 0 Then
+                        If missingTabs = "" Then
+                            missingTabs = missingTab
+                        Else
+                            missingTabs = missingTabs & vbNewLine & missingTab
+                        End If
+                    End If
+                End If
+            End If
+
+            ' Find missing tabs from import_fs
+            If InStr(logLine, "import_fs(") > 0 And InStr(logLine, "returned an empty DataFrame") > 0 Then
+                fsStart = InStr(logLine, "import_fs('") + 11
+                fsEnd = InStr(fsStart, logLine, "')")
+                If fsStart > 11 And fsEnd > fsStart Then
+                    missingFs = Mid(logLine, fsStart, fsEnd - fsStart)
+                    If InStr(vbNewLine & missingTabs & vbNewLine, vbNewLine & missingFs & vbNewLine) = 0 Then
+                        If missingTabs = "" Then
+                            missingTabs = missingFs
+                        Else
+                            missingTabs = missingTabs & vbNewLine & missingFs
+                        End If
+                    End If
+                End If
+            End If
+
+            ' Find pending FN list
+            If InStr(logLine, "Pending FN:") > 0 Then
+                Dim pfStart As Long
+                Dim pfEnd As Long
+                pfStart = InStr(logLine, "[", InStr(logLine, "Pending FN:")) + 1
+                pfEnd = InStr(pfStart, logLine, "]") - 1
+                If pfStart > 1 And pfEnd > pfStart Then
+                    pendingFN = Mid(logLine, pfStart, pfEnd - pfStart + 1)
+                End If
+            End If
+
+            ' Find the reorder complete line
+            If InStr(logLine, "Reordering complete. After:") > 0 Then
+                reorderLine = logLine
+            End If
+
+        Loop
+        Close #fileNum
+    End If
+
+    ' Remove duplicates from missingTabs
+    If missingTabs <> "" Then
+        Dim missingArr() As String
+        Dim cleanMissing As String
+        Dim m As Long
+        cleanMissing = ""
+        missingArr = Split(missingTabs, vbNewLine)
+        For m = 0 To UBound(missingArr)
+            Dim mTab As String
+            mTab = Trim(missingArr(m))
+            If mTab <> "" Then
+                If InStr(vbNewLine & cleanMissing & vbNewLine, vbNewLine & mTab & vbNewLine) = 0 Then
+                    If cleanMissing = "" Then
+                        cleanMissing = mTab
+                    Else
+                        cleanMissing = cleanMissing & vbNewLine & mTab
+                    End If
+                End If
+            End If
+        Next m
+        missingTabs = cleanMissing
+    End If
+
+    '--------------------------------------------------------------------------
+    ' Parse the reorder line to get successful tabs
+    '--------------------------------------------------------------------------
+    If reorderLine <> "" Then
+        ' Find the LAST [ in the line — that's the tab list, not [INFO]
+        Dim lastBracket As Long
+        Dim searchPos   As Long
+        lastBracket = 0
+        searchPos = 1
+        Do While InStr(searchPos, reorderLine, "[") > 0
+            lastBracket = InStr(searchPos, reorderLine, "[")
+            searchPos = lastBracket + 1
+        Loop
+
+        Dim bracketStart As Long
+        Dim bracketEnd   As Long
+        bracketStart = lastBracket + 1
+        bracketEnd = InStr(lastBracket, reorderLine, "]") - 1
+
+        If lastBracket > 0 And bracketEnd > bracketStart Then
+            Dim tabList As String
+            tabList = Mid(reorderLine, bracketStart, bracketEnd - bracketStart + 1)
+
+            Dim tabArr() As String
+            tabArr = Split(tabList, ",")
+            Dim t As Long
+            For t = 0 To UBound(tabArr)
+                Dim tabName As String
+                tabName = Trim(tabArr(t))
+                tabName = Replace(tabName, "'", "")
+                tabName = Trim(tabName)
+
+                If InStr("," & omitTabs & ",", "," & tabName & ",") = 0 And tabName <> "" Then
+                    If successTabs = "" Then
+                        successTabs = tabName
+                    Else
+                        successTabs = successTabs & ", " & tabName
+                    End If
+                End If
+            Next t
+        End If
+    End If
+
+    ' Find tabs created in this run — in both pendingFN and successTabs
+    If pendingFN <> "" And successTabs <> "" Then
+        Dim pendingArr() As String
+        Dim p As Long
+        pendingArr = Split(pendingFN, ",")
+        For p = 0 To UBound(pendingArr)
+            Dim pendingTab As String
+            pendingTab = Trim(pendingArr(p))
+            pendingTab = Replace(pendingTab, "'", "")
+            pendingTab = Trim(pendingTab)
+            If InStr("," & Replace(successTabs, " ", "") & ",", "," & Replace(pendingTab, " ", "") & ",") > 0 Then
+                If createdTabs = "" Then
+                    createdTabs = pendingTab
+                Else
+                    createdTabs = createdTabs & ", " & pendingTab
+                End If
+            End If
+        Next p
+    End If
+
+    '--------------------------------------------------------------------------
+    ' Build message
+    '--------------------------------------------------------------------------
+
+    ' Status line
+    If result <> 0 Then
+        statusMsg = "Script failed with exit code " & result & "." & vbNewLine & _
+                    "Check log: " & errorLogPath
+    Else
+        statusMsg = "Python script completed successfully."
+    End If
+
+    ' Successfully created tabs
+    If successTabs <> "" Then
+        tabsMsg = vbNewLine & vbNewLine & "Tabs successfully created:" & vbNewLine & successTabs
+    Else
+        tabsMsg = vbNewLine & vbNewLine & "No completed tabs found in log."
+    End If
+
+    ' Tabs created in this run
+    Dim createdMsg As String
+    If createdTabs <> "" Then
+        createdMsg = vbNewLine & vbNewLine & "Tabs created in this run: " & vbNewLine & createdTabs
+    Else
+        createdMsg = vbNewLine & vbNewLine & "Tabs created in this run: None"
+    End If
+
+    ' Missing tabs
+    If missingTabs <> "" Then
+        missingMsg = vbNewLine & vbNewLine & "Missing tabs (no source file found):" & vbNewLine & missingTabs
+    Else
+        missingMsg = ""
+    End If
+
+    ' Warning/error stats
+    statsMsg = vbNewLine & vbNewLine & _
+               "Warnings: " & warningCount & vbNewLine & _
+               "Errors:   " & errorCount
+
+    ' Statement to Statement discrepancies
+    Dim stmtMsg As String
+    If stmtDiscrepancies = -1 Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
+    ElseIf Not stmtExists Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
+    Else
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
+                  vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
+    End If
+
+    ' End note
     If result <> 0 Then
         noteMsg = vbNewLine & vbNewLine & "NOTE: Automation failed — please check the log file for details."
     ElseIf hasErrors Then
@@ -8,3 +211,10 @@
     Else
         noteMsg = vbNewLine & vbNewLine & "NOTE: Automation completed successfully with no errors."
     End If
+
+    ' Assemble full message with timestamps
+    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
+              statusMsg & tabsMsg & createdMsg & missingMsg & statsMsg & stmtMsg & noteMsg & vbNewLine & vbNewLine & _
+              "Log file: " & errorLogPath
