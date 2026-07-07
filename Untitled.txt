@@ -1,11 +1,3 @@
-' Capture existing sheets before Python runs
-    Dim existingSheets As String
-    existingSheets = ""
-    Dim preWs As Worksheet
-    For Each preWs In ThisWorkbook.Worksheets
-        If existingSheets = "" Then
-            existingSheets = LCase(preWs.Name)
-        Else
-            existingSheets = existingSheets & "," & LCase(preWs.Name)
-        End If
-    Next preWs
+' Check if tab already existed before this run
+            Dim tabAlreadyExists As Boolean
+            tabAlreadyExists = InStr("," & existingSheets & ",", "," & LCase(pendingTab) & ",") > 0
