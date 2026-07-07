@@ -1,4 +1,5 @@
-MsgBox "lastBracket=" & lastBracket & vbNewLine & _
-           "bracketStart=" & bracketStart & vbNewLine & _
-           "bracketEnd=" & bracketEnd & vbNewLine & _
-           "tabList='" & Mid(reorderLine, bracketStart, bracketEnd - bracketStart + 1) & "'", vbInformation, "Debug"
+For t = 0 To UBound(tabArr)
+            tabName = Trim(tabArr(t))
+            tabName = Replace(tabName, "'", "")
+            tabName = Trim(tabName)
+            MsgBox "tabName='" & tabName & "' omitCheck=" & InStr("," & omitTabs & ",", "," & tabName & ","), vbInformation, "Debug"
