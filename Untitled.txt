@@ -1,7 +1,7 @@
 ' Find pending FN list
-            If InStr(logLine, "Pending FN:") > 0 Then
+            If InStr(1, logLine, "Pending FN:", vbTextCompare) > 0 Then
                 Dim pfSearch As Long
-                pfSearch = InStr(logLine, "Pending FN:")
+                pfSearch = InStr(1, logLine, "Pending FN:", vbTextCompare)
                 pfStart = InStr(pfSearch, logLine, "[") + 1
                 pfEnd = InStr(pfStart, logLine, "]") - 1
                 If pfStart > 1 And pfEnd > pfStart Then
