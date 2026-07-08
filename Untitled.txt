@@ -1,20 +1,44 @@
-If CDbl(cellVal) <> 0 Then
-                            stmtDiscrepancies = stmtDiscrepancies + 1
-                            ' Get the two titles from column A — two rows above the difference row
-                            Dim title1 As String
-                            Dim title2 As String
-                            title1 = ""
-                            title2 = ""
-                            If r - 2 >= hdrRow + 1 Then
-                                title1 = Trim(CStr(wsStmt.Cells(r - 2, 1).Value))
-                            End If
-                            If r - 1 >= hdrRow + 1 Then
-                                title2 = Trim(CStr(wsStmt.Cells(r - 1, 1).Value))
-                            End If
-                            ' Add to discrepancy list
-                            If discrepancyList = "" Then
-                                discrepancyList = title1 & " vs " & title2
-                            Else
-                                discrepancyList = discrepancyList & vbNewLine & title1 & " vs " & title2
-                            End If
-                        End If
+Dim stmtMsg As String
+    Dim stmtMsgFull As String
+    
+    If stmtDiscrepancies = -1 Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
+        stmtMsgFull = stmtMsg
+    ElseIf Not stmtExists Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
+        stmtMsgFull = stmtMsg
+    ElseIf stmtDiscrepancies = 0 Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: 0"
+        stmtMsgFull = stmtMsg
+    Else
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies
+        stmtMsgFull = stmtMsg & vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
+    End If
+
+Dim fullMsg As String
+    Dim fullMsgFile As String
+
+    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+              "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
+              statusMsg & tabsMsg & createdMsg & missingMsg & statsMsg & stmtMsg & noteMsg & vbNewLine & vbNewLine & _
+              "Log file: " & errorLogPath
+
+    fullMsgFile = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+                  "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
+                  "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
+                  statusMsg & tabsMsg & createdMsg & missingMsg & statsMsg & stmtMsgFull & noteMsg & vbNewLine & vbNewLine & _
+                  "Log file: " & errorLogPath
+
+summaryFile = FreeFile
+    Open summaryPath For Output As #summaryFile
+    Print #summaryFile, fullMsgFull
+    Close #summaryFile
+
+    fullMsg = fullMsg & vbNewLine & "Summary file: " & summaryPath
+
+    If result <> 0 Then
+        MsgBox fullMsg, vbCritical, "Script Failed"
+    Else
+        MsgBox fullMsg, vbInformation, "Execution Completed"
+    End If
