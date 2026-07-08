@@ -1,44 +1,20 @@
-Dim stmtMsg As String
-    Dim stmtMsgFull As String
-    
-    If stmtDiscrepancies = -1 Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
-        stmtMsgFull = stmtMsg
-    ElseIf Not stmtExists Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
-        stmtMsgFull = stmtMsg
-    ElseIf stmtDiscrepancies = 0 Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: 0"
-        stmtMsgFull = stmtMsg
-    Else
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies
-        stmtMsgFull = stmtMsg & vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
-    End If
-
-Dim fullMsg As String
-    Dim fullMsgFile As String
-
-    fullMsg = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-              "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
-              statusMsg & tabsMsg & createdMsg & missingMsg & statsMsg & stmtMsg & noteMsg & vbNewLine & vbNewLine & _
-              "Log file: " & errorLogPath
-
-    fullMsgFile = "Start time: " & Format(startTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-                  "End time:   " & Format(endTime, "yyyy-mm-dd hh:mm:ss") & vbNewLine & _
-                  "Duration:   " & Format(endTime - startTime, "hh:mm:ss") & vbNewLine & vbNewLine & _
-                  statusMsg & tabsMsg & createdMsg & missingMsg & statsMsg & stmtMsgFull & noteMsg & vbNewLine & vbNewLine & _
-                  "Log file: " & errorLogPath
-
-summaryFile = FreeFile
-    Open summaryPath For Output As #summaryFile
-    Print #summaryFile, fullMsgFull
-    Close #summaryFile
-
-    fullMsg = fullMsg & vbNewLine & "Summary file: " & summaryPath
-
-    If result <> 0 Then
-        MsgBox fullMsg, vbCritical, "Script Failed"
-    Else
-        MsgBox fullMsg, vbInformation, "Execution Completed"
-    End If
+1	AFR Statement to Statement	Automate the population of the statement-to-statement checklist using data extracted from prepared financial statements and footnotes to ensure consistency.	2/17/2026	7/31/2026
+2	Project Prioritization	Develop a prototype for cataloging, scoring, and prioritizing future automation initiatives based on impact, feasibility, and resource requirements.	5/1/2026	6/10/2026
+	OMB Max SF-132 to DHSTIER-133 Reconciliation	Automate the comparison between the SF-132 (Apportionment) data in OMB MAX and the DHSTIER-133 (Report on Budget Execution) to ensure budgetary alignment.		
+6	Quarterly Obligation Analysis	Create an automated dashboard or report to analyze quarterly spending trends and identify potential de-obligation opportunities.		
+	Bankcard Email Automations	Implement an automated email notification system for bankcard holders and approving officials to streamline the monthly reconciliation and certification process.		
+5	PBC Expansion to HQ and Components	Scale the Provided by Client (PBC) request tracking system from a pilot phase to full implementation across Headquarters and all Agency Components.		
+3	AFR Document Automation	Automate the population of financial statements and footnotes directly into the Agency Financial Report (AFR) document to streamline year-end reporting.	date we started the POC for word doc automation?	7/31/2026
+	TIER + Manual Footnotes	Streamline the integration of Treasury Information Executive Repository (TIER) data with manually prepared financial statement footnotes for consolidated reporting.		
+	Performance Matrix	Develop a centralized digital matrix to track organizational KPIs, audit remediation progress, and financial reporting milestones.		
+	UCO to UDO Reconciliation	Develop a tool to reconcile Unliquidated Commitment Obligations (UCO) against Undelivered Orders (UDO) to ensure accurate obligation tracking.		
+	Component Data Call Template Optimization	Redesign and standardize the templates used for data calls to Components to improve data quality and reduce manual cleanup efforts during consolidation.		
+	Funds from Dedicated Collections	Standardize the identification and reporting of "Funds from Dedicated Collections" to meet federal accounting standards and requirements.		
+	FECA Reconciliation	Automate the reconciliation of Federal Employees' Compensation Act (FECA) liabilities and expenses between Department of Labor reports and agency records.		
+	Department of State Oversees Leases	Establish a standardized process for gathering and reporting lease data from Department of State managed properties to ensure compliance with lease accounting standards.		
+	Contingent Legal Liabilities	Automate the data collection and tracking of legal claims to estimate and report potential contingent liabilities on the financial statements.		
+	Quarterly ARM			
+	Intra-governmental Transactions (IGTs)	Streamline Intra-governmental Transactions (IGTs). 		
+	OneStream CONOPS	Establish Concept of Operations and coduct feasibility study for using OneStream for financial statement, footnote and journal voucher preparation.		
+7	TIER Dashboards	Management Reports out of TIER		
+4	PBC Enhancements	Scale the Provided by Client (PBC) request tracking system from a pilot phase to full implementation across Headquarters and all Agency Components.		
