@@ -1,3 +1,63 @@
-' Check if tab already existed before this run
-            Dim tabAlreadyExists As Boolean
-            tabAlreadyExists = InStr("," & existingSheets & ",", "," & LCase(pendingTab) & ",") > 0
+If diffCol > 0 Then
+            Dim lastStmtRow As Long
+            lastStmtRow = wsStmt.Cells(wsStmt.Rows.Count, diffCol).End(xlUp).Row
+            Dim r As Long
+            Dim discrepancyList As String
+            discrepancyList = ""
+            
+            For r = hdrRow + 1 To lastStmtRow
+                Dim cellVal As Variant
+                cellVal = wsStmt.Cells(r, diffCol).Value
+                If Not IsEmpty(cellVal) And Not IsNull(cellVal) Then
+                    If IsNumeric(cellVal) Then
+                        If CDbl(cellVal) <> 0 Then
+                            stmtDiscrepancies = stmtDiscrepancies + 1
+                            ' Collect the two titles in column B for this comparison
+                            ' Search backwards and forwards from this row for the two titles
+                            Dim title1 As String
+                            Dim title2 As String
+                            Dim searchRow As Long
+                            title1 = ""
+                            title2 = ""
+                            ' Search backwards for first title
+                            For searchRow = r To hdrRow + 1 Step -1
+                                If Trim(CStr(wsStmt.Cells(searchRow, 2).Value)) <> "" Then
+                                    title1 = Trim(CStr(wsStmt.Cells(searchRow, 2).Value))
+                                    Exit For
+                                End If
+                            Next searchRow
+                            ' Search forwards for second title
+                            For searchRow = r + 1 To lastStmtRow
+                                If Trim(CStr(wsStmt.Cells(searchRow, 2).Value)) <> "" Then
+                                    title2 = Trim(CStr(wsStmt.Cells(searchRow, 2).Value))
+                                    Exit For
+                                End If
+                            Next searchRow
+                            ' Add to discrepancy list
+                            If discrepancyList = "" Then
+                                discrepancyList = title1 & " vs " & title2
+                            Else
+                                discrepancyList = discrepancyList & vbNewLine & title1 & " vs " & title2
+                            End If
+                        End If
+                    End If
+                End If
+            Next r
+        Else
+            stmtDiscrepancies = -1
+        End If
+
+
+Dim stmtMsg As String
+    If stmtDiscrepancies = -1 Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
+    ElseIf Not stmtExists Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
+    ElseIf stmtDiscrepancies = 0 Then
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: 0"
+    Else
+        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
+                  vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
+    End If
+
+
