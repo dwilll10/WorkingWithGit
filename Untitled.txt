@@ -1,71 +1,41 @@
-If diffCol > 0 Then
-            Dim lastStmtRow As Long
-            lastStmtRow = wsStmt.Cells(wsStmt.Rows.Count, diffCol).End(xlUp).Row
-            Dim r As Long
-            Dim discrepancyList As String
-            discrepancyList = ""
-            
-            For r = hdrRow + 1 To lastStmtRow
-                Dim titleVal As Variant
-                Dim amountVal As Variant
-                Dim cellVal As Variant
-                titleVal = wsStmt.Cells(r, 1).Value   ' Column A - title
-                amountVal = wsStmt.Cells(r, 2).Value  ' Column B - amount
-                cellVal = wsStmt.Cells(r, diffCol).Value  ' Column C - difference
-
-                ' Count rows where title exists but amount is missing
+' Count rows where title exists but amount is missing
                 If Not IsEmpty(titleVal) And Trim(CStr(titleVal)) <> "" Then
                     If IsEmpty(amountVal) Or Trim(CStr(amountVal)) = "" Or Not IsNumeric(amountVal) Then
                         missingValues = missingValues + 1
-                    End If
-                End If
-
-                ' Count non-zero differences and collect titles
-                If Not IsEmpty(cellVal) And Not IsNull(cellVal) Then
-                    If IsNumeric(cellVal) Then
-                        If CDbl(cellVal) <> 0 Then
-                            stmtDiscrepancies = stmtDiscrepancies + 1
-                            ' Get the two titles from column A — two rows above the difference row
-                            Dim title1 As String
-                            Dim title2 As String
-                            title1 = ""
-                            title2 = ""
-                            If r - 2 >= hdrRow + 1 Then
-                                title1 = Trim(CStr(wsStmt.Cells(r - 2, 1).Value))
-                            End If
-                            If r - 1 >= hdrRow + 1 Then
-                                title2 = Trim(CStr(wsStmt.Cells(r - 1, 1).Value))
-                            End If
-                            If discrepancyList = "" Then
-                                discrepancyList = title1 & " vs " & title2
+                        ' Every other missing value completes a pair — add to list on even count
+                        If missingValues Mod 2 = 0 Then
+                            Dim missingTitle1 As String
+                            Dim missingTitle2 As String
+                            missingTitle1 = Trim(CStr(wsStmt.Cells(r - 1, 1).Value))
+                            missingTitle2 = Trim(CStr(titleVal))
+                            If missingTieList = "" Then
+                                missingTieList = missingTitle1 & " vs " & missingTitle2
                             Else
-                                discrepancyList = discrepancyList & vbNewLine & title1 & " vs " & title2
+                                missingTieList = missingTieList & vbNewLine & missingTitle1 & " vs " & missingTitle2
                             End If
                         End If
                     End If
                 End If
-            Next r
-        Else
-            stmtDiscrepancies = -1
-        End If
 
 
-
-Dim stmtMsg As String
-    Dim stmtMsgFull As String
-
-    If stmtDiscrepancies = -1 Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Column 'Difference' not found"
-        stmtMsgFull = stmtMsg
-    ElseIf Not stmtExists Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: Tab 'STMT to STMT' not found"
-        stmtMsgFull = stmtMsg
-    ElseIf stmtDiscrepancies = 0 Then
+ElseIf stmtDiscrepancies = 0 Then
         stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: 0" & _
                   vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
-        stmtMsgFull = stmtMsg
+        If missingValues > 0 Then
+            stmtMsgFull = stmtMsg & vbNewLine & vbNewLine & "Missing tie-through detail:" & vbNewLine & missingTieList
+        Else
+            stmtMsgFull = stmtMsg
+        End If
     Else
         stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
                   vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
-        stmtMsgFull = stmtMsg & vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
+        Dim combinedDetail As String
+        combinedDetail = ""
+        If missingValues > 0 Then
+            combinedDetail = combinedDetail & vbNewLine & vbNewLine & "Missing tie-through detail:" & vbNewLine & missingTieList
+        End If
+        If discrepancyList <> "" Then
+            combinedDetail = combinedDetail & vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
+        End If
+        stmtMsgFull = stmtMsg & combinedDetail
     End If
