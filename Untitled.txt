@@ -1,80 +1,30 @@
-For Each ws In wbConfig.Worksheets
+' Load all master list titles into a dictionary before the loop
+Dim masterTitles As Object
+Set masterTitles = CreateObject("Scripting.Dictionary")
+For m = 2 To masterLastRow
+    Dim masterTitle As String
+    masterTitle = LCase(Trim(wsMaster.Cells(m, masterTitleCol).Value))
+    If masterTitle <> "" And Not masterTitles.Exists(masterTitle) Then
+        masterTitles.Add masterTitle, wsMaster.Cells(m, masterTitleCol).Value  ' store original casing as value
+    End If
+Next m
 
-        sheetName = ws.Name
-
-        ' Skip sheets handled by separate macros or the Sums block
-        If sheetName = "OI-SOS" Then GoTo NextSheet
-        If sheetName = "Sums" Then GoTo NextSheet
-        WriteLog "Start processing sheet '" & sheetName & "'"
-
-        ' Check if this config tab exists in the master list
-        dataExists = False
-        For m = 2 To masterLastRow
-            If LCase(Trim(wsMaster.Cells(m, masterTitleCol).Value)) = LCase(Trim(sheetName)) Then
-                dataExists = True
-                Exit For
-            End If
-        Next m
-
-        ' Map placeholders to config tab regardless of whether data sheet exists
-        Dim mapWsConfig As Worksheet
-        Set mapWsConfig = ws
-        Dim mapLastRow As Long
-        mapLastRow = mapWsConfig.Cells(mapWsConfig.Rows.Count, "C").End(xlUp).Row
-        Dim mapRow As Long
-        For mapRow = 2 To mapLastRow
-            Dim mapPh As Long
-            For mapPh = 3 To 7
-                Dim mapPhVal As String
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapPh).Value))
-                If mapPhVal <> "" Then
-                    If Not phTabMap.Exists(mapPhVal) Then
-                        phTabMap.Add mapPhVal, sheetName
-                    End If
-                End If
-            Next mapPh
-            ' Also check K+ columns
-            Dim mapExtra As Long
-            mapExtra = 11
-            Do While Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value)) <> ""
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value))
-                If Not phTabMap.Exists(mapPhVal) Then
-                    phTabMap.Add mapPhVal, sheetName
-                End If
-                mapExtra = mapExtra + 1
-            Loop
-        Next mapRow
-
-        If Not dataExists Then
-            WriteLog "SKIPPED: Config tab '" & sheetName & "' has placeholders but there is no matching entry in BSFNMasterList."
-            If skippedSheets = "" Then
-                skippedSheets = sheetName
-            Else
-                skippedSheets = skippedSheets & ", " & sheetName
-            End If
-            GoTo NextSheet
+If dataExists Then
+            masterTitles.Remove LCase(Trim(sheetName))
         End If
 
-        ' Check that ThisWorkbook actually has a matching sheet
-        Dim wsDataExists As Boolean
-        wsDataExists = False
-        Dim checkWs As Worksheet
-        For Each checkWs In ThisWorkbook.Worksheets
-            If LCase(checkWs.Name) = LCase(sheetName) Then
-                wsDataExists = True
-                Exit For
-            End If
-        Next checkWs
-
-        If Not wsDataExists Then
-            WriteLog "SKIPPED: Config tab '" & sheetName & "' found in master list but no matching sheet in ThisWorkbook."
-            If skippedSheets = "" Then
-                skippedSheets = sheetName
+' Report master list entries with no matching config tab
+    If masterTitles.Count > 0 Then
+        Dim unmatchedList As String
+        unmatchedList = ""
+        Dim key As Variant
+        For Each key In masterTitles.Keys
+            If unmatchedList = "" Then
+                unmatchedList = masterTitles(key)
             Else
-                skippedSheets = skippedSheets & ", " & sheetName
+                unmatchedList = unmatchedList & ", " & masterTitles(key)
             End If
-            GoTo NextSheet
-        End If
-
-        Set wsConfig = ws
-        Set wsData = ThisWorkbook.Sheets(sheetName)
+        Next key
+        WriteLog "Master list titles with no matching config tab: " & unmatchedList
+        MsgBox "The following master list entries had no matching config tab:" & vbNewLine & unmatchedList, vbExclamation, "Unmatched Master List Entries"
+    End If
