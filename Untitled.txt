@@ -1,47 +1,21 @@
-' Loop every tab in config.xlsx
-    '--------------------------------------------------------------------------
-
-    On Error GoTo MasterError
-    Set wbMaster = Workbooks.Open(masterPath, ReadOnly:=True)
-    On Error GoTo 0
-    
-    Set wsMaster = wbMaster.Sheets(1)
-    
-    ' Find the "Title" column by header name
-    Set headerCell = wsMaster.Rows(1).Find( _
-        What:="Title", LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
-    
-    If headerCell Is Nothing Then
-        wbMaster.Close SaveChanges:=False
-        MsgBox "Could not find 'Title' column in BSFNMasterList", vbCritical, "Error"
-        Exit Sub
-    End If
-    
-    masterTitleCol = headerCell.Column
-    masterLastRow = wsMaster.Cells(wsMaster.Rows.Count, masterTitleCol).End(xlUp).Row
-    
-    
-    Dim ws As Worksheet
-    For Each ws In wbConfig.Worksheets
+For Each ws In wbConfig.Worksheets
 
         sheetName = ws.Name
-        
+
         ' Skip sheets handled by separate macros or the Sums block
         If sheetName = "OI-SOS" Then GoTo NextSheet
         If sheetName = "Sums" Then GoTo NextSheet
         WriteLog "Start processing sheet '" & sheetName & "'"
-        ' Skip if ThisWorkbook doesn't have a matching data sheet
-        Dim dataExists As Boolean
+
+        ' Check if this config tab exists in the master list
         dataExists = False
-        Set wbMaster = Workbooks.Open(masterPath, ReadOnly:=True)
         For m = 2 To masterLastRow
-            If LCase(Trim(wsMaster.Cells(m, masterTitleCol).value)) = LCase(Trim(ws.Name)) Then
+            If LCase(Trim(wsMaster.Cells(m, masterTitleCol).Value)) = LCase(Trim(sheetName)) Then
                 dataExists = True
                 Exit For
             End If
         Next m
-        
-        
+
         ' Map placeholders to config tab regardless of whether data sheet exists
         Dim mapWsConfig As Worksheet
         Set mapWsConfig = ws
@@ -52,7 +26,7 @@
             Dim mapPh As Long
             For mapPh = 3 To 7
                 Dim mapPhVal As String
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapPh).value))
+                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapPh).Value))
                 If mapPhVal <> "" Then
                     If Not phTabMap.Exists(mapPhVal) Then
                         phTabMap.Add mapPhVal, sheetName
@@ -62,8 +36,8 @@
             ' Also check K+ columns
             Dim mapExtra As Long
             mapExtra = 11
-            Do While Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).value)) <> ""
-                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).value))
+            Do While Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value)) <> ""
+                mapPhVal = Trim(CStr(mapWsConfig.Cells(mapRow, mapExtra).Value))
                 If Not phTabMap.Exists(mapPhVal) Then
                     phTabMap.Add mapPhVal, sheetName
                 End If
@@ -72,7 +46,7 @@
         Next mapRow
 
         If Not dataExists Then
-            WriteLog "SKIPPED: Config tab '" & sheetName & "' has placeholders but there is no data in Gatekeeping tool."
+            WriteLog "SKIPPED: Config tab '" & sheetName & "' has placeholders but there is no matching entry in BSFNMasterList."
             If skippedSheets = "" Then
                 skippedSheets = sheetName
             Else
@@ -81,9 +55,19 @@
             GoTo NextSheet
         End If
 
-        If Not dataExists Then
-            Debug.Print "Config tab '" & sheetName & "' has placeholders but there is no data in Gatekeeping tool — skipped."
-            WriteLog "Config tab '" & sheetName & "' has placeholders but there is no data in Gatekeeping tool and is skipped."
+        ' Check that ThisWorkbook actually has a matching sheet
+        Dim wsDataExists As Boolean
+        wsDataExists = False
+        Dim checkWs As Worksheet
+        For Each checkWs In ThisWorkbook.Worksheets
+            If LCase(checkWs.Name) = LCase(sheetName) Then
+                wsDataExists = True
+                Exit For
+            End If
+        Next checkWs
+
+        If Not wsDataExists Then
+            WriteLog "SKIPPED: Config tab '" & sheetName & "' found in master list but no matching sheet in ThisWorkbook."
             If skippedSheets = "" Then
                 skippedSheets = sheetName
             Else
@@ -94,164 +78,3 @@
 
         Set wsConfig = ws
         Set wsData = ThisWorkbook.Sheets(sheetName)
-
-        ' Use col C (first placeholder col) to find last row — always populated
-        lastRow = wsConfig.Cells(wsConfig.Rows.Count, "C").End(xlUp).Row
-        Debug.Print "Processing sheet: " & sheetName & " (" & lastRow - 1 & " config rows)"
-        If successSheets = "" Then
-            successSheets = sheetName
-        Else
-            successSheets = successSheets & ", " & sheetName
-        End If
-
-        '----------------------------------------------------------------------
-        ' Loop config rows (row 1 = header)
-        '----------------------------------------------------------------------
-        For i = 2 To lastRow
-            WriteLog "Row " & i & " sheet='" & sheetName & "' section='" & Trim(CStr(wsConfig.Cells(i, 1).value)) & "' subtitle='" & Trim(CStr(wsConfig.Cells(i, 2).value)) & "' ph='" & Trim(CStr(wsConfig.Cells(i, 3).value)) & "' N='" & Trim(CStr(wsConfig.Cells(i, 14).value)) & "'"
-            section = Trim(CStr(wsConfig.Cells(i, 1).value))   ' Col A
-            subtitle = Trim(CStr(wsConfig.Cells(i, 2).value))  ' Col B
-
-            ' Read occurrence from col H (8) — blank defaults to 1
-            occurrence = 1
-            If Trim(CStr(wsConfig.Cells(i, 8).value)) <> "" Then
-                occurrence = CLng(wsConfig.Cells(i, 8).value)
-            End If
-
-            ' Read subtitle column from col I (9) — blank defaults to C (3)
-            subtitleColNum = 3
-            If Trim(CStr(wsConfig.Cells(i, 9).value)) <> "" Then
-                subtitleColNum = ColLetterToNum(Trim(wsConfig.Cells(i, 9).value))
-            End If
-
-            ' Read value columns from col J (10) — blank defaults to "D"
-            Dim valCols As String
-            valCols = Trim(CStr(wsConfig.Cells(i, 10).value))
-            If valCols = "" Then valCols = "D"
-            
-            ' Read Value Row column
-            Dim valueRowOverride As String
-            valueRowOverride = Trim(CStr(wsConfig.Cells(i, 14).value))
-
-            ' Skip rows with no placeholder in col C
-            If Trim(CStr(wsConfig.Cells(i, 3).value)) = "" Then GoTo NextRow
-
-            ' Skip blank subtitles unless section is also blank (no-section sheets)
-            If subtitle = "" And section <> "" And valueRowOverride = "" Then GoTo NextRow
-
-            '------------------------------------------------------------------
-            ' Steps 1-3: section and subtitle lookup
-            ' Only run when section is present
-            '------------------------------------------------------------------
-            sectionRow = 0
-            nextSectionRow = 0
-            subtitleRow = 0
-            dataRow = 0
-
-            If section <> "" Then
-                ' Step 1: find section in col A
-                sectionRow = FindSectionRow(wsData, section)
-                If sectionRow = 0 Then
-                    Debug.Print "  NOT FOUND section: '" & section & "'"
-                    GoTo NextRow
-                End If
-
-                ' Step 2: find next section to bound the search
-                Dim defaultLast As Long
-                defaultLast = wsData.Cells(wsData.Rows.Count, subtitleColNum).End(xlUp).Row
-                nextSectionRow = FindNextSectionRow(wsData, sectionRow, defaultLast)
-
-                ' Step 3: find subtitle within bounded range (if subtitle provided)
-                If subtitle <> "" Then
-                    subtitleRow = FindSubtitleRow(wsData, sectionRow, nextSectionRow, _
-                                              subtitle, subtitleColNum, occurrence)
-                    If subtitleRow = 0 Then
-                        WriteLog "  NOT FOUND subtitle: '" & subtitle & "' under section: '" & section & "' in sheet: '" & sheetName & "'"
-                        GoTo NextRow
-                    End If
-                    dataRow = subtitleRow
-                Else
-                    ' No subtitle — check col N for explicit row number
-                    'Dim valueRowOverride As String
-                    'valueRowOverride = Trim(CStr(wsConfig.Cells(i, 14).value))
-                    If valueRowOverride <> "" Then
-                        dataRow = CLng(valueRowOverride)
-                        WriteLog "  dataRow set to " & CStr(dataRow) & " for row " & CStr(i) & " sheet='" & sheetName & "'"
-                    Else
-                        ' No subtitle and no Value_Row — skip
-                        WriteLog "  Skipping: blank subtitle and no Value_Row for row " & CStr(i)
-                        GoTo NextRow
-                    End If
-                End If
-
-            Else
-                ' No section — search entire subtitle column with occurrence
-                Dim lastDataRow As Long
-                lastDataRow = wsData.Cells(wsData.Rows.Count, subtitleColNum).End(xlUp).Row
-                subtitleRow = FindSubtitleRow(wsData, 1, lastDataRow, subtitle, subtitleColNum, occurrence)
-                If subtitleRow = 0 Then
-                    Debug.Print "  NOT FOUND subtitle: '" & subtitle & "' (no section)"
-                    GoTo NextRow
-                End If
-                dataRow = subtitleRow
-            End If
-            'WriteLog "  Reached placeholder collection: dataRow=" & dataRow & " valCols='" & valCols & "' phCount=" & phCount
-            '------------------------------------------------------------------
-            ' Step 4: collect placeholders and build args
-            '
-            ' Placeholders in config: cols C-G (indices 3-7) then K+ (index 11+)
-            ' Value columns: comma-separated list from col J
-            '------------------------------------------------------------------
-            Dim allPH() As String
-            'Dim phCount As Long
-            phCount = 0
-
-            ' First 5 placeholders: cols C-G (3-7)
-            Dim pc As Long
-            For pc = 3 To 7
-                Dim phVal As String
-                phVal = Trim(CStr(wsConfig.Cells(i, pc).value))
-                If phVal <> "" Then
-                    ReDim Preserve allPH(phCount)
-                    allPH(phCount) = phVal
-                    phCount = phCount + 1
-                End If
-            Next pc
-
-            ' Additional placeholders: cols K+ (11+)
-            Dim extraCol As Long
-            extraCol = 11
-            Do While Trim(CStr(wsConfig.Cells(i, extraCol).value)) <> ""
-                ReDim Preserve allPH(phCount)
-                allPH(phCount) = Trim(CStr(wsConfig.Cells(i, extraCol).value))
-                phCount = phCount + 1
-                extraCol = extraCol + 1
-            Loop
-            
-
-            If phCount = 0 Then GoTo NextRow
-
-            ' Match each placeholder to its value column
-            Dim valColArr() As String
-            valColArr = Split(valCols, ",")
-
-            For c = 0 To UBound(valColArr)
-                If c <= UBound(allPH) Then
-                    If allPH(c) <> "" Then
-                        Dim colNum As Long
-                        colNum = ColLetterToNum(Trim(valColArr(c)))
-                        Dim cellVal As String
-                        cellVal = CleanVal(wsData.Cells(dataRow, colNum).value)
-                        args = args & " """ & allPH(c) & "=" & cellVal & """"
-                        Debug.Print "  " & allPH(c) & " = " & cellVal
-                    End If
-                End If
-            Next c
-            
-            
-
-NextRow:
-        Next i
-WriteLog "Sheet '" & sheetName & "' completed successfully."
-NextSheet:
-    Next ws
