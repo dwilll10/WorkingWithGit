@@ -1,41 +1,47 @@
-' Count rows where title exists but amount is missing
-                If Not IsEmpty(titleVal) And Trim(CStr(titleVal)) <> "" Then
-                    If IsEmpty(amountVal) Or Trim(CStr(amountVal)) = "" Or Not IsNumeric(amountVal) Then
-                        missingValues = missingValues + 1
-                        ' Every other missing value completes a pair — add to list on even count
-                        If missingValues Mod 2 = 0 Then
-                            Dim missingTitle1 As String
-                            Dim missingTitle2 As String
-                            missingTitle1 = Trim(CStr(wsStmt.Cells(r - 1, 1).Value))
-                            missingTitle2 = Trim(CStr(titleVal))
-                            If missingTieList = "" Then
-                                missingTieList = missingTitle1 & " vs " & missingTitle2
-                            Else
-                                missingTieList = missingTieList & vbNewLine & missingTitle1 & " vs " & missingTitle2
-                            End If
-                        End If
-                    End If
-                End If
+Dim wsMaster As Worksheet
+Dim wbMaster As Workbook
+Dim masterPath As String
+Dim masterLastRow As Long
+Dim masterTitleCol As Long
+Dim m As Long
+Dim headerCell As Range
 
+masterPath = oneDrivePath & "\Documents\z. Python Program\GK_new_format\BSFNMasterList.xlsx"  ' <-- adjust path as needed
 
-ElseIf stmtDiscrepancies = 0 Then
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: 0" & _
-                  vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
-        If missingValues > 0 Then
-            stmtMsgFull = stmtMsg & vbNewLine & vbNewLine & "Missing tie-through detail:" & vbNewLine & missingTieList
-        Else
-            stmtMsgFull = stmtMsg
-        End If
+On Error GoTo MasterError
+Set wbMaster = Workbooks.Open(masterPath, ReadOnly:=True)
+On Error GoTo 0
+
+Set wsMaster = wbMaster.Sheets(1)
+
+' Find the "Title" column by header name
+Set headerCell = wsMaster.Rows(1).Find( _
+    What:="Title", LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+
+If headerCell Is Nothing Then
+    wbMaster.Close SaveChanges:=False
+    MsgBox "Could not find 'Title' column in BSFNMasterList", vbCritical, "Error"
+    Exit Sub
+End If
+
+masterTitleCol = headerCell.Column
+masterLastRow = wsMaster.Cells(wsMaster.Rows.Count, masterTitleCol).End(xlUp).Row
+
+For m = 2 To masterLastRow
+    If existingSheets = "" Then
+        existingSheets = LCase(Trim(wsMaster.Cells(m, masterTitleCol).Value))
     Else
-        stmtMsg = vbNewLine & "Discrepancies in Statement to Statement: " & stmtDiscrepancies & _
-                  vbNewLine & "Missing tie-throughs in Statement to Statement: " & missingValues \ 2
-        Dim combinedDetail As String
-        combinedDetail = ""
-        If missingValues > 0 Then
-            combinedDetail = combinedDetail & vbNewLine & vbNewLine & "Missing tie-through detail:" & vbNewLine & missingTieList
-        End If
-        If discrepancyList <> "" Then
-            combinedDetail = combinedDetail & vbNewLine & vbNewLine & "Discrepancy detail:" & vbNewLine & discrepancyList
-        End If
-        stmtMsgFull = stmtMsg & combinedDetail
+        existingSheets = existingSheets & "," & LCase(Trim(wsMaster.Cells(m, masterTitleCol).Value))
     End If
+Next m
+
+wbMaster.Close SaveChanges:=False
+
+
+
+MasterError:
+    Application.ScreenUpdating = True
+    MsgBox "Could not open BSFNMasterList file: " & masterPath, vbCritical, "Master List Error"
+    Exit Sub
+
+
